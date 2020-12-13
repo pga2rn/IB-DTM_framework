@@ -1,0 +1,125 @@
+// protobuff definition for CITS blockchain,
+// including the definition of trust value offset and trust value
+
+syntax = "proto3";
+
+package ethereum.eth.v1alpha1;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "eth/v1alpha1/beacon_block.proto";
+import "eth/v1alpha1/validator.proto";
+
+option csharp_namespace = "Ethereum.Eth.v1alpha1";
+option go_package = "github.com/prysmaticlabs/ethereumapis/eth/v1alpha1;eth";
+option java_multiple_files = true;
+option java_outer_classname = "CITSProto";
+option java_package = "org.ethereum.eth.v1alpha1";
+option php_namespace = "Ethereum\\Eth\\v1alpha1";
+
+// Definitions for RSU 
+
+// RSUProperty stores properties of RSU
+message RSUProperty {
+    // unique ID for RSU
+    uint64 id = 1;
+
+    // bound of cits stake
+    // stake will not exceed the upperbound and lower bound
+    uint64 cits_stake_upperbound = 2;
+    uint64 cits_stake_lowerbound = 3;
+}
+
+// RSUInfo stores the status of RSU in a given epoch
+message RSUInfo {
+    // unique ID of RSU
+    uint64 id = 1;
+
+    // the epoch that this info for
+    uint64 epoch = 2;
+
+    // the real cits_balance in the epoch
+    uint64 cits_balance = 3;
+
+    // the rounded cits_balance in the epoch, considering the upperbound and cits_stake_lowerbound
+    uint64 effective_cits_balance = 4;
+}
+
+// RSU logic module
+
+message TrustValueOffset {
+    // unique vehicle id
+    uint64 vehicle_id = 1;
+
+    // uint64 timestamp
+    uint64 time_stamp = 2;
+
+    // trust value offset as float
+    // value range from -1 to 1 
+    float trust_value_offset = 3;
+}
+
+message TrustValueOffsetPack {
+    repeated TrustValueOffset = 1;
+}
+
+message TrustValueOffsetRequest {
+    uint64 epoch = 1;
+}
+
+message TrustValue {
+    // unique vehicle id
+    uint64 vehicle_id = 1;
+
+    // trust value is related to specific epoch
+    uint64 epoch = 2;
+
+    // trust value as float
+    // value range from -1 to 1
+    float trust_value = 3;
+}
+
+message ListTrustValue {
+    uint64 epoch = 1;
+    repeated TrustValue = 2;
+}
+
+// we can request many vehicles' trust value in a specific epoch
+message TrustValueRequest {
+    repeated uint64 vehicle_id = 1;
+    uint64 epoch = 2;
+}
+
+// interfaces of RSU model
+service RSUModule {
+    //////////////// RSU on-board logic ////////////////
+    // RSU logic module invoke the method to register to the central authority(simulator)
+
+    // central authority activate the RSU by invoke the following method
+    // return the object of newly created validator
+    rpc RSUActivate(RSUProperty) returns (Validator)
+
+    rpc RSUExit
+
+
+    //////////////// RSU logic module <-> validator module //////////////
+    // validator gets latest available trust value offsets that are not uploaded from RSU model
+    rpc GetTrustValueOffsetPackForPropose(google.protobuf.Empty) returns (TrustValueOffsetPack)
+
+    // RSU model sents trust value offsets pack to validator for uploads
+    rpc ProposeTrustValueOffset(TrustValueOffsetPack) returns (ProposeResponse)
+
+    //////////////// RSU logic module <-> beacon-node module ////////////
+    // synchronized epoch and time slot with blockchain
+    // configuration of beaconchain can be queried via:
+    //      GetBeaconConfig in beacon_chain.proto
+    // current slot and epoch can be queried via:
+    //      GetChainHead in beacon_chain.proto
+
+    // retrieve trust value offsets from blocks for specific epoch
+    // check the implementation of this method for reference:
+    //      ListBlocks in beacon_chain.proto
+    rpc GetTrustValueOffset(TrustValueOffsetRequest) returns (TrustValueOffsetPack)
+
+    // retrieve trust value for specific vehicle,
+    rpc GetVehicleTrustValue(TrustValueRequest) returns (ListTrustValue)
+}

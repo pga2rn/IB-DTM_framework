@@ -1,0 +1,1 @@
+# Protobuff API definitions for RSU and Simulator

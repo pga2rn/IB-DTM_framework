@@ -1,0 +1,31 @@
+// vanet simulator interfaces
+// this module serve as simulator as well as a central authority
+
+message Vehicle {
+    uint64 id = 1;
+    Position pos = 2;
+}
+
+// position of specific vehicle
+message Position {
+    uint64 x = 1;
+    uint64 y = 2;
+}
+
+message SimulatedMap {
+    
+}
+
+
+service VANETSimulator {
+
+    // for RSU to update the map and vehicles status, 
+    // like a map contains updated vehicles positions and the total nums of vehicles
+    rpc GetMapUpdate() returns (SimulatedMap)
+
+    // feed simulated trust rating reports to each RSU
+    rpc GetTrustRatingReports() returns ()
+
+    // for query statistics of current epoch's
+    rpc GetTrustValueReport returns ()
+}
