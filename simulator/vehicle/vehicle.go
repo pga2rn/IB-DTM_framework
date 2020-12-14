@@ -138,28 +138,28 @@ func (v *Vehicle) Move() error {
 				// The vehicle drives out of the map
 				v.Inactivate()
 			}
-			break
+			return nil
 		case XBackward:
 			if v.Pos.X - 1 > 0 {
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
-			break
+			return nil
 		case YForward:
 			if v.Pos.Y + 1 < int(v.m.SimConfig.YLen) {
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
-			break
+			return nil
 		case YBackward:
 			if v.Pos.Y - 1 > 0{
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
-			break
+			return nil
 		}
 	}
 
@@ -167,5 +167,4 @@ func (v *Vehicle) Move() error {
 	// 1. remain active, means it moves
 	// 2. being inactive, means it moves out of the map
 
-	return nil
 }

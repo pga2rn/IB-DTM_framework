@@ -3,11 +3,11 @@
 
 syntax = "proto3";
 
-package ethereum.eth.v1alpha1;
+package ib-dtm_framework.shared.pb;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-import "eth/v1alpha1/beacon_block.proto";
-import "eth/v1alpha1/validator.proto";
+import "ib-dtm_framework/shared/beacon_block.proto";
+import "github.com/prysmaticlabs/ethereumapis/eth/v1alpha1/validator.proto";
 
 option csharp_namespace = "Ethereum.Eth.v1alpha1";
 option go_package = "github.com/prysmaticlabs/ethereumapis/eth/v1alpha1;eth";

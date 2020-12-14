@@ -4,10 +4,20 @@ import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
+	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
 	"github.com/pga2rn/ib-dtm_framework/simulator/rsu"
 	"github.com/pga2rn/ib-dtm_framework/simulator/sim-map"
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"time"
 )
+
+type Beacon struct {
+	// genesis
+	Genesis time.Time
+	// time sync
+	Epoch uint64
+	Slot uint64
+}
 
 // struct that store the status of a simulation session
 type SimulationSession struct {
@@ -18,9 +28,8 @@ type SimulationSession struct {
 	Map *simmap.Map
 
 	// time
-	Ticker timeutil.Ticker
-	Epoch   uint64 // current epoch
-	Slot    uint64 // current slot
+	Ticker     timeutil.Ticker
+	TimeStream Beacon
 
 	// current status
 	ActiveVehiclesNum uint64
@@ -33,7 +42,7 @@ type SimulationSession struct {
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
-	RSUs []*rsu.RSU
+	RSUs []*dtm.RSU
 }
 
 // construct a simulationsession object
@@ -49,7 +58,7 @@ func PrepareSimulationSession(
 	// init each data fields
 	sim.ActiveVehiclesNum = 0
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
-	sim.RSUs = make([]*rsu.RSU, cfg.XLen * cfg.YLen)
+	sim.RSUs = make([]*dtm.RSU, cfg.XLen * cfg.YLen)
 
 	// ticker
 	sim.Ticker = timeutil.GetSlotTicker(cfg.Genesis, cfg.SlotLen)
@@ -66,7 +75,9 @@ func (sim *SimulationSession) Done(){
 // routines are as follow:
 // case 1: main process exit, simulation stop
 // case 2: waiting for next slot
-//		r1: generate new trust value offset and spread to every RSU
+//		r1: update the map, move the vehicles
+//		r2: generate trust value for newly moved vehicles
+//		r3:	call RSU, provide trust value offsets to them and let them do the job
 //		r2: calculate trust value
 func run(ctx context.Context, sim *SimulationSession){
 	cleanup := sim.Done
