@@ -1,6 +1,9 @@
 package vehicle
 
+// TODO: error handle and context
+
 import (
+	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"github.com/pga2rn/ib-dtm_framework/simulator/sim-map"
 )
 
@@ -8,55 +11,150 @@ import (
 type Vehicle struct {
 	// unique id of each vehicle
 	id uint64
+	m *simmap.Map
 
-	// current position of the vehicle
+	// current Pos of the vehicle
 	// set to nil for inactive
-	position simmap.Position
-	// the path of vehicle movement, represented by pos
+	Pos simmap.Position
+	// the Path of vehicle movement, represented by pos
 	// reset when becomes inactive
-	path []simmap.Position
+	// don't know how to maintain it, so just leave it
+	// Path []simmap.Position
 
 	// trust value related
-	trust_value float32
+	trustValue float32
 
 	// vehicle status
-	vehicle_status int
+	vehicleStatus int
+	// last 6 movement of the vehicle
+	lastMovementDirection int
 }
 
 // vehiclestatus
 const (
-	Destroyed = -1
-	NotInit   = -1 // the same as destroyed, the data structure is not available
-	InActive  = 0  // temporary leave the map, but the data structure remains
-	Active    = 1  // in the map right now
+	InActive  = iota  // temporary leave the map, but the data structure remains
+	Active      // in the map right now
 )
 
+// move direction
+const (
+	XForward = 1
+	XBackward = -XForward
+	YForward = 2
+	YBackward = -YForward
+)
+var DirectionArray = []int{XForward, XBackward, YForward, YBackward}
 
 ////// life cycle //////
 // activate a vehicle into the map
 func (v *Vehicle) Activate (m *simmap.Map) error {
+	// if the active vehicles exceed the maximum, return
+	if m.MapStatus.ActiveVehiclesNum > m.SimConfig.VehicleNumMax{
+		return nil
+	}
+
+	// search for valid vehicle ID
 	index := -1
 	for i, v := range m.Vehicles{
 		if v == nil {
 			index = i
 			break
-		} else if v.vehicle_status != Active {
+		} else if v.vehicleStatus != Active {
 			index = i
 			break
 		}
 	}
 
+	// all the slot is activated (which is very rare)
 	if index < 0 {
 		return error()
 	}
 
-	// register the vehicle to the map
+	// construct the vehicle
+	// pos
+	v.Pos.X = uint32(config.R.Intn(int(m.SimConfig.XLen)))
+	v.Pos.Y = uint32(config.R.Intn(int(m.SimConfig.YLen)))
+	// status
+	v.vehicleStatus = Active
+	v.lastMovementDirection = DirectionArray[config.R.Intn(len(DirectionArray))]
+
+	// register
 	v.id = uint64(index) // the same as the slot in the map
-	m.Vehicles[index] = v
+	v.m = m // pointer to the map
+	m.Vehicles[index] = v // register into the map
 }
 // vehicle destroy
-Done()
+// not really destroy, but just set it as Inactive
+func (v *Vehicle) Inactivate() error {
+	if v.vehicleStatus != InActive {
+		v.vehicleStatus = InActive
+	} else {
+		return error()
+	}
+	return nil
+}
 
 ////// simulation //////
-// simulate the movement within the map
-Move()
+// exceed boundary test is executed by the caller function
+func (v *Vehicle) moveHelper(direction int){
+	switch direction{
+	case XForward:
+		v.Pos.X += 1
+	case XBackward:
+		v.Pos.X -= 1
+	case YForward:
+		v.Pos.Y += 1
+	case YBackward:
+		v.Pos.Y -= 1
+	}
+}
+
+func (v *Vehicle) Move() error {
+	// if the vehicle is not activated
+	if v.vehicleStatus != Active {
+		return error()
+	}
+
+	// TODO: make the movement more scientifically in the future
+	for {
+		direction := DirectionArray[config.R.Intn(len(DirectionArray))]
+		switch direction {
+		case -v.lastMovementDirection:
+			// It is strange to move backward immediately
+			continue
+		case XForward:
+			if v.Pos.X+1 < v.m.SimConfig.XLen {
+				v.moveHelper(direction)
+			} else {
+				// The vehicle drives out of the map
+				v.Inactivate()
+			}
+		case XBackward:
+			if v.Pos.X - 1 > 0 {
+				v.moveHelper(direction)
+			} else {
+				v.Inactivate()
+			}
+		case YForward:
+			if v.Pos.Y + 1 < v.m.SimConfig.YLen{
+				v.moveHelper(direction)
+			} else {
+				v.Inactivate()
+			}
+		case YBackward:
+			if v.Pos.Y - 1 > 0{
+				v.moveHelper(direction)
+			} else {
+				v.Inactivate()
+			}
+		}
+	}
+
+	// after the movement, the vehicle will either
+	// 1. remain active, means it moves
+	// 2. being inactive, means it moves out of the map
+
+	// update the status of the car
+
+	return nil
+}

@@ -1,7 +1,13 @@
 // Package config defines the config for the simulation
 package config
 
-import "time"
+import (
+	"math/rand"
+	"time"
+)
+
+// a global accessable random object
+var R = rand.New(rand.NewSource(time.Now().Unix()))
 
 // Config is used to define a simulation
 type Config struct {
@@ -10,8 +16,8 @@ type Config struct {
 	YLen uint32
 
 	////// simulation config //////
-	VehicleNumMax uint32
-	VehicleNumMin uint32
+	VehicleNumMax uint64
+	VehicleNumMin uint64
 	RSUNum uint32
 	PortionOfCompromisedRSUMax float32 // from 0 ~ 1
 	PortionOfCompromisedRSUMin float32 // from 0 ~ 1
@@ -20,6 +26,8 @@ type Config struct {
 	Genesis time.Time
 	SlotsPerEpoch uint64
 	SlotLen uint64 // in seconds
+
+	// vehicle config
 }
 
 func GenYangNetConfig() *Config {

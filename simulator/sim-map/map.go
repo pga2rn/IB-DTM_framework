@@ -8,12 +8,17 @@ import (
 )
 
 type Position struct {
-	x uint32
-	y uint32
+	X uint32
+	Y uint32
 }
 
 // each cross represents a CROSS within the map,
 // which holds a RSU and 0 or more vehicles
+// map looks like this:
+// 0->N
+// |
+// v
+// M
 type cross struct {
 	// position of the cross
 	Pos Position
