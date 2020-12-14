@@ -22,7 +22,8 @@ type Vehicle struct {
 	// Path []simmap.Position
 
 	// trust value related
-	trustValue float32
+	// move to simulation structure
+	// trustValue float32
 
 	// vehicle status
 	vehicleStatus int
@@ -72,8 +73,8 @@ func (v *Vehicle) Activate (m *simmap.Map) error {
 
 	// construct the vehicle
 	// pos
-	v.Pos.X = uint32(config.R.Intn(int(m.SimConfig.XLen)))
-	v.Pos.Y = uint32(config.R.Intn(int(m.SimConfig.YLen)))
+	v.Pos.X = config.R.Intn(int(m.SimConfig.XLen))
+	v.Pos.Y = config.R.Intn(int(m.SimConfig.YLen))
 	// status
 	v.vehicleStatus = Active
 	v.lastMovementDirection = DirectionArray[config.R.Intn(len(DirectionArray))]
@@ -88,6 +89,10 @@ func (v *Vehicle) Activate (m *simmap.Map) error {
 func (v *Vehicle) Inactivate() error {
 	if v.vehicleStatus != InActive {
 		v.vehicleStatus = InActive
+		// reset the vehicles position
+		v.Pos = simmap.Position{X:-1, Y:-1}
+		v.lastMovementDirection = InActive
+		v.m = nil
 	} else {
 		return error()
 	}
@@ -97,6 +102,7 @@ func (v *Vehicle) Inactivate() error {
 ////// simulation //////
 // exceed boundary test is executed by the caller function
 func (v *Vehicle) moveHelper(direction int){
+	// update pos
 	switch direction{
 	case XForward:
 		v.Pos.X += 1
@@ -107,7 +113,10 @@ func (v *Vehicle) moveHelper(direction int){
 	case YBackward:
 		v.Pos.Y -= 1
 	}
+	// update the vehicle's status accordingly
+	v.lastMovementDirection = direction
 }
+
 
 func (v *Vehicle) Move() error {
 	// if the vehicle is not activated
@@ -123,38 +132,40 @@ func (v *Vehicle) Move() error {
 			// It is strange to move backward immediately
 			continue
 		case XForward:
-			if v.Pos.X+1 < v.m.SimConfig.XLen {
+			if v.Pos.X + 1 < int(v.m.SimConfig.XLen) {
 				v.moveHelper(direction)
 			} else {
 				// The vehicle drives out of the map
 				v.Inactivate()
 			}
+			break
 		case XBackward:
 			if v.Pos.X - 1 > 0 {
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
+			break
 		case YForward:
-			if v.Pos.Y + 1 < v.m.SimConfig.YLen{
+			if v.Pos.Y + 1 < int(v.m.SimConfig.YLen) {
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
+			break
 		case YBackward:
 			if v.Pos.Y - 1 > 0{
 				v.moveHelper(direction)
 			} else {
 				v.Inactivate()
 			}
+			break
 		}
 	}
 
 	// after the movement, the vehicle will either
 	// 1. remain active, means it moves
 	// 2. being inactive, means it moves out of the map
-
-	// update the status of the car
 
 	return nil
 }
