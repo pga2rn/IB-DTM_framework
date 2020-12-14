@@ -23,9 +23,11 @@ type Config struct {
 	PortionOfCompromisedRSUMin float32 // from 0 ~ 1
 
 	// time config
-	Genesis time.Time
-	SlotsPerEpoch uint64
-	SlotLen uint64 // in seconds
+	Genesis           time.Time
+	SlotsPerEpoch     uint64
+	SlotLen           uint64 // in seconds
+	OutOfSyncTolerant uint64 // in slots
+	FinalizedDelay	uint64 // in epoch
 
 	// vehicle config
 }
@@ -34,22 +36,25 @@ func GenYangNetConfig() *Config {
 	cfg := &Config{}
 
 	// config aligned to yang test eth2 net
-	cfg.slotLen = 6
-	cfg.slotsPerEpoch = 6
-	cfg.rsuNum = 100
+	cfg.SlotLen = 6
+	cfg.SlotsPerEpoch = 6
+	cfg.RSUNum = 100
 
 	// map config
-	cfg.xLen = 10
-	cfg.yLen = 10
+	cfg.XLen = 10
+	cfg.YLen = 10
+
+	// sim config
+	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
+	cfg.FinalizedDelay = 2 // aligned with eth2.0 setup
+	cfg.PortionOfCompromisedRSUMax = 0.25
+	cfg.PortionOfCompromisedRSUMin = 0.05
+	cfg.VehicleNumMin = 600
+	cfg.VehicleNumMax = 1000
 
 	return cfg
 }
 
-func ConfigVehicleNum(cfg *Config, min int, max int) {
-	cfg.vehicleNumMin = 600
-	cfg.vehicleNumMax = 1000
-}
-
-func ConfigGensis(cfg *Config, genesis uint64) {
-	cfg.genesis = genesis
+func (cfg *Config) ConfigSetGensis(genesis time.Time) {
+	cfg.Genesis = genesis
 }
