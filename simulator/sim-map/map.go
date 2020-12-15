@@ -19,7 +19,7 @@ type position struct {
 // M
 type cross struct {
 	// a list of vehicle that appears
-	Vehicles []*vehicle.Vehicle
+	Vehicles map[uint64]*vehicle.Vehicle
 }
 
 type Map struct {

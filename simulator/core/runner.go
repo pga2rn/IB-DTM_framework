@@ -19,6 +19,12 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 	cleanup := sim.Done
 	defer cleanup()
 
+	// init vehicles
+	if err := sim.WaitForVehiclesInit(); err != nil {
+		cleanup()
+		log.Fatal("Could not init vehicles: %v", err)
+	}
+
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(); err != nil {
@@ -26,14 +32,11 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 		log.Fatal("External RSU module is not ready: %v", err)
 	}
 
-	// init vehicles
-	if err := sim.WaitForVehiclesInit(); err != nil {
-		cleanup()
-		log.Fatal("Could not init vehicles: %v", err)
-	}
-
 	// wait for the blockchain
 	// WaitForBlockchainStart
+
+	// process the genesis epoch
+	sim.ProcessEpoch(ctx, 0)
 
 	// start the main loop
 	for {
@@ -73,11 +76,8 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 				}
 			}
 
-			// after the above function is completed, update the timestream
-			sim.TimeStream = Beacon{
-				Epoch: slot % sim.Config.SlotsPerEpoch,
-				Slot:  slot,
-			}
+			// after the above function is completed, update the slot index
+			sim.Slot = slot
 
 			// dispatch the trust value offsets to every RSU
 			// call RSU to execute: 1. internal logics, 2. external logics
