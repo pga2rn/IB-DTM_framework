@@ -1,6 +1,11 @@
 package core
 
-import "context"
+import (
+	"context"
+	"github.com/sirupsen/logrus"
+)
+
+var log = logrus.WithField("Prefix","core")
 
 // start the simulation!
 // routines are as follow:
@@ -10,7 +15,7 @@ import "context"
 //		r2: generate trust value for newly moved vehicles
 //		r3:	call RSU, provide trust value offsets to them and let them do the job
 //		r2: calculate trust value
-func run(ctx context.Context, sim *SimulationSession) {
+func (sim *SimulationSession) Run(ctx context.Context) {
 	cleanup := sim.Done
 	defer cleanup()
 
@@ -22,7 +27,7 @@ func run(ctx context.Context, sim *SimulationSession) {
 	}
 
 	// init vehicles
-	if err := sim.WaitForInitingVehicles(); err != nil {
+	if err := sim.WaitForVehiclesInit(); err != nil {
 		cleanup()
 		log.Fatal("Could not init vehicles: %v", err)
 	}
@@ -39,8 +44,8 @@ func run(ctx context.Context, sim *SimulationSession) {
 			log.Info("Context canceled, stop the simulation.")
 			cancel()
 			return
-
-		case slot := <-sim.Ticker.NextSlot():
+		// the ticker will tick a uint64 slot index very slot
+		case slot := <-sim.Ticker.C():
 
 			// the following process must be finished within the slot
 			deadline := sim.SlotDeadline(slot)

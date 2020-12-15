@@ -25,7 +25,7 @@ type Config struct {
 	// time config
 	Genesis           time.Time
 	SlotsPerEpoch     uint64
-	SlotLen           uint64 // in seconds
+	SecondsPerSlot           uint64 // in seconds
 	OutOfSyncTolerant uint64 // in slots
 	FinalizedDelay	uint64 // in epoch
 
@@ -40,7 +40,7 @@ func GenYangNetConfig() *Config {
 	cfg := &Config{}
 
 	// config aligned to yang test eth2 net
-	cfg.SlotLen = 6
+	cfg.SecondsPerSlot = 6
 	cfg.SlotsPerEpoch = 6
 	cfg.RSUNum = 100
 

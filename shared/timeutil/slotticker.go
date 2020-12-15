@@ -62,7 +62,7 @@ func GetSlotTickerWithOffset(genesisTime time.Time, offset time.Duration, second
 		c:    make(chan uint64),
 		done: make(chan struct{}),
 	}
-	ticker.start(genesisTime.Add(offset), secondsPerSlot, timeutils.Since, timeutils.Until, time.After)
+	ticker.start(genesisTime.Add(offset), secondsPerSlot, Since, Until, time.After)
 	return ticker
 }
 

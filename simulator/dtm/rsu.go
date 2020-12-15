@@ -2,16 +2,15 @@ package dtm
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmutils"
-	"github.com/pga2rn/ib-dtm_framework/simulator/core"
 )
 
 type RSU struct {
 	// unique id of an RSU, index in the sim-session object
 	Id uint64
-	Session *core.SimulationSession
 
 	// for sync
-	TimeSync core.Beacon
+	Epoch uint64
+	Slot uint64
 
 	// management zone
 	// id of vehicle
@@ -26,9 +25,8 @@ type RSU struct {
 }
 
 // init simulated RSU
-func InitRSU(sim *core.SimulationSession) *RSU {
+func InitRSU() *RSU {
 	rsu := &RSU{}
-	rsu.TimeSync.Genesis = sim.Config.Genesis
 	return rsu
 }
 

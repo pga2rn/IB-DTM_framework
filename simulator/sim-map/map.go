@@ -2,11 +2,10 @@ package simmap
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
-	"github.com/pga2rn/ib-dtm_framework/simulator/core"
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 )
 
-type Position struct {
+type position struct {
 	X int
 	Y int
 }
@@ -19,26 +18,24 @@ type Position struct {
 // v
 // M
 type cross struct {
-	// position of the cross
-	Pos Position
-
 	// a list of vehicle that appears
 	Vehicles []*vehicle.Vehicle
 }
 
 type Map struct {
-	////// map /////
-	Cross []*cross
-
-	SimStatus *core.SimulationSession
+	// a 2d array represents the map
+	Cross [][]*cross
 }
 
 // create a brand new map
-func CreateMap(cfg config.Config) *Map {
+func CreateMap(cfg *config.Config) *Map {
 	m := &Map{}
 
 	// prepare the map
-	m.Cross = make([]*cross, cfg.XLen * cfg.YLen)
+	m.Cross = make([][]*cross, cfg.YLen)
+	for i := range m.Cross {
+		m.Cross[i] = make([]*cross, cfg.XLen)
+	}
 
 	return m
 }
