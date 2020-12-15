@@ -1,5 +1,6 @@
-package dtm
+package dtmutils
 
+// definition of a single trust value offset record
 type TrustValueOffset struct {
 	VehicleId uint64
 

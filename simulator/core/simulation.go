@@ -1,15 +1,16 @@
 package core
 
 import (
-	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
-	"github.com/pga2rn/ib-dtm_framework/simulator/rsu"
 	"github.com/pga2rn/ib-dtm_framework/simulator/sim-map"
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"github.com/sirupsen/logrus"
 	"time"
 )
+
+var log = logrus.New()
 
 type Beacon struct {
 	// genesis
@@ -37,8 +38,8 @@ type SimulationSession struct {
 	// store the ID(index) of compromised RSU of this slot
 	CompromisedRSUList []*int
 	// a complete list that stores every vehicle's trust value
-	RealTrustValueList []float32 // without bias
-	EffectiveTrustValueList []float32 // with bias
+	AccurateTrustValueList []float32 // without bias
+	BiasedTrustValueList []float32 // with bias
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
@@ -68,44 +69,20 @@ func PrepareSimulationSession(
 }
 
 func (sim *SimulationSession) Done(){
-
+	return
 }
 
-// start the simulation!
-// routines are as follow:
-// case 1: main process exit, simulation stop
-// case 2: waiting for next slot
-//		r1: update the map, move the vehicles
-//		r2: generate trust value for newly moved vehicles
-//		r3:	call RSU, provide trust value offsets to them and let them do the job
-//		r2: calculate trust value
-func run(ctx context.Context, sim *SimulationSession){
-	cleanup := sim.Done
-	defer cleanup()
+// wait for connecting with external RSU modules
+func (sim *SimulationSession) WaitForRSUInit() error {
+	return nil
+}
 
-	// init RSU
-	// wait for every RSU to comes online
-	// sim.WaitForRSUInit()
-
-	// init vehicles
-	// sim.PrepareVehicles()
-
-
-	// start the main loop
-	for {
-		ctx, cancel := context.WithCancel(ctx)
-
-		//select {
-		//case <-ctx.Done():
-		//	cancel()
-		//	return // exit
-		//
-		//	case slot := <- sim.Ticker.NextSlot():
-		//
-		//
-		//
-		//}
+// initializing vehicles, place VehicleNumMin vehicles into the network
+func (sim *SimulationSession) WaitForInitingVehicles() error {
+	sim.ActiveVehiclesNum = sim.Config.VehicleNumMin
+	for i := 0 ; i < int(sim.ActiveVehiclesNum); i++ {
+		// init the vehicles here
 	}
 
-
+	return nil
 }

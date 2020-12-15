@@ -30,6 +30,10 @@ type Config struct {
 	// vehicle config
 }
 
+type RSUConfig struct {
+	
+}
+
 func GenYangNetConfig() *Config {
 	cfg := &Config{}
 
