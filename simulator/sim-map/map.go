@@ -27,6 +27,10 @@ type Map struct {
 	Cross [][]*cross
 }
 
+func (c *cross) initCross() {
+	c.Vehicles = make(map[uint64]*vehicle.Vehicle)
+}
+
 // create a brand new map
 func CreateMap(cfg *config.Config) *Map {
 	m := &Map{}
@@ -35,6 +39,12 @@ func CreateMap(cfg *config.Config) *Map {
 	m.Cross = make([][]*cross, cfg.YLen)
 	for i := range m.Cross {
 		m.Cross[i] = make([]*cross, cfg.XLen)
+		// init cross
+		for j := 0; j < int(cfg.XLen); j++ {
+			c := cross{}
+			c.initCross()
+			m.Cross[i][j] = &c
+		}
 	}
 
 	return m
