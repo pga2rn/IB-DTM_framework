@@ -2,10 +2,8 @@ package core
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 )
-
-var log = logrus.WithField("Prefix","core")
 
 // start the simulation!
 // routines are as follow:
@@ -22,14 +20,14 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(); err != nil {
 		cleanup()
-		log.Fatal("Could not init vehicles: %v", err)
+		logutil.LoggerList["core"].Fatal("Could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(); err != nil {
 		cleanup()
-		log.Fatal("External RSU module is not ready: %v", err)
+		logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
 	}
 
 	// wait for the blockchain
@@ -44,46 +42,46 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
-			log.Info("Context canceled, stop the simulation.")
+			logutil.LoggerList["core"].Debugf("Context canceled, stop the simulation.")
 			cancel()
 			return
 		// the ticker will tick a uint64 slot index very slot
-		case slot := <-sim.Ticker.C():
-
-			// the following process must be finished within the slot
-			deadline := sim.SlotDeadline(slot)
-			slotCtx, cancel := context.WithDeadline(ctx, deadline)
-			log.WithField("deadline", deadline).
-				Debug("The slot process must be finished within the current slot.")
-
-			// move the vehicles
-			if err := sim.MoveVehicles(slotCtx, slot); err != nil {
-				log.Fatal("Failed to move vehicles: %v", err)
-				cancel()
-			}
-
-			// generate the trust value offsets
-			if err := sim.GenerateTrustValueOffsets(slotCtx, slot); err != nil {
-				log.Fatal("Failed to generate trust value offsets: %v", err)
-				break
-			}
-
-			// if it is the checkpoint
-			if slot % sim.Config.SlotsPerEpoch == 0 {
-				if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
-					log.Fatal("Failed to process epoch: %v", err)
-					break
-				}
-			}
-
-			// after the above function is completed, update the slot index
-			sim.Slot = slot
-
-			// dispatch the trust value offsets to every RSU
-			// call RSU to execute: 1. internal logics, 2. external logics
-			if err := sim.ExecuteRSULogic(); err != nil {
-				log.Fatal("Failed to execute RSU logics: %v", err)
-			}
+		//case slot := <-sim.Ticker.C():
+		//
+		//	// the following process must be finished within the slot
+		//	deadline := sim.SlotDeadline(slot)
+		//	slotCtx, cancel := context.WithDeadline(ctx, deadline)
+		//	log.WithField("deadline", deadline).
+		//		Debug("The slot process must be finished within the current slot.")
+		//
+		//	// move the vehicles
+		//	if err := sim.MoveVehicles(slotCtx, slot); err != nil {
+		//		log.Fatal("Failed to move vehicles: %v", err)
+		//		cancel()
+		//	}
+		//
+		//	// generate the trust value offsets
+		//	if err := sim.GenerateTrustValueOffsets(slotCtx, slot); err != nil {
+		//		log.Fatal("Failed to generate trust value offsets: %v", err)
+		//		break
+		//	}
+		//
+		//	// if it is the checkpoint
+		//	if slot % sim.Config.SlotsPerEpoch == 0 {
+		//		if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
+		//			log.Fatal("Failed to process epoch: %v", err)
+		//			break
+		//		}
+		//	}
+		//
+		//	// after the above function is completed, update the slot index
+		//	sim.Slot = slot
+		//
+		//	// dispatch the trust value offsets to every RSU
+		//	// call RSU to execute: 1. internal logics, 2. external logics
+		//	if err := sim.ExecuteRSULogic(); err != nil {
+		//		log.Fatal("Failed to execute RSU logics: %v", err)
+		//	}
 		}
 	}
 
