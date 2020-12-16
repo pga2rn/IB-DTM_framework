@@ -11,3 +11,5 @@ type VehicleRecords struct {
 type MapRecords struct {
 	epoch uint32
 }
+
+// maintain a linked list of records per epoch

@@ -2,27 +2,30 @@ package core
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 )
 
 ////// simulation //////
-func (sim *SimulationSession) moveVehicles(ctx context.Context,c chan interface{}) {
-	// after the process is completed, call the caller to finish
-	defer func(){
-		c <- 1
-	}()
-
-	// check if num of vehicles is insufficient
-	for _, v := range sim.Vehicles {
-		if v.VehicleStatus != vehicle.Active {
-			if sim.ActiveVehiclesNum < sim.Config.VehicleNumMin {
-				v.VehicleStatus = vehicle.Active
-				v.ResetVehicle() // reset the pos and lastmovement
+func (sim *SimulationSession) moveVehicles(ctx context.Context) {
+	logutil.LoggerList["core"].Debugf("[moveVehicles] entering..")
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["core"].Debugf("[moveVehicles] context canceled")
+		return
+	default:
+		// check if num of vehicles is insufficient
+		for _, v := range sim.Vehicles {
+			if v.VehicleStatus != vehicle.Active {
+				if sim.ActiveVehiclesNum < sim.Config.VehicleNumMin {
+					v.VehicleStatus = vehicle.Active
+					v.ResetVehicle() // reset the pos and lastmovement
+				}
 			}
-		}
-		if v.VehicleStatus == vehicle.Active {
-			sim.moveVehicle(v)
+			if v.VehicleStatus == vehicle.Active {
+				sim.moveVehicle(v)
+			}
 		}
 	}
 

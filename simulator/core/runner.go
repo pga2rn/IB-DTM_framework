@@ -32,11 +32,16 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 
 	// wait for the blockchain
 	// WaitForBlockchainStart
+	// Ignored it! I will manually start blockchain and simulator
 
 	// process the genesis epoch
-	sim.ProcessEpoch(ctx, 0)
+	// must be processed until genesis
+	epochCtx, cancel := context.WithDeadline(ctx, sim.Config.Genesis)
+	defer cancel()
+	sim.ProcessEpoch(epochCtx, 0)
 
 	// start the main loop
+	logutil.LoggerList["core"].Debugf("[Run] Genesis kicks start!")
 	for {
 		ctx, cancel := context.WithCancel(ctx)
 
@@ -46,14 +51,18 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			cancel()
 			return
 		// the ticker will tick a uint64 slot index very slot
-		//case slot := <-sim.Ticker.C():
-		//
-		//	// the following process must be finished within the slot
-		//	deadline := sim.SlotDeadline(slot)
-		//	slotCtx, cancel := context.WithDeadline(ctx, deadline)
-		//	log.WithField("deadline", deadline).
-		//		Debug("The slot process must be finished within the current slot.")
-		//
+		case slot := <-sim.Ticker.C():
+			logutil.LoggerList["core"].Debugf("[SlotTicker] Slot %v", slot)
+
+			// the following process must be finished within the slot
+			deadline := sim.SlotDeadline(slot)
+			slotCtx, cancel := context.WithDeadline(ctx, deadline)
+			defer cancel()
+			if err := sim.ProcessSlot(slotCtx, slot); err != nil {
+				logutil.LoggerList["core"].Debugf("failed to process slot")
+				return
+			}
+
 		//	// move the vehicles
 		//	if err := sim.MoveVehicles(slotCtx, slot); err != nil {
 		//		log.Fatal("Failed to move vehicles: %v", err)

@@ -20,6 +20,7 @@ type RSU struct {
 	// id of vehicle
 	Vehicle map[uint64]*vehicle.Vehicle
 	// map of trust value offset per slot
+	// this is for external RSU modules
 	TrustValueOffsetPerSlot []map[uint64]dtmutils.TrustValueOffset
 	// to indicate the rsu to be compromised or not, aligned with TrustValueOffsetPerSlot
 	CompromisedFlag	bool

@@ -19,7 +19,10 @@ func InitLogger(){
 
 func RegisterLogger(prefix string) {
 	log.SetLevel(log.DebugLevel)
-	LoggerList[prefix] = log.WithField("prefix", prefix)
+	fields := log.Fields{
+		"package": prefix,
+	}
+	LoggerList[prefix] = log.WithFields(fields)
 }
 
 func GetLogger(prefix string) *log.Entry {

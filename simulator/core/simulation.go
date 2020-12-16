@@ -22,6 +22,7 @@ func (sim *SimulationSession) Done(){
 
 // wait for rsu data structure ready
 func (sim *SimulationSession) WaitForRSUInit() error {
+	logutil.LoggerList["core"].Debugf("[WaitForRSUInit] ..")
 	if ok := sim.InitRSU(); !ok {
 		return errors.New("failed to init RSU")
 	}
@@ -32,8 +33,8 @@ func (sim *SimulationSession) WaitForRSUInit() error {
 }
 
 func (sim *SimulationSession) InitRSU() bool {
-	num := int(sim.Config.RSUNum)
-	for i := 0; i < num; i++ {
+
+	for i := 0; i < int(sim.Config.RSUNum); i++ {
 		r := &dtm.RSU{}
 
 		r.Id = uint64(i)
@@ -63,9 +64,10 @@ func (sim *SimulationSession) InitExternalRSUModule() error {
 
 // initializing vehicles, place VehicleNumMin vehicles into the network
 func (sim *SimulationSession) WaitForVehiclesInit() error {
+	logutil.LoggerList["core"].Debugf("[WaitForVehiclesInit] ..")
 	sim.ActiveVehiclesNum = sim.Config.VehicleNumMin
 	if ok := sim.InitVehicles(); !ok {
-		err := errors.New("Failed to init vehicles.")
+		err := errors.New("failed to init vehicles")
 		return err
 	}
 	return nil
@@ -106,8 +108,14 @@ func (sim *SimulationSession) InitVehicles() bool {
 	}
 
 	// init all vehicles' trust value
-	sim.AccurateTrustValueList = make([]float32, sim.Config.VehicleNumMax, 1.0)
-	sim.BiasedTrustValueList = make([]float32, sim.Config.VehicleNumMax, 1.0)
+	sim.AccurateTrustValueList = make([]float32, sim.Config.VehicleNumMax)
+	for i := range sim.AccurateTrustValueList {
+		sim.AccurateTrustValueList[i] = 1.0
+	}
+	sim.BiasedTrustValueList = make([]float32, sim.Config.VehicleNumMax)
+	for i := range sim.BiasedTrustValueList {
+		sim.BiasedTrustValueList[i] = 1.0
+	}
 
 	return true
 }
@@ -122,26 +130,26 @@ func (sim *SimulationSession) InitVehicles() bool {
 // 3. update rsu
 // 3.1 update rsu trustvalueoffsetlist
 func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error{
+	logutil.LoggerList["core"].Debugf("[ProcessSlot] entering ..")
 	SlotCtx, cancel := context.WithCancel(ctx)
-	c := make(chan interface{})
-
-	// move the vehicles!
-	go sim.moveVehicles(SlotCtx, c)
-	// update rsu trust value offset list
-	go sim.executeRSU(SlotCtx, c)
 
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["core"].Debugf("[ProcessSlot] context canceled.")
 		cancel()
 		return errors.New("context canceled")
-	case <- c:
-		// the 2 go routines finished
+	default:
+		// move the vehicles!
+		sim.moveVehicles(SlotCtx)
+		//generate trust value offset for specific slot
+		//sim.genTrustValueOffset(SlotCtx, slot)
+		//
+		//
+		//// update rsu trust value offset list
+		//sim.executeRSU(SlotCtx, slot)
 		return nil
 	}
 }
-
-
 
 // process epoch
 // routine:

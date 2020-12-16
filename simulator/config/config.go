@@ -7,7 +7,7 @@ import (
 )
 
 // a global accessable random object
-var R = rand.New(rand.NewSource(time.Now().Unix()))
+var R = rand.New(rand.NewSource(123))
 
 // Config is used to define a simulation
 type Config struct {
