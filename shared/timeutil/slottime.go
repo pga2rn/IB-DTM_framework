@@ -36,3 +36,18 @@ func EpochsSinceGenesis(genesis time.Time) uint64 {
 func DivideSlotBy(timesPerSlot int64) time.Duration {
 	return time.Duration(int64(config.GenYangNetConfig().SecondsPerSlot*1000)/timesPerSlot) * time.Millisecond
 }
+
+// return the start time of the next epoch
+func NextEpochTime(genesis time.Time, slot uint64) time.Time {
+	cfg := config.GenYangNetConfig()
+	epoch := slot / cfg.SlotsPerEpoch
+	duration := time.Duration((epoch + 1) * cfg.SlotsPerEpoch * cfg.SecondsPerSlot)
+	return genesis.Add(duration)
+}
+
+// return the start time of the next slot
+func NextSlotTime(genesis time.Time, slot uint64) time.Time {
+	cfg := config.GenYangNetConfig()
+	duration := time.Duration((slot + 1) * cfg.SecondsPerSlot)
+	return genesis.Add(duration)
+}
