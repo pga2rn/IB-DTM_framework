@@ -48,6 +48,8 @@ func (v *Vehicle) ResetVehicle(){
 }
 
 // exceed boundary test is executed by the caller function
+// Move helper helps move the vehicle Pos,
+// unregister the vehicle from the
 func (v *Vehicle) MoveHelper(direction int){
 	// update pos
 	switch direction{

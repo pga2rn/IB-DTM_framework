@@ -2,12 +2,19 @@ package dtm
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmutils"
-	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 )
+
+type position struct {
+	X int
+	Y int
+}
 
 type RSU struct {
 	// unique id of an RSU, index in the sim-session object
 	Id uint64
+
+	// pos
+	Pos position
 
 	// for sync
 	Epoch uint64
@@ -17,11 +24,12 @@ type RSU struct {
 	ExternalRSUModuleInitFlag bool
 
 	// management zone
-	// id of vehicle
-	Vehicle map[uint64]*vehicle.Vehicle
+	// id of vehicle (check it on Map.cross)
+	// Vehicle map[uint64]*vehicle.Vehicle
+
 	// map of trust value offset per slot
 	// this is for external RSU modules
-	TrustValueOffsetPerSlot []map[uint64]dtmutils.TrustValueOffset
+	TrustValueOffsetPerSlot []map[uint64]*dtmutils.TrustValueOffset
 	// to indicate the rsu to be compromised or not, aligned with TrustValueOffsetPerSlot
 	CompromisedFlag	bool
 

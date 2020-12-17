@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/boljen/go-bitmap"
+	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
@@ -24,8 +25,11 @@ type SimulationSession struct {
 	Slot uint64
 
 	// current status
+	// vehicle
 	ActiveVehiclesNum uint64
 	ActiveVehiclesBitMap bitmap.Bitmap
+	MisbehaviorVehicleBitMap bitmap.Bitmap
+	// RSU
 	CompromisedRSUPortion float32
 	// store the ID(index) of compromised RSU of this slot
 	CompromisedRSUBitMap bitmap.Bitmap
@@ -35,9 +39,11 @@ type SimulationSession struct {
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
-	RSUs []*dtm.RSU
+	// a 2d array store the RSU data structure
+	// aligned with the map structure
+	RSUs [][]*dtm.RSU
 
-	// a random generater, for determined random
+	// a random generator, for determined random
 	R *rand.Rand
 }
 
@@ -53,8 +59,19 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
 	// init each data fields
 	sim.ActiveVehiclesNum = 0
 	sim.ActiveVehiclesBitMap = bitmap.New(int(sim.Config.VehicleNumMax))
+	sim.MisbehaviorVehicleBitMap = bitmap.New(int(sim.Config.VehicleNumMax))
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
-	sim.RSUs = make([]*dtm.RSU, cfg.XLen * cfg.YLen)
+
+	sim.RSUs = make([][]*dtm.RSU, cfg.YLen)
+	for x := range sim.RSUs {
+		sim.RSUs[x] = make([]*dtm.RSU, cfg.XLen)
+		// init every RSU data structure
+		for y := 0; y < int(cfg.XLen); y++ {
+			r := dtm.RSU{}
+			sim.RSUs[x][y] = &r
+		}
+	}
+
 	sim.CompromisedRSUBitMap = bitmap.New(100) // all 0 bits
 	sim.CompromisedRSUPortion = 0
 
@@ -62,7 +79,7 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
 	sim.Ticker = timeutil.GetSlotTicker(cfg.Genesis, cfg.SecondsPerSlot)
 
 	// random
-	sim.R = rand.New(rand.NewSource(123))
+	sim.R = randutil.InitRand(123)
 
 	return sim
 }

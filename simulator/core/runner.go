@@ -3,16 +3,14 @@ package core
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
 
 // start the simulation!
 // routines are as follow:
-// case 1: main process exit, simulation stop
-// case 2: waiting for next slot
-//		r1: update the map, move the vehicles
-//		r2: generate trust value for newly moved vehicles
-//		r3:	call RSU, provide trust value offsets to them and let them do the job
-//		r2: calculate trust value
+// if checkpoint: processepoch
+// processslot
+// gather reports
 func (sim *SimulationSession) Run(ctx context.Context) {
 	cleanup := sim.Done
 	defer cleanup()
@@ -34,11 +32,20 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 	// WaitForBlockchainStart
 	// Ignored it! I will manually start blockchain and simulator
 
-	// process the genesis epoch
+	// wait for statistics collecting modules
+
+	// process the genesis epoch & slot
 	// must be processed until genesis
 	epochCtx, cancel := context.WithDeadline(ctx, sim.Config.Genesis)
-	defer cancel()
-	sim.ProcessEpoch(epochCtx, 0)
+	if err := sim.ProcessEpoch(epochCtx, 0); err != nil {
+		cancel()
+		logutil.LoggerList["core"].Fatalf("failed to process epoch: %v", err)
+	}
+	if err := sim.ProcessSlot(epochCtx, 0); err != nil {
+		cancel()
+		logutil.LoggerList["core"].Fatalf("failed to process slot: %v", err)
+	}
+	cancel() // clean up context
 
 	// start the main loop
 	logutil.LoggerList["core"].Debugf("[Run] Genesis kicks start!")
@@ -54,44 +61,57 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 		case slot := <-sim.Ticker.C():
 			logutil.LoggerList["core"].Debugf("[SlotTicker] Slot %v", slot)
 
+			// check if the session's epoch and slot record is correct
+			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis){
+				// we are slower than the ticker, skipped some slots
+				logutil.LoggerList["core"].
+					Debugf("[Run] we are asynced with the ticker, %v, %v", slot, timeutil.SlotsSinceGenesis(sim.Config.Genesis))
+				// catch up with the ticker
+				logutil.LoggerList["core"].Debugf("[Run] catch up with the ticker")
+			}
+			// update the slot and epoch tracing in session before hand
+			sim.Slot = timeutil.SlotsSinceGenesis(sim.Config.Genesis)
+			sim.Epoch = timeutil.EpochsSinceGenesis(sim.Config.Genesis)
+
 			// the following process must be finished within the slot
-			deadline := sim.SlotDeadline(slot)
-			slotCtx, cancel := context.WithDeadline(ctx, deadline)
-			defer cancel()
+			slotCtx, cancel := context.WithDeadline(ctx, sim.SlotDeadline(slot))
 			if err := sim.ProcessSlot(slotCtx, slot); err != nil {
-				logutil.LoggerList["core"].Debugf("failed to process slot")
+				cancel()
+				logutil.LoggerList["core"].Fatalf("failed to process slot: %v", err)
 				return
 			}
 
-		//	// move the vehicles
-		//	if err := sim.MoveVehicles(slotCtx, slot); err != nil {
-		//		log.Fatal("Failed to move vehicles: %v", err)
-		//		cancel()
-		//	}
-		//
-		//	// generate the trust value offsets
-		//	if err := sim.GenerateTrustValueOffsets(slotCtx, slot); err != nil {
-		//		log.Fatal("Failed to generate trust value offsets: %v", err)
-		//		break
-		//	}
-		//
-		//	// if it is the checkpoint
-		//	if slot % sim.Config.SlotsPerEpoch == 0 {
-		//		if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
-		//			log.Fatal("Failed to process epoch: %v", err)
-		//			break
-		//		}
-		//	}
-		//
-		//	// after the above function is completed, update the slot index
-		//	sim.Slot = slot
-		//
-		//	// dispatch the trust value offsets to every RSU
-		//	// call RSU to execute: 1. internal logics, 2. external logics
-		//	if err := sim.ExecuteRSULogic(); err != nil {
-		//		log.Fatal("Failed to execute RSU logics: %v", err)
-		//	}
-		}
-	}
+			// if it is the checkpoint, or the start point of epoch
+			if slot % sim.Config.SlotsPerEpoch == 0 {
+				if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
+					cancel()
+					logutil.LoggerList["core"].Fatal("failed to process epoch: %v", err)
+					return
+				}
+				// spawn a new go routine for gathering reports for epoch
+				go func() {
+					// the report generation should be done before the next epoch
+					epochCtx, cancel :=
+						context.WithDeadline(ctx, timeutil.NextEpochTime(sim.Config.Genesis, slot))
+					if err := sim.PrepareReportPerEpoch(epochCtx, slot); err != nil {
+						cancel()
+						logutil.LoggerList["core"].Debugf("failed to gather reports for epoch: %v", err)
+					}
 
+				}()
+			}
+
+			// spawn a new go routine to collect per slot report
+			go func() {
+				slotCtx, cancel := context.WithDeadline(ctx, sim.SlotDeadline(slot))
+				if err := sim.PrepareReportPerSlot(slotCtx, slot); err != nil {
+					cancel()
+					logutil.LoggerList["core"].Debugf("failed to gather reports for slot: %v", err)
+				}
+			}()
+		}
+
+		cancel() // terminate ctx for this slot
+	}
 }
+

@@ -2,12 +2,8 @@
 package config
 
 import (
-	"math/rand"
 	"time"
 )
-
-// a global accessable random object
-var R = rand.New(rand.NewSource(123))
 
 // Config is used to define a simulation
 type Config struct {
@@ -18,7 +14,7 @@ type Config struct {
 	////// simulation config //////
 	VehicleNumMax uint64
 	VehicleNumMin uint64
-	RSUNum uint32
+	RSUNum int
 	PortionOfCompromisedRSUMax float32 // from 0 ~ 1
 	PortionOfCompromisedRSUMin float32 // from 0 ~ 1
 

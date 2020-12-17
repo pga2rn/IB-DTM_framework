@@ -3,15 +3,17 @@ package core
 import (
 	"context"
 	"errors"
+	"github.com/boljen/go-bitmap"
+	"github.com/pga2rn/ib-dtm_framework/shared/dtmutils"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
+	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 	"time"
 )
 
 func (sim *SimulationSession) SlotDeadline(slot uint64) time.Time {
-	duration := time.Duration((slot + 1) * sim.Config.SecondsPerSlot) * time.Second
-	return sim.Config.Genesis.Add(duration)
+	return timeutil.NextSlotTime(sim.Config.Genesis, slot)
 }
 
 func (sim *SimulationSession) Done(){
@@ -33,25 +35,33 @@ func (sim *SimulationSession) WaitForRSUInit() error {
 }
 
 func (sim *SimulationSession) InitRSU() bool {
+	for x := range sim.RSUs {
+		// init every RSU data structure
+		for y := range sim.RSUs[x] {
+			r := sim.RSUs[x][y]
 
-	for i := 0; i < int(sim.Config.RSUNum); i++ {
-		r := &dtm.RSU{}
+			r.Id = uint64(y) * uint64(sim.Config.XLen) + uint64(x)
+			r.Epoch = 0
+			r.Slot = 0
 
-		r.Id = uint64(i)
-		r.Epoch = 0
-		r.Slot = 0
+			// start as un-compromised RSU
+			r.CompromisedFlag = false
+			// uploading tracker
+			r.NextSlotForUpload = 0
 
-		// start as un-compromised RSU
-		r.CompromisedFlag = false
-		// uploading tracker
-		r.NextSlotForUpload = 0
+			// init the data structure of trust value offset storage
+			r.TrustValueOffsetPerSlot =
+				make([]map[uint64]*dtmutils.TrustValueOffset, sim.Config.SlotsPerEpoch)
+			for i := range r.TrustValueOffsetPerSlot{
+				// init map structure for every slot
+				r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmutils.TrustValueOffset)
+			}
 
-		// not yet connected with external RSU module
-		r.ExternalRSUModuleInitFlag = false
-
-		// register the RSU
-		sim.RSUs[i] = r
+			// not yet connected with external RSU module
+			r.ExternalRSUModuleInitFlag = false
+		}
 	}
+
 	return true
 }
 
@@ -123,12 +133,8 @@ func (sim *SimulationSession) InitVehicles() bool {
 ////// simulation routines //////
 // process slot
 // routine:
-// 1. move vehicles(including moving out of the map, set as inactive)
-// 1.1 check if nums of vehicles less than vehiclenummin, or activate new vehicles
-// 1.2 update rsu vehicles list
-// 2. generate trust value offsets for every active vehicles
-// 3. update rsu
-// 3.1 update rsu trustvalueoffsetlist
+// 1. move vehicles!
+// 2. generate trust value offset!
 func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error{
 	logutil.LoggerList["core"].Debugf("[ProcessSlot] entering ..")
 	SlotCtx, cancel := context.WithCancel(ctx)
@@ -141,21 +147,73 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 	default:
 		// move the vehicles!
 		sim.moveVehicles(SlotCtx)
-		//generate trust value offset for specific slot
-		//sim.genTrustValueOffset(SlotCtx, slot)
-		//
-		//
-		//// update rsu trust value offset list
-		//sim.executeRSU(SlotCtx, slot)
+		// generate trust value offset for specific slot
+		sim.genTrustValueOffset(SlotCtx, slot)
 		return nil
 	}
 }
 
 // process epoch
 // routine:
-// 1. process slot
+// 1. reassign the compromised RSU
+// 1. reassign the misbehavior vehicles
 // 2. calculated trust value and stored in the session
-// 3. statistics gathering
-func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64){
 
+// IMPORTANT: mutex should be applied to the reports storage
+func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) error {
+	// reassign the compromised RSU
+	sim.CompromisedRSUBitMap = bitmap.New(sim.Config.RSUNum)
+
+	count := 0
+	sim.CompromisedRSUPortion = randutil.RandFloatRange(
+			sim.R,
+			sim.Config.PortionOfCompromisedRSUMin,
+			sim.Config.PortionOfCompromisedRSUMax,
+		)
+	target := int(float32(sim.Config.RSUNum) * sim.CompromisedRSUPortion)
+
+	for count < target {
+		index := randutil.RandIntRange(sim.R, 0, sim.Config.RSUNum)
+		if ! sim.CompromisedRSUBitMap.Get(index) {
+			sim.CompromisedRSUBitMap.Set(index, true)
+			sim.RSUs[index %][]
+		}
+	}
+
+
+
+
+	//// compromised RSU count
+	//compromisedRSUCount := 0
+	//compromisedRSUTargetPortion := randutil.RandFloatRange(
+	//	sim.R,
+	//	sim.Config.PortionOfCompromisedRSUMin,
+	//	sim.Config.PortionOfCompromisedRSUMax,
+	//)
+	//compromisedRSUTargetNum := int(float32(sim.Config.RSUNum) * compromisedRSUTargetPortion)
+	//
+	//for compromisedRSUCount < compromisedRSUTargetNum {
+	//	x := randutil.RandIntRange(sim.R, 0, int(sim.Config.XLen))
+	//	y := randutil.RandIntRange(sim.R, 0, int(sim.Config.YLen))
+	//
+	//	// turn a good RSU into a bad one
+	//	r := sim.RSUs[x][y]
+	//	switch r.CompromisedFlag{
+	//	case true:
+	//		continue
+	//	case false:
+	//		compromisedRSUCount += 1
+	//		r.CompromisedFlag = true
+	//	}
+	//}
+	//
+	//
+	//
+	//
+	//cRSUCount,  := 0,
+	//for rsuCount {
+	//
+	//}
+
+	return nil
 }

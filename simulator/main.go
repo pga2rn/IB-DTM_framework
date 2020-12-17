@@ -21,6 +21,6 @@ func main() {
 	session := core.PrepareSimulationSession(cfg)
 	go session.Run(ctx)
 
-	time.Sleep(60 * time.Second)
+	time.Sleep(120 * time.Second)
 	cancel()
 }

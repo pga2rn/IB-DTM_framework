@@ -5,11 +5,6 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 )
 
-type position struct {
-	X int
-	Y int
-}
-
 // each cross represents a CROSS within the map,
 // which holds a RSU and 0 or more vehicles
 // map looks like this:
