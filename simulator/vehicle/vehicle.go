@@ -65,3 +65,15 @@ func (v *Vehicle) MoveHelper(direction int){
 	// update the vehicle's status accordingly
 	v.LastMovementDirection = direction
 }
+
+func (v *Vehicle) InitVehicle(
+	id uint64,
+	pos Position,
+	active int,
+	lastMovement int,
+	){
+	v.Pos = pos
+	v.Id = id
+	v.VehicleStatus = active
+	v.LastMovementDirection = lastMovement
+}

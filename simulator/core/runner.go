@@ -34,19 +34,6 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 
 	// wait for statistics collecting modules
 
-	// process the genesis epoch & slot
-	// must be processed until genesis
-	epochCtx, cancel := context.WithDeadline(ctx, sim.Config.Genesis)
-	if err := sim.ProcessEpoch(epochCtx, 0); err != nil {
-		cancel()
-		logutil.LoggerList["core"].Fatalf("failed to process epoch: %v", err)
-	}
-	if err := sim.ProcessSlot(epochCtx, 0); err != nil {
-		cancel()
-		logutil.LoggerList["core"].Fatalf("failed to process slot: %v", err)
-	}
-	cancel() // clean up context
-
 	// start the main loop
 	logutil.LoggerList["core"].Debugf("[Run] Genesis kicks start!")
 	for {
@@ -78,15 +65,13 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			if err := sim.ProcessSlot(slotCtx, slot); err != nil {
 				cancel()
 				logutil.LoggerList["core"].Fatalf("failed to process slot: %v", err)
-				return
 			}
 
 			// if it is the checkpoint, or the start point of epoch
 			if slot % sim.Config.SlotsPerEpoch == 0 {
 				if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
 					cancel()
-					logutil.LoggerList["core"].Fatal("failed to process epoch: %v", err)
-					return
+					logutil.LoggerList["core"].Fatalf("failed to process epoch: %v", err)
 				}
 				// spawn a new go routine for gathering reports for epoch
 				go func() {
@@ -94,10 +79,9 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 					epochCtx, cancel :=
 						context.WithDeadline(ctx, timeutil.NextEpochTime(sim.Config.Genesis, slot))
 					if err := sim.PrepareReportPerEpoch(epochCtx, slot); err != nil {
-						cancel()
 						logutil.LoggerList["core"].Debugf("failed to gather reports for epoch: %v", err)
 					}
-
+					cancel()
 				}()
 			}
 
@@ -105,13 +89,13 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			go func() {
 				slotCtx, cancel := context.WithDeadline(ctx, sim.SlotDeadline(slot))
 				if err := sim.PrepareReportPerSlot(slotCtx, slot); err != nil {
-					cancel()
 					logutil.LoggerList["core"].Debugf("failed to gather reports for slot: %v", err)
 				}
+				cancel()
 			}()
-		}
 
-		cancel() // terminate ctx for this slot
-	}
+			cancel() // terminate ctx for this slot
+		} // slot
+	} // main loop
 }
 

@@ -26,9 +26,10 @@ type SimulationSession struct {
 
 	// current status
 	// vehicle
-	ActiveVehiclesNum uint64
+	ActiveVehiclesNum int
 	ActiveVehiclesBitMap bitmap.Bitmap
 	MisbehaviorVehicleBitMap bitmap.Bitmap
+	MisbehaviorVehiclePortion float32
 	// RSU
 	CompromisedRSUPortion float32
 	// store the ID(index) of compromised RSU of this slot
@@ -82,4 +83,14 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
 	sim.R = randutil.InitRand(123)
 
 	return sim
+}
+
+// a little helper function to convert index to coord
+func (sim *SimulationSession) IndexToCoord(index int) (int, int) {
+	return index / int(sim.Config.YLen), index % int(sim.Config.YLen)
+}
+
+// coord to index
+func (sim *SimulationSession) CoordToIndex(x, y int) int {
+	return x * int(sim.Config.YLen) + y
 }

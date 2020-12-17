@@ -1,7 +1,7 @@
 package dtm
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmutils"
+	"github.com/pga2rn/ib-dtm_framework/shared/dtmutil"
 )
 
 type position struct {
@@ -29,9 +29,10 @@ type RSU struct {
 
 	// map of trust value offset per slot
 	// this is for external RSU modules
-	TrustValueOffsetPerSlot []map[uint64]*dtmutils.TrustValueOffset
+	TrustValueOffsetPerSlot []map[uint64]*dtmutil.TrustValueOffset
 	// to indicate the rsu to be compromised or not, aligned with TrustValueOffsetPerSlot
-	CompromisedFlag	bool
+	// DEPRECATED: move to session
+	//CompromisedFlag	bool
 
 	// for external rsu module
 	NextSlotForUpload uint64 // the slot that available for uploading trust value offset
