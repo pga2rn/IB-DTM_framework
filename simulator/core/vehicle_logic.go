@@ -9,37 +9,27 @@ import (
 
 ////// simulation //////
 // try to put the vehicle close to the center of the map
-func (sim *SimulationSession) genNewPosition() vehicle.Position{
+func (sim *SimulationSession) genNewPosition() vehicle.Position {
 	xl, yl := int(sim.Config.XLen), int(sim.Config.YLen)
 	return vehicle.Position{
-		X: randutil.RandIntRange(sim.R, xl / 8, xl * 7 / 8),
-		Y: randutil.RandIntRange(sim.R, yl / 8, xl * 7 / 8),
+		X: randutil.RandIntRange(sim.R, xl/8, xl*7/8),
+		Y: randutil.RandIntRange(sim.R, yl/8, xl*7/8),
 	}
 }
 
 // a helper function to sync the vehicle status between session and vehicle object
-func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, status int){
-	count := 0
-	for i := 0; i < sim.Config.VehicleNumMax; i++ {
-		if sim.ActiveVehiclesBitMap.Get(i){
-			count ++
-		}
-	}
-	logutil.LoggerList["core"].Debugf("[UpdateVehicleStatus] id %v, v.status %v, status %v, bitmap status %v, bitmap count %v, av %v",
-		v.Id,
-		v.VehicleStatus,
-		status,
-		sim.ActiveVehiclesBitMap.Get(int(v.Id)),
-		count,
-		sim.ActiveVehiclesNum,
-		)
-
+func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, status int) {
+	//logutil.LoggerList["core"].Debugf("vs %v, bitms %v, status %v",
+	//	v.VehicleStatus, sim.ActiveVehiclesBitMap.Get(int(v.Id)), status)
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
+		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
+		v.VehicleStatus = status
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
-		// counter alter
+		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
+		v.VehicleStatus = status
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
@@ -54,7 +44,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 	sim.ActiveVehiclesNum = sim.Config.VehicleNumMin
 
 	// init activated vehicles
-	for i := 0 ; i < int(sim.Config.VehicleNumMin); i++ {
+	for i := 0; i < int(sim.Config.VehicleNumMin); i++ {
 		v := &vehicle.Vehicle{}
 		v.InitVehicle(
 			uint64(i),
@@ -109,22 +99,23 @@ func (sim *SimulationSession) moveVehicles(ctx context.Context) {
 	default:
 		// activate extra vehicles
 		interval := sim.Config.VehicleNumMax - sim.ActiveVehiclesNum
-		newCount, newTarget := 0, randutil.RandIntRange(sim.R, interval / 3, interval * 2 / 3)
+		newCount, newTarget := 0, randutil.RandIntRange(sim.R, interval/3, interval*2/3)
 
 		// randomly pick vehicle, iterating the whole list
 		for _, i := range sim.R.Perm(int(sim.Config.VehicleNumMax)) {
 			v := sim.Vehicles[i]
-			switch sim.ActiveVehiclesBitMap.Get(i) {
+			//isActive := sim.ActiveVehiclesBitMap.Get(i)
+			switch isActive := sim.ActiveVehiclesBitMap.Get(i); isActive {
 			case true:
-					sim.moveVehicle(v)
+				sim.moveVehicle(v)
 			case false:
-					if newCount < newTarget {
-						sim.UpdateVehicleStatus(v, vehicle.Active)
-						newCount ++
+				if newCount < newTarget {
+					sim.UpdateVehicleStatus(v, vehicle.Active)
+					newCount++
 
-						v.Pos, v.LastMovementDirection = sim.genNewPosition(), vehicle.NotMove
-						sim.moveVehicle(v)
-					}
+					v.Pos, v.LastMovementDirection = sim.genNewPosition(), vehicle.NotMove
+					sim.moveVehicle(v)
+				}
 			}
 		}
 	}
@@ -207,7 +198,7 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 	// 2. being inactive, means it moves out of the map
 }
 
-func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context){
+func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 		return
@@ -223,9 +214,9 @@ func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context){
 
 		for count < target {
 			index := randutil.RandIntRange(sim.R, 0, sim.Config.VehicleNumMax)
-			if ! sim.MisbehaviorVehicleBitMap.Get(index) {
+			if !sim.MisbehaviorVehicleBitMap.Get(index) {
 				sim.MisbehaviorVehicleBitMap.Set(index, true)
-				count ++
+				count++
 			}
 		}
 	}

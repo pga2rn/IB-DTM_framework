@@ -14,7 +14,7 @@ func (sim *SimulationSession) InitRSU() bool {
 		for y := range sim.RSUs[x] {
 			r := sim.RSUs[x][y]
 
-			r.Id = uint64(y) * uint64(sim.Config.XLen) + uint64(x)
+			r.Id = uint64(y)*uint64(sim.Config.XLen) + uint64(x)
 			r.Epoch = 0
 			r.Slot = 0
 
@@ -24,7 +24,7 @@ func (sim *SimulationSession) InitRSU() bool {
 			// init the data structure of trust value offset storage
 			r.TrustValueOffsetPerSlot =
 				make([]map[uint64]*dtmutil.TrustValueOffset, sim.Config.SlotsPerEpoch)
-			for i := range r.TrustValueOffsetPerSlot{
+			for i := range r.TrustValueOffsetPerSlot {
 				// init map structure for every slot
 				r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmutil.TrustValueOffset)
 			}
@@ -37,13 +37,13 @@ func (sim *SimulationSession) InitRSU() bool {
 	return true
 }
 
-func (sim *SimulationSession) executeRSULogic(ctx context.Context, slot uint64){
+func (sim *SimulationSession) executeRSULogic(ctx context.Context, slot uint64) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return
 	default:
-		for x := range sim.RSUs{
-			for y:= range sim.RSUs[x]{
+		for x := range sim.RSUs {
+			for y := range sim.RSUs[x] {
 				// sync epoch and slot
 				r := sim.RSUs[x][y]
 				r.Slot, r.Epoch =
@@ -59,7 +59,7 @@ func (sim *SimulationSession) executeRSULogic(ctx context.Context, slot uint64){
 }
 
 // helper function for processEpoch to assign compromisedRSU
-func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context){
+func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 		return
@@ -74,9 +74,9 @@ func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context){
 
 		for count < target {
 			index := randutil.RandIntRange(sim.R, 0, sim.Config.RSUNum)
-			if ! sim.CompromisedRSUBitMap.Get(index) {
+			if !sim.CompromisedRSUBitMap.Get(index) {
 				sim.CompromisedRSUBitMap.Set(index, true)
-				count ++
+				count++
 			}
 		}
 	}

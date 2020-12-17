@@ -11,8 +11,8 @@ var PackageNameList = []string{
 	"rsu",
 }
 
-func InitLogger(){
-	for _, v := range PackageNameList{
+func InitLogger() {
+	for _, v := range PackageNameList {
 		RegisterLogger(v)
 	}
 }

@@ -28,21 +28,22 @@ type Vehicle struct {
 
 // vehiclestatus
 const (
-	InActive  = iota  // temporary leave the map, but the data structure remains
-	Active      // in the map right now
+	InActive = iota // temporary leave the map, but the data structure remains
+	Active          // in the map right now
 )
 
 // move direction
 const (
-	NotMove = 0
-	XForward = 1
+	NotMove   = 0
+	XForward  = 1
 	XBackward = -XForward
-	YForward = 2
+	YForward  = 2
 	YBackward = -YForward
 )
+
 var DirectionArray = []int{XForward, XBackward, YForward, YBackward, NotMove}
 
-func (v *Vehicle) ResetVehicle(){
+func (v *Vehicle) ResetVehicle() {
 	v.Pos = Position{}
 	v.LastMovementDirection = NotMove
 }
@@ -50,9 +51,9 @@ func (v *Vehicle) ResetVehicle(){
 // exceed boundary test is executed by the caller function
 // Move helper helps move the vehicle Pos,
 // unregister the vehicle from the
-func (v *Vehicle) MoveHelper(direction int){
+func (v *Vehicle) MoveHelper(direction int) {
 	// update pos
-	switch direction{
+	switch direction {
 	case XForward:
 		v.Pos.X += 1
 	case XBackward:
@@ -71,7 +72,7 @@ func (v *Vehicle) InitVehicle(
 	pos Position,
 	active int,
 	lastMovement int,
-	){
+) {
 	v.Pos = pos
 	v.Id = id
 	v.VehicleStatus = active

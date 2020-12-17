@@ -20,23 +20,23 @@ type SimulationSession struct {
 	Map *simmap.Map
 
 	// time
-	Ticker     timeutil.Ticker
-	Epoch	uint64
-	Slot uint64
+	Ticker timeutil.Ticker
+	Epoch  uint64
+	Slot   uint64
 
 	// current status
 	// vehicle
-	ActiveVehiclesNum int
-	ActiveVehiclesBitMap bitmap.Bitmap
-	MisbehaviorVehicleBitMap bitmap.Bitmap
+	ActiveVehiclesNum         int
+	ActiveVehiclesBitMap      *bitmap.Threadsafe
+	MisbehaviorVehicleBitMap  *bitmap.Threadsafe
 	MisbehaviorVehiclePortion float32
 	// RSU
 	CompromisedRSUPortion float32
 	// store the ID(index) of compromised RSU of this slot
-	CompromisedRSUBitMap bitmap.Bitmap
+	CompromisedRSUBitMap *bitmap.Threadsafe
 	// a complete list that stores every vehicle's trust value
 	AccurateTrustValueList []float32 // without bias
-	BiasedTrustValueList []float32 // with bias
+	BiasedTrustValueList   []float32 // with bias
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
@@ -49,7 +49,7 @@ type SimulationSession struct {
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
+func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 
@@ -59,8 +59,8 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
 
 	// init each data fields
 	sim.ActiveVehiclesNum = 0
-	sim.ActiveVehiclesBitMap = bitmap.New(int(sim.Config.VehicleNumMax))
-	sim.MisbehaviorVehicleBitMap = bitmap.New(int(sim.Config.VehicleNumMax))
+	sim.ActiveVehiclesBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
+	sim.MisbehaviorVehicleBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
 
 	sim.RSUs = make([][]*dtm.RSU, cfg.YLen)
@@ -73,7 +73,7 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession{
 		}
 	}
 
-	sim.CompromisedRSUBitMap = bitmap.New(100) // all 0 bits
+	sim.CompromisedRSUBitMap = bitmap.NewTS(100) // all 0 bits
 	sim.CompromisedRSUPortion = 0
 
 	// ticker
@@ -92,5 +92,5 @@ func (sim *SimulationSession) IndexToCoord(index int) (int, int) {
 
 // coord to index
 func (sim *SimulationSession) CoordToIndex(x, y int) int {
-	return x * int(sim.Config.YLen) + y
+	return x*int(sim.Config.YLen) + y
 }

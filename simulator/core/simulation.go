@@ -13,7 +13,7 @@ func (sim *SimulationSession) SlotDeadline(slot uint64) time.Time {
 	return timeutil.NextSlotTime(sim.Config.Genesis, slot)
 }
 
-func (sim *SimulationSession) Done(){
+func (sim *SimulationSession) Done() {
 	// terminate the ticker
 	sim.Ticker.Done()
 	return
@@ -53,7 +53,7 @@ func (sim *SimulationSession) WaitForVehiclesInit() error {
 // routine:
 // 1. move vehicles!
 // 2. generate trust value offset!
-func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error{
+func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error {
 	logutil.LoggerList["core"].Debugf("[ProcessSlot] entering ..")
 	SlotCtx, cancel := context.WithCancel(ctx)
 
@@ -71,8 +71,8 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 		// debug:
 		count := 0
 		for i := 0; i < sim.Config.VehicleNumMax; i++ {
-			if sim.ActiveVehiclesBitMap.Get(i){
-				count ++
+			if sim.ActiveVehiclesBitMap.Get(i) {
+				count++
 			}
 		}
 
@@ -102,11 +102,11 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		return errors.New("context canceled")
 	default:
 		// reassign the compromised RSU
-		sim.CompromisedRSUBitMap = bitmap.New(sim.Config.RSUNum)
+		sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
 		sim.initAssignCompromisedRSU(ctx)
 
 		// reassign the misbehavior vehicle
-		sim.MisbehaviorVehicleBitMap = bitmap.New(sim.Config.VehicleNumMax)
+		sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
 		sim.InitAssignMisbehaveVehicle(ctx)
 
 		// calculate trust value

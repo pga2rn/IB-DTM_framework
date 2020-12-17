@@ -18,7 +18,7 @@ type RSU struct {
 
 	// for sync
 	Epoch uint64
-	Slot uint64
+	Slot  uint64
 
 	// if connected with external RSU module
 	ExternalRSUModuleInitFlag bool

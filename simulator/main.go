@@ -16,7 +16,7 @@ func main() {
 
 	logutil.LoggerList["main"].Debugf("entering main")
 	cfg := config.GenYangNetConfig()
-	cfg.SetGenesis(time.Now().Add(3*time.Second))
+	cfg.SetGenesis(time.Now().Add(3 * time.Second))
 
 	session := core.PrepareSimulationSession(cfg)
 	go session.Run(ctx)

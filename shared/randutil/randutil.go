@@ -13,7 +13,7 @@ func InitRand(seed int64) *rand.Rand {
 func RandIntRange(r *rand.Rand, start, stop int) int {
 	// convert stop-start to float32, multiplied by a portion factor,
 	// and then rounded it down to int
-	increment := int(r.Float32() * float32(r.Intn(stop - start)))
+	increment := int(r.Float32() * float32(r.Intn(stop-start)))
 	return start + increment
 }
 

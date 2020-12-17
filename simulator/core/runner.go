@@ -49,7 +49,7 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			logutil.LoggerList["core"].Debugf("[SlotTicker] Slot %v", slot)
 
 			// check if the session's epoch and slot record is correct
-			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis){
+			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {
 				// we are slower than the ticker, skipped some slots
 				logutil.LoggerList["core"].
 					Debugf("[Run] we are asynced with the ticker, %v, %v", slot, timeutil.SlotsSinceGenesis(sim.Config.Genesis))
@@ -68,7 +68,7 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			}
 
 			// if it is the checkpoint, or the start point of epoch
-			if slot % sim.Config.SlotsPerEpoch == 0 {
+			if slot%sim.Config.SlotsPerEpoch == 0 {
 				if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
 					cancel()
 					logutil.LoggerList["core"].Fatalf("failed to process epoch: %v", err)
@@ -98,4 +98,3 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 		} // slot
 	} // main loop
 }
-

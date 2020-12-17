@@ -7,10 +7,10 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
 )
 
-func (sim *SimulationSession) executeDTMLogic(ctx context.Context , slot uint64){
+func (sim *SimulationSession) executeDTMLogic(ctx context.Context, slot uint64) {
 	logutil.LoggerList["core"].Debugf("[executeDTMLogic] entering ..")
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		logutil.LoggerList["core"].Debugf("[executeDTMLogic] context canceled")
 		return
 	default:
@@ -26,25 +26,25 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 	logutil.LoggerList["core"].Debugf("[genTrustValueOffset] entering..")
 
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		logutil.LoggerList["core"].Debugf("[genTrustValueOffset] context canceled")
 		return
 	default:
 		// iterate every vehicles, and then generate trust value offsets for it
 		for id, v := range sim.Vehicles {
-			if v.Id != uint64(id){
+			if v.Id != uint64(id) {
 				logutil.LoggerList["core"].
-					Fatalf("[genTrustValueOffset] index and vehicle id mismatches, %v, %v",id, v.Id)
+					Fatalf("[genTrustValueOffset] index and vehicle id mismatches, %v, %v", id, v.Id)
 			}
 
-			if v.VehicleStatus != vehicle.Active{
+			if v.VehicleStatus != vehicle.Active {
 				continue
 			}
 
 			slotIndex := int(slot % sim.Config.SlotsPerEpoch)
 			tvo := dtmutil.TrustValueOffset{
 				VehicleId: v.Id,
-				Slot: slot,
+				Slot:      slot,
 			}
 
 			if sim.MisbehaviorVehicleBitMap.Get(int(v.Id)) {
@@ -67,9 +67,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 			// adjust trust value weight
 			possibility := sim.R.Float32()
 			switch {
-			case possibility < 1 - dtmutil.Fatal:
+			case possibility < 1-dtmutil.Fatal:
 				tvo.Weight = dtmutil.Fatal
-			case possibility < 1 - dtmutil.Crital && possibility > 1 - dtmutil.Fatal:
+			case possibility < 1-dtmutil.Crital && possibility > 1-dtmutil.Fatal:
 				tvo.Weight = dtmutil.Crital
 			default:
 				tvo.Weight = dtmutil.Rountine
@@ -85,7 +85,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 func (sim *SimulationSession) calculateTrustValue(ctx context.Context) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return
 	default:
 		// init a data structure to store the trust value
