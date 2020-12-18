@@ -8,35 +8,30 @@ import (
 )
 
 ////// simulation //////
-// try to put the vehicle close to the center of the map
-func (sim *SimulationSession) genNewPosition() vehicle.Position {
-	xl, yl := int(sim.Config.XLen), int(sim.Config.YLen)
-	return vehicle.Position{
-		X: randutil.RandIntRange(sim.R, xl/8, xl*7/8),
-		Y: randutil.RandIntRange(sim.R, yl/8, xl*7/8),
-	}
-}
-
 // a helper function to sync the vehicle status between session and vehicle object
-func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, status int) {
+func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicle.Position, status int) {
 	//logutil.LoggerList["core"].Debugf("vs %v, bitms %v, status %v",
 	//	v.VehicleStatus, sim.ActiveVehiclesBitMap.Get(int(v.Id)), status)
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
 		v.VehicleStatus = status
+		// update the session
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
+		// add the vehicle into the map
+		sim.Map.Cross[pos.X][pos.Y].Vehicles[v.Id] = v
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
+		// update the session
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		delete(sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles, v.Id)
+		delete(sim.Map.Cross[pos.X][pos.Y].Vehicles, v.Id)
+		// reset the vehicle after remove it from the map
+		v.ResetVehicle()
 	}
-	// reset the vehicle pos and lastmovement
-	v.ResetVehicle()
 }
 
 func (sim *SimulationSession) InitVehicles() bool {
@@ -45,12 +40,11 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 	// init activated vehicles
 	for i := 0; i < int(sim.Config.VehicleNumMin); i++ {
-		v := &vehicle.Vehicle{}
-		v.InitVehicle(
+		v := vehicle.InitVehicle(
 			uint64(i),
-			sim.genNewPosition(),
+			sim.Config.XLen, sim.Config.YLen,
 			vehicle.Active,
-			vehicle.NotMove,
+			sim.R,
 		)
 
 		// register the vehicle to the session
@@ -64,12 +58,11 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 	// init inactivate vehicles
 	for i := sim.Config.VehicleNumMin; i < sim.Config.VehicleNumMax; i++ {
-		v := &vehicle.Vehicle{}
-		v.InitVehicle(
+		v := vehicle.InitVehicle(
 			uint64(i),
-			vehicle.Position{},
+			sim.Config.XLen, sim.Config.YLen,
 			vehicle.InActive,
-			vehicle.NotMove,
+			sim.R,
 		)
 
 		// register the vehicle to the session
@@ -110,10 +103,13 @@ func (sim *SimulationSession) moveVehicles(ctx context.Context) {
 				sim.moveVehicle(v)
 			case false:
 				if newCount < newTarget {
-					sim.UpdateVehicleStatus(v, vehicle.Active)
 					newCount++
-
-					v.Pos, v.LastMovementDirection = sim.genNewPosition(), vehicle.NotMove
+					// when we activate a new vehicle
+					// first we update the vehicle object
+					v.InitPosition(sim.R, sim.Config.XLen, sim.Config.YLen)
+					// then we update it onto the map
+					sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
+					// finally we move it!
 					sim.moveVehicle(v)
 				}
 			}
@@ -122,12 +118,12 @@ func (sim *SimulationSession) moveVehicles(ctx context.Context) {
 }
 
 // mark a specific vehicle as inactive, and unregister it from the map
-func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle) {
+func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehicle.Position) {
 	// filter out invalid vehicle
 	if v == nil || v.Id > uint64(sim.Config.VehicleNumMax) {
 		return
 	}
-	sim.UpdateVehicleStatus(v, vehicle.InActive)
+	sim.UpdateVehicleStatus(v, oldPos, vehicle.InActive)
 }
 
 // move vehicle from one cross to another
@@ -142,60 +138,28 @@ func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle) {
 // routine:
 // 1. move the vehicle!
 // 2. update vehicle's position record within the map
-// TODO: optimize the following code?
 func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 	// if the vehicle is not activated
 	if v.VehicleStatus != vehicle.Active {
 		return
 	}
 
-	// TODO: make the movement more scientifically in the future
-	for {
-		direction := vehicle.DirectionArray[sim.R.Intn(len(vehicle.DirectionArray))]
-		switch direction {
-		case -v.LastMovementDirection, vehicle.NotMove:
-			// It is strange to move backward immediately
-			// or stay still all the time
-			continue
-		case vehicle.XForward:
-			if v.Pos.X+1 < int(sim.Config.XLen) {
-				v.MoveHelper(direction)
-				sim.updateVehiclePos(v)
-			} else {
-				// The vehicle drives out of the map
-				sim.inactivateVehicle(v)
-			}
-			return
-		case vehicle.XBackward:
-			if v.Pos.X-1 > 0 {
-				v.MoveHelper(direction)
-				sim.updateVehiclePos(v)
-			} else {
-				sim.inactivateVehicle(v)
-			}
-			return
-		case vehicle.YForward:
-			if v.Pos.Y+1 < int(sim.Config.YLen) {
-				v.MoveHelper(direction)
-				sim.updateVehiclePos(v)
-			} else {
-				sim.inactivateVehicle(v)
-			}
-			return
-		case vehicle.YBackward:
-			if v.Pos.Y-1 > 0 {
-				v.MoveHelper(direction)
-				sim.updateVehiclePos(v)
-			} else {
-				sim.inactivateVehicle(v)
-			}
-			return
-		}
+	// update the vehicle object
+	newDirection := v.MovementDecisionMaker(sim.R, sim.Config.XLen, sim.Config.YLen)
+	oldPos := v.Pos
+	v.MoveHelper(newDirection)
+
+	// after the vehicle object is updated,
+	// check whether the vehicle is still in the map
+	switch {
+	case v.Pos.X >= 0 && v.Pos.Y >= 0 && v.Pos.X < sim.Config.XLen && v.Pos.Y < sim.Config.YLen:
+		// finally update the vehicle's status on map
+		sim.updateVehiclePos(v)
+	default:
+		// the vehicle moves out of the map
+		sim.inactivateVehicle(v, oldPos)
 	}
 
-	// after the movement, the vehicle will either
-	// 1. remain active, means it moves
-	// 2. being inactive, means it moves out of the map
 }
 
 func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {

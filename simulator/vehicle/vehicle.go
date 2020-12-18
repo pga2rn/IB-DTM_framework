@@ -35,11 +35,28 @@ const (
 	Active          // in the map right now
 )
 
-// DEPRECATED! every vehicles' position and movement of previous period should be saved.
-//func (v *Vehicle) ResetVehicle() {
-//	v.Pos = Position{}
-//	v.LastMovementDirection = NotMove
-//}
+// init vehicle, generate the position and lastmovement
+// IMPORTANT! the vehicle is not being placed into the map yet!
+// IMPORTANT! the syncing with active vehicle bitmap relies on the caller!
+func InitVehicle(
+	id uint64, // id of the vehicle
+	xlen, ylen int, // the size of the map
+	active	int,
+	r *rand.Rand, // random generator provided by the caller
+) *Vehicle {
+
+	v := &Vehicle{}
+	v.Id, v.VehicleStatus = id, active
+
+	// generate the position based on map size
+	v.InitPosition(r, xlen, ylen)
+	return v
+}
+
+func (v *Vehicle) ResetVehicle() {
+	v.Pos = Position{}
+	v.LastMovementDirection = NotMove
+}
 
 // exceed boundary test is executed by the caller function
 // Move helper helps move the vehicle Pos,
@@ -55,31 +72,25 @@ func (v *Vehicle) MoveHelper(direction int) {
 		v.Pos.Y += 1
 	case YBackward:
 		v.Pos.Y -= 1
+	case XFYF:
+		v.Pos.X += 1
+		v.Pos.Y += 1
+	case XFYB:
+		v.Pos.X += 1
+		v.Pos.Y -= 1
+	case XBYF:
+		v.Pos.X -= 1
+		v.Pos.Y += 1
+	case XBYB:
+		v.Pos.X -= 1
+		v.Pos.Y -= 1
 	}
 	// update the vehicle's status accordingly
 	v.LastMovementDirection = direction
 }
 
-// init vehicle, generate the position and lastmovement
-// IMPORTANT! the vehicle is not being placed into the map yet!
-// IMPORTANT! the syncing with active vehicle bitmap relies on the caller!
-func InitVehicle(
-	id uint64, // id of the vehicle
-	xlen, ylen int, // the size of the map
-	active	int,
-	r *rand.Rand, // random generator provided by the caller
-	) *Vehicle {
-
-	v := &Vehicle{}
-	v.Id, v.VehicleStatus = id, active
-
-	// generate the position based on map size
-	v.initPosition(r, xlen, ylen)
-	return v
-}
-
 // this helper function generate position for vehicle and update the vehicle object
-func (v *Vehicle) initPosition(r *rand.Rand, xlen, ylen int){
+func (v *Vehicle) InitPosition(r *rand.Rand, xlen, ylen int){
 	x, y := randutil.RandIntRange(r, 0, xlen), randutil.RandIntRange(r, 0, ylen)
 	v.Pos = Position{x, y}
 
@@ -119,6 +130,10 @@ func (v *Vehicle) initPosition(r *rand.Rand, xlen, ylen int){
 func (v *Vehicle) MovementDecisionMaker(r *rand.Rand, xlen, ylen int) int {
 	var direction int
 	ld := v.LastMovementDirection
+
+	if ld == NotMove{
+		return NotMoveGroup[randutil.RandIntRange(r, 0, len(NotMoveGroup))]
+	}
 
 	// WARNING! the length of array in direction map is hard coded to 2!
 	r1, r2 := r.Float32(), randutil.RandIntRange(r, 0, 2)

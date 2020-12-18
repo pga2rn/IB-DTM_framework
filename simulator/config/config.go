@@ -8,8 +8,8 @@ import (
 // Config is used to define a simulation
 type Config struct {
 	////// map config ///////
-	XLen uint32
-	YLen uint32
+	XLen int
+	YLen int
 
 	////// simulation config //////
 	VehicleNumMax              int
