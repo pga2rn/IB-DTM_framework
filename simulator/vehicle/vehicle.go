@@ -1,6 +1,9 @@
 package vehicle
 
-// TODO: error handle and context
+import (
+	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
+	"math/rand"
+)
 
 type Position struct {
 	X int
@@ -32,10 +35,11 @@ const (
 	Active          // in the map right now
 )
 
-func (v *Vehicle) ResetVehicle() {
-	v.Pos = Position{}
-	v.LastMovementDirection = NotMove
-}
+// DEPRECATED! every vehicles' position and movement of previous period should be saved.
+//func (v *Vehicle) ResetVehicle() {
+//	v.Pos = Position{}
+//	v.LastMovementDirection = NotMove
+//}
 
 // exceed boundary test is executed by the caller function
 // Move helper helps move the vehicle Pos,
@@ -56,14 +60,79 @@ func (v *Vehicle) MoveHelper(direction int) {
 	v.LastMovementDirection = direction
 }
 
-func (v *Vehicle) InitVehicle(
-	id uint64,
-	pos Position,
-	active int,
-	lastMovement int,
-) {
-	v.Pos = pos
-	v.Id = id
-	v.VehicleStatus = active
-	v.LastMovementDirection = lastMovement
+// init vehicle, generate the position and lastmovement
+// IMPORTANT! the vehicle is not being placed into the map yet!
+// IMPORTANT! the syncing with active vehicle bitmap relies on the caller!
+func InitVehicle(
+	id uint64, // id of the vehicle
+	xlen, ylen int, // the size of the map
+	active	int,
+	r *rand.Rand, // random generator provided by the caller
+	) *Vehicle {
+
+	v := &Vehicle{}
+	v.Id, v.VehicleStatus = id, active
+
+	// generate the position based on map size
+	v.initPosition(r, xlen, ylen)
+	return v
+}
+
+// this helper function generate position for vehicle and update the vehicle object
+func (v *Vehicle) initPosition(r *rand.Rand, xlen, ylen int){
+	x, y := randutil.RandIntRange(r, 0, xlen), randutil.RandIntRange(r, 0, ylen)
+	v.Pos = Position{x, y}
+
+	denominator, lower, upper := 4, 1, 3
+	xLeftBound, xRightBound, yLeftBound, yRightBound :=
+		xlen * lower / denominator, xlen * upper / denominator,
+		ylen * lower / denominator, ylen * upper / denominator
+
+	// generate the lastmovement based on the position
+	// the map is roughly divided into 5 pieces
+	// the idea is to try to let vehicle moving toward the center of the map
+	switch {
+	case x < xLeftBound && y < yLeftBound:
+		v.LastMovementDirection = XFYF
+	case x > xRightBound && y > yRightBound:
+		v.LastMovementDirection = XBYB
+	case x > xRightBound && y < yRightBound:
+		v.LastMovementDirection = XBYF
+	case x < xLeftBound && y > yRightBound:
+		v.LastMovementDirection = XFYB
+	case (x > xLeftBound && x < xRightBound) && y < yLeftBound:
+		v.LastMovementDirection = YForward
+	case (x > xLeftBound && x < xRightBound) && y > yRightBound:
+		v.LastMovementDirection = YBackward
+	case (y > yLeftBound && y < yRightBound) && x < xLeftBound:
+		v.LastMovementDirection = XForward
+	case (y > yLeftBound && y < yRightBound) && x > xRightBound:
+		v.LastMovementDirection = XBackward
+	default:
+		// if the vehicle is placed in the center of map
+		v.LastMovementDirection = NotMoveGroup[randutil.RandIntRange(r, 0, len(NotMoveGroup))]
+	}
+}
+
+// return the decision of direction,
+// the boundary check logic and offmap logic should be achieved by the caller
+func (v *Vehicle) MovementDecisionMaker(r *rand.Rand, xlen, ylen int) int {
+	var direction int
+	ld := v.LastMovementDirection
+
+	// WARNING! the length of array in direction map is hard coded to 2!
+	r1, r2 := r.Float32(), randutil.RandIntRange(r, 0, 2)
+	dmap := *DirectionMap[ld]
+	switch {
+	case r1 > KeepStraightDirection:
+		direction = ld
+	case r1 <= KeepStraightDirection && r1 > SectorDirection:
+		direction = dmap[SectorDirection][r2]
+	case r1 <= SectorDirection && r1 > LeftOrRightDirection:
+		direction = dmap[LeftOrRightDirection][r2]
+	default:
+		direction = dmap[SectorDirection][r2]
+	}
+
+	return direction
 }
