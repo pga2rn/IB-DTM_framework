@@ -32,17 +32,6 @@ const (
 	Active          // in the map right now
 )
 
-// move direction
-const (
-	NotMove   = 0
-	XForward  = 1
-	XBackward = -XForward
-	YForward  = 2
-	YBackward = -YForward
-)
-
-var DirectionArray = []int{XForward, XBackward, YForward, YBackward, NotMove}
-
 func (v *Vehicle) ResetVehicle() {
 	v.Pos = Position{}
 	v.LastMovementDirection = NotMove
