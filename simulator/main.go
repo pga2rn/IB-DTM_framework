@@ -10,6 +10,8 @@ import (
 
 var ctx, cancel = context.WithCancel(context.Background())
 
+// TODO: separate init logic to service.go
+
 func main() {
 	// init all logger at startup
 	logutil.InitLogger()

@@ -1,6 +1,10 @@
 package dtmutil
 
-import "sync"
+import (
+	"sync"
+)
+
+// TODO: implement mutex for trustvaluestorage
 
 // trust value starts range from -1 ~ 1
 // starts from 0
@@ -24,16 +28,22 @@ const (
 	Fatal    = 0.9
 )
 
-type TrustValueStorageHead struct {
-	p  *TrustValueStorage
-	mu sync.Mutex
-}
-
 // data structure to hold every vehicle's trust value of specific epoch
 type TrustValueStorage struct {
 	Epoch uint64
+	Mu *sync.Mutex // thread safe
 	// [vehicleId<uint64>]TrustValue<float32>
 	TrustValueList *map[uint64]float32
 	pNext          *TrustValueStorage
 	pPrevious      *TrustValueStorage
+}
+
+// TODO: implement the link list for trustvaluestorage
+func InitTrustValueStorageObject(epoch uint64) *TrustValueStorage{
+	storage := TrustValueStorage{}
+	storage.Epoch = epoch
+	storage.mu = &sync.Mutex{}
+	storage.TrustValueList = func() *map[uint64]float32{ s := make(map[uint64]float32); return &s}()
+
+	return &storage
 }

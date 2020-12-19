@@ -38,13 +38,13 @@ func GenYangNetConfig() *Config {
 	cfg := &Config{}
 
 	// config aligned to yang test eth2 net
-	cfg.SecondsPerSlot = 3
-	cfg.SlotsPerEpoch = 3
-	cfg.RSUNum = 25
+	cfg.SecondsPerSlot = 6
+	cfg.SlotsPerEpoch = 6
+	cfg.RSUNum = 400
 
 	// map config
-	cfg.XLen = 5
-	cfg.YLen = 5
+	cfg.XLen = 20
+	cfg.YLen = 20
 
 	// sim config
 	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
