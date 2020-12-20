@@ -106,7 +106,7 @@ func (sim *SimulationSession) moveVehicles(ctx context.Context) {
 					newCount++
 					// when we activate a new vehicle
 					// first we update the vehicle object
-					v.InitPosition(sim.R, sim.Config.XLen, sim.Config.YLen)
+					v.EnterMap(sim.R, sim.Config.XLen, sim.Config.YLen)
 					// then we update it onto the map
 					sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
 					// finally we move it!

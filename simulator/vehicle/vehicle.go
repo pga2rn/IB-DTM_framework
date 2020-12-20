@@ -41,7 +41,7 @@ const (
 func InitVehicle(
 	id uint64, // id of the vehicle
 	xlen, ylen int, // the size of the map
-	active	int,
+	active int,
 	r *rand.Rand, // random generator provided by the caller
 ) *Vehicle {
 
@@ -89,15 +89,47 @@ func (v *Vehicle) MoveHelper(direction int) {
 	v.LastMovementDirection = direction
 }
 
+// this helper function generate the position when the vehicle comes back into the map
+// update the vehicle's position and lastmovementdirection
+func (v *Vehicle) EnterMap(r *rand.Rand, xlen, ylen int) {
+	// x01y0 represents the edge (0, 0)~(1, 0)
+	// x0y01 represents the edge (0, 0)~(0, 1)
+	// x1y01 represents the edge (1, 0)~(1, 1)
+	// y1x01 represents the edge (0, 1)~(1, 1)
+	const (
+		x01y0 = iota
+		y01x0
+		x1y01
+		y1x01
+	)
+
+	edge, pos, direction := randutil.RandIntRange(r, 0, 4), Position{}, NotMove
+	switch edge {
+	case x01y0:
+		pos.X, pos.Y = randutil.RandIntRange(r, 0, xlen), 0
+		direction = YForward
+	case y01x0:
+		pos.X, pos.Y = 0, randutil.RandIntRange(r, 0, ylen)
+		direction = XForward
+	case x1y01:
+		pos.X, pos.Y = 1, randutil.RandIntRange(r, 0, ylen)
+		direction = XBackward
+	case y1x01:
+		pos.X, pos.Y = randutil.RandIntRange(r, 0, xlen), 1
+		direction = YBackward
+	}
+	v.Pos, v.LastMovementDirection = pos, direction
+}
+
 // this helper function generate position for vehicle and update the vehicle object
-func (v *Vehicle) InitPosition(r *rand.Rand, xlen, ylen int){
+func (v *Vehicle) InitPosition(r *rand.Rand, xlen, ylen int) {
 	x, y := randutil.RandIntRange(r, 0, xlen), randutil.RandIntRange(r, 0, ylen)
 	v.Pos = Position{x, y}
 
 	denominator, lower, upper := 4, 1, 3
 	xLeftBound, xRightBound, yLeftBound, yRightBound :=
-		xlen * lower / denominator, xlen * upper / denominator,
-		ylen * lower / denominator, ylen * upper / denominator
+		xlen*lower/denominator, xlen*upper/denominator,
+		ylen*lower/denominator, ylen*upper/denominator
 
 	// generate the lastmovement based on the position
 	// the map is roughly divided into 5 pieces
@@ -131,7 +163,7 @@ func (v *Vehicle) MovementDecisionMaker(r *rand.Rand, xlen, ylen int) int {
 	var direction int
 	ld := v.LastMovementDirection
 
-	if ld == NotMove{
+	if ld == NotMove {
 		return NotMoveGroup[randutil.RandIntRange(r, 0, len(NotMoveGroup))]
 	}
 
