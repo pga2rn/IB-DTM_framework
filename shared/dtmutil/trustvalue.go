@@ -1,8 +1,6 @@
 package dtmutil
 
-import (
-	"sync"
-)
+import "sync"
 
 // TODO: implement mutex for trustvaluestorage
 
@@ -28,22 +26,32 @@ const (
 	Fatal    = 0.9
 )
 
+// link list head of trustvaluestorage list
+type TrustValueStorageHead struct {
+	HeadEpoch  uint64 `the epoch of current head`
+	EpochCount int    `total epoch being recorded`
+	PtrNext    *TrustValueStorage
+}
+
 // data structure to hold every vehicle's trust value of specific epoch
 type TrustValueStorage struct {
-	Epoch uint64
-	Mu *sync.Mutex // thread safe
-	// [vehicleId<uint64>]TrustValue<float32>
-	TrustValueList *map[uint64]float32
-	pNext          *TrustValueStorage
-	pPrevious      *TrustValueStorage
+	Epoch          uint64
+	TrustValueList *sync.Map `map[uint64]float32`
+	PtrNext        *TrustValueStorage
+	PtrPrevious    *TrustValueStorage
+}
+
+func InitTrustValueStorage() *TrustValueStorageHead {
+	return &TrustValueStorageHead{
+		HeadEpoch:  0,
+		EpochCount: -1,
+	}
 }
 
 // TODO: implement the link list for trustvaluestorage
-func InitTrustValueStorageObject(epoch uint64) *TrustValueStorage{
+func InitTrustValueStorageObject(epoch uint64) *TrustValueStorage {
 	storage := TrustValueStorage{}
 	storage.Epoch = epoch
-	storage.mu = &sync.Mutex{}
-	storage.TrustValueList = func() *map[uint64]float32{ s := make(map[uint64]float32); return &s}()
-
+	storage.TrustValueList = &sync.Map{}
 	return &storage
 }
