@@ -5,37 +5,73 @@ package timefactor
 import (
 	"errors"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
+	"math"
 )
 
 // pre-calculated values
-var ExponentialFunction *[]int // y = 2^x - 1
-var LinearFunction *[]int // y = x
-var PowerFunction *[]int // y = x^n
-var SinFunction *[]int // y = sin(1/2 * pi * x)
-var LogarithmFunction *[]int // y = -nlog(1/x)+1, smaller the n, the steeper when x reaches 0
-
-func InitTimeFactor(cfg config.Config){
-	slotsPerEpoch := cfg.SlotsPerEpoch
-
+type table struct {
+	length    int
+	funcTable map[int][]float32
 }
 
-func GetExp(index int) (int, error){
-	if ExponentialFunction == nil || index > len(*ExponentialFunction) || index < 0 {
-		return -1, errors.New("invalid arguments")
-	}
-	return (*ExponentialFunction)[index], nil
+const (
+	exp = iota
+	linear
+	power
+	sin
+	log
+)
+
+var funcNums = 5
+var funcTable table
+
+func InitTimeFactor(cfg *config.Config) {
+	funcTable = table{}
+	length := cfg.SlotsPerEpoch
+	funcTable.length = int(length)
+
+	funcTable.funcTable[exp] = make([]float32, length)
+	funcTable.funcTable[linear] = make([]float32, length)
+	funcTable.funcTable[power] = make([]float32, length)
+	funcTable.funcTable[sin] = make([]float32, length)
+	funcTable.funcTable[log] = make([]float32, length)
 }
 
-func GetLinear(index int) (int, error){
-	if LinearFunction == nil || index < 0 {
-		return -1, errors.New("invalid arguments")
+// print the table
+func calculateTimeFactor(cfg config.Config) {
+	for i := 0; i < int(cfg.SlotsPerEpoch); i++ {
+		x := 0.0
+		funcTable.funcTable[sin][i] = float32(sinFunc(x))
+		funcTable.funcTable[power][i] = float32(powerFunc(x))
+		funcTable.funcTable[log][i] = float32(logFunc(x))
+		funcTable.funcTable[exp][i] = float32(expFunc(x))
+		funcTable.funcTable[linear][i] = float32(x)
 	}
-	return index, nil
 }
 
-func GetPower(index int) (int, error){
-	if PowerFunction == nil || index > len(*PowerFunction) || index < 0 {
+// y = sin(1/2 * pi * x)
+func sinFunc(x float64) float64 {
+	return math.Sin(x * 0.5 * math.Pi)
+}
+
+// y = 2^x - 1
+func expFunc(x float64) float64 {
+	return math.Pow(2, x) - 1
+}
+
+// y = x^2
+func powerFunc(x float64) float64 {
+	return math.Pow(x, 2)
+}
+
+// y = -0.5log(1/x)+1
+func logFunc(x float64) float64 {
+	return -1*0.5*math.Log(1/x) + 1
+}
+
+func GetTimeFactor(funcType, index int) (float32, error) {
+	if index < 0 || index > funcTable.length || funcType < 0 || funcType > funcNums {
 		return -1, errors.New("invalid arguments")
 	}
-	return (*PowerFunction)[index], nil
+	return funcTable.funcTable[funcType][index], nil
 }

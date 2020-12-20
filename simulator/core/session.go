@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
@@ -21,8 +22,9 @@ type SimulationSession struct {
 
 	// time
 	Ticker timeutil.Ticker
-	Epoch  uint64
-	Slot   uint64
+	// epoch and slot stored in session should only be used when gathering reports
+	Epoch uint64
+	Slot  uint64
 
 	// current status
 	// vehicle
@@ -52,6 +54,9 @@ type SimulationSession struct {
 func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
+
+	// init time factor
+	timefactor.InitTimeFactor(cfg)
 
 	// init map
 	m := simmap.CreateMap(cfg)
