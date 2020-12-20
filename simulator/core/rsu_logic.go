@@ -6,6 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
+	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
 )
 
 func (sim *SimulationSession) InitRSU() bool {
@@ -37,11 +38,39 @@ func (sim *SimulationSession) InitRSU() bool {
 	return true
 }
 
+//
+func (sim *SimulationSession) resetRSUAtCheckpoint(ctx context.Context, slot uint64) {
+	if slot%sim.Config.SlotsPerEpoch != 0 {
+		logutil.LoggerList["core"].Warnf("[resetRSUAtCheckpoint] being called at non-checkpoint slot, abort")
+		return
+	}
+
+	// reset the rsu trust value offset storage
+	for x := range sim.RSUs {
+		for y := range sim.RSUs[x] {
+			rsu := sim.RSUs[x][y]
+			sim.resetRSUTrustValueOffsetStorage(rsu)
+		}
+	}
+}
+
+// reset RSU data fields at the end of epoch
+func (sim *SimulationSession) resetRSUTrustValueOffsetStorage(r *dtm.RSU) {
+	r.TrustValueOffsetPerSlot =
+		make([]map[uint64]*dtmutil.TrustValueOffset, sim.Config.SlotsPerEpoch)
+	for i := range r.TrustValueOffsetPerSlot {
+		// init map structure for every slot
+		r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmutil.TrustValueOffset)
+	}
+}
+
+// do rsu should do
 func (sim *SimulationSession) executeRSULogic(ctx context.Context, slot uint64) {
 	select {
 	case <-ctx.Done():
 		return
 	default:
+		// update epoch and slot
 		for x := range sim.RSUs {
 			for y := range sim.RSUs[x] {
 				// sync epoch and slot

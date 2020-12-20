@@ -64,23 +64,10 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 		return errors.New("context canceled")
 	default:
 		// move the vehicles!
-		sim.moveVehicles(SlotCtx)
-		// execute dtm logic
-		sim.executeDTMLogic(SlotCtx, slot)
+		sim.moveVehiclesPerSlot(SlotCtx)
+		// execute dtm logic, update RSU status
+		sim.executeDTMLogicPerSlot(SlotCtx, slot)
 
-		// debug:
-		count := 0
-		for i := 0; i < sim.Config.VehicleNumMax; i++ {
-			if sim.ActiveVehiclesBitMap.Get(i) {
-				count++
-			}
-		}
-
-		logutil.LoggerList["core"].
-			Debugf("[ProcessSlot] active vehicles: %v, bitmap count %v",
-				sim.ActiveVehiclesNum,
-				count,
-			)
 		cancel()
 		return nil
 	}
@@ -95,7 +82,7 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 
 // TODO: mutex should be applied to trustvalue storage
 func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) error {
-	logutil.LoggerList["core"].Debugf("[ProcessEpoch] entering ..")
+	logutil.LoggerList["core"].Debugf("[ProcessEpoch] processing epoch %v", slot/sim.Config.SlotsPerEpoch)
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["core"].Debugf("[ProcessEpoch] context canceled")
@@ -110,6 +97,9 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		sim.InitAssignMisbehaveVehicle(ctx)
 
 		// calculate trust value
+		sim.genTrustValue(ctx, slot)
+
+		// reset RSU storage
 
 		// debug
 		logutil.LoggerList["core"].

@@ -10,11 +10,11 @@ import (
 	"sync"
 )
 
-func (sim *SimulationSession) executeDTMLogic(ctx context.Context, slot uint64) {
-	logutil.LoggerList["core"].Debugf("[executeDTMLogic] entering ..")
+func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot uint64) {
+	logutil.LoggerList["core"].Debugf("[executeDTMLogicPerSlot] entering ..")
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["core"].Debugf("[executeDTMLogic] context canceled")
+		logutil.LoggerList["core"].Debugf("[executeDTMLogicPerSlot] context canceled")
 		return
 	default:
 		// generate and dispatch trust value offsets to every RSUs
@@ -26,7 +26,8 @@ func (sim *SimulationSession) executeDTMLogic(ctx context.Context, slot uint64) 
 
 // trust value offsets are stored on each RSU components
 func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint64) {
-	logutil.LoggerList["core"].Debugf("[genTrustValueOffset] entering..")
+	logutil.LoggerList["core"].Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
+	defer logutil.LoggerList["core"].Debugf("[genTrustValueOffset] done")
 
 	select {
 	case <-ctx.Done():
@@ -86,22 +87,23 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 	}
 }
 
-func (sim *SimulationSession) calculateTrustValue(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
+	logutil.LoggerList["core"].Debugf("[genTrustValue] start to process for epoch %v", slot/sim.Config.SlotsPerEpoch)
+	logutil.LoggerList["core"].Debugf("[genTrustValue] slot %v, deadline %v", slot, timeutil.NextEpochTime(sim.Config.Genesis, slot))
+	defer logutil.LoggerList["core"].
+		Debugf("[genTrustValue] epoch %v, slot %v done", slot/sim.Config.SlotsPerEpoch, slot)
+
 	select {
 	case <-ctx.Done():
 		return
 	default:
 		if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {
 			logutil.LoggerList["core"].
-				Warnf("[calculateTrustValue] mismatch slot index! potential async")
+				Warnf("[genTrustValue] mismatch slot index! potential async")
 		}
 		if slot%sim.Config.SlotsPerEpoch != 0 {
-			logutil.LoggerList["core"].Fatalf("[calculateTrustValue] call func at non checkpoint slot, abort")
+			logutil.LoggerList["core"].Fatalf("[genTrustValue] call func at non checkpoint slot, abort")
 		}
-
-		// deadline for all worker
-		epochCtx, cancel := context.WithDeadline(ctx, timeutil.NextEpochTime(sim.Config.Genesis, slot))
-		defer cancel()
 
 		// init a data structure to store the trust value
 		trustValueRecord :=
@@ -110,19 +112,21 @@ func (sim *SimulationSession) calculateTrustValue(ctx context.Context, slot uint
 		wg := sync.WaitGroup{}
 
 		// iterate all RSU
+		// set deadline
+		epochCtx, cancel := context.WithDeadline(ctx, timeutil.NextEpochTime(sim.Config.Genesis, slot))
 		for x := range sim.RSUs {
 			for y := range sim.RSUs[x] {
 				rsu := sim.RSUs[x][y]
+
 				// use go routines to collect every RSU's data
+				// add one worker to wait group
+				wg.Add(1)
 				go func() {
 					select {
 					case <-epochCtx.Done():
-						logutil.LoggerList["core"].Fatalf("[calculateTrustValue] times up for collecting RSU data, abort")
+						logutil.LoggerList["core"].Fatalf("[genTrustValue] times up for collecting RSU data at the end of epoch, abort")
 						return
 					default:
-						// add one worker to wait group
-						wg.Add(1)
-
 						// RSU: for every slots
 						for slotIndex := 0; slotIndex < int(sim.Config.SlotsPerEpoch); slotIndex++ {
 							// get the slot
@@ -131,10 +135,11 @@ func (sim *SimulationSession) calculateTrustValue(ctx context.Context, slot uint
 							for vid, tvo := range slot {
 								if vid != tvo.VehicleId {
 									logutil.LoggerList["core"].
-										Warnf("[calculateTrustValue] mismatch vid! %v in vehicle and %v in tvo", vid, tvo.VehicleId)
+										Warnf("[genTrustValue] mismatch vid! %v in vehicle and %v in tvo", vid, tvo.VehicleId)
 									continue // ignore invalid trust value offset record
 								}
 
+								// TODO: compromised RSU logic is not applied here
 								// tune and add calculated trust value to the storage
 								timeFactor, _ := timefactor.GetTimeFactor(sim.Config.TimeFactorType, slotIndex)
 								tunedTrustValueOffset := timeFactor * tvo.TrustValueOffset
@@ -152,9 +157,9 @@ func (sim *SimulationSession) calculateTrustValue(ctx context.Context, slot uint
 		}
 
 		// wait for all work to finish their job
-		defer logutil.LoggerList["core"].
-			Debugf("[calculateTrustValue] epoch %v, slot %v done", slot/sim.Config.SlotsPerEpoch, slot)
 		wg.Wait()
+		// after all the workers finish their job, cancel the context
+		cancel()
 
 		// TODO: realize background tracking services to keep records of trust value
 		// TODO: utilize the generated trustvaluestorage object

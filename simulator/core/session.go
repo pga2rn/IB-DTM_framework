@@ -37,8 +37,9 @@ type SimulationSession struct {
 	// store the ID(index) of compromised RSU of this slot
 	CompromisedRSUBitMap *bitmap.Threadsafe
 	// a complete list that stores every vehicle's trust value
-	AccurateTrustValueList []float32 // without bias
-	BiasedTrustValueList   []float32 // with bias
+	// TODO: not yet utilize the following 2 fields for trust value storage
+	//AccurateTrustValueList []float32 // without bias
+	//BiasedTrustValueList   []float32 // with bias
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
@@ -56,7 +57,7 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
 	sim.Config = cfg
 
 	// init time factor
-	timefactor.InitTimeFactor(cfg)
+	timefactor.InitTimeFactor(cfg.SlotsPerEpoch)
 
 	// init map
 	m := simmap.CreateMap(cfg)

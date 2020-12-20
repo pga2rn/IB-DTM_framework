@@ -71,23 +71,23 @@ func (sim *SimulationSession) InitVehicles() bool {
 	}
 
 	// init all vehicles' trust value
-	sim.AccurateTrustValueList = make([]float32, sim.Config.VehicleNumMax)
-	for i := range sim.AccurateTrustValueList {
-		sim.AccurateTrustValueList[i] = 0
-	}
-	sim.BiasedTrustValueList = make([]float32, sim.Config.VehicleNumMax)
-	for i := range sim.BiasedTrustValueList {
-		sim.BiasedTrustValueList[i] = 0
-	}
+	//sim.AccurateTrustValueList = make([]float32, sim.Config.VehicleNumMax)
+	//for i := range sim.AccurateTrustValueList {
+	//	sim.AccurateTrustValueList[i] = 0
+	//}
+	//sim.BiasedTrustValueList = make([]float32, sim.Config.VehicleNumMax)
+	//for i := range sim.BiasedTrustValueList {
+	//	sim.BiasedTrustValueList[i] = 0
+	//}
 
 	return true
 }
 
-func (sim *SimulationSession) moveVehicles(ctx context.Context) {
-	logutil.LoggerList["core"].Debugf("[moveVehicles] entering..")
+func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context) {
+	logutil.LoggerList["core"].Debugf("[moveVehiclesPerSlot] entering..")
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["core"].Debugf("[moveVehicles] context canceled")
+		logutil.LoggerList["core"].Debugf("[moveVehiclesPerSlot] context canceled")
 		return
 	default:
 		// activate extra vehicles

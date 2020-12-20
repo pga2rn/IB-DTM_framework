@@ -4,7 +4,6 @@ package timefactor
 
 import (
 	"errors"
-	"github.com/pga2rn/ib-dtm_framework/simulator/config"
 	"math"
 )
 
@@ -25,21 +24,21 @@ const (
 var funcNums = 5
 var funcTable table
 
-func InitTimeFactor(cfg *config.Config) {
+func InitTimeFactor(slotsPerEpoch uint64) {
 	funcTable = table{}
-	length := cfg.SlotsPerEpoch
+	length := slotsPerEpoch
 	funcTable.length = int(length)
+
+	funcTable.funcTable = make(map[int][]float32)
 
 	funcTable.funcTable[Exp] = make([]float32, length)
 	funcTable.funcTable[Linear] = make([]float32, length)
 	funcTable.funcTable[Power] = make([]float32, length)
 	funcTable.funcTable[Sin] = make([]float32, length)
 	funcTable.funcTable[Log] = make([]float32, length)
-}
 
-// print the table
-func calculateTimeFactor(cfg config.Config) {
-	for i := 0; i < int(cfg.SlotsPerEpoch); i++ {
+	// generate the table
+	for i := 0; i < int(slotsPerEpoch); i++ {
 		x := 0.0
 		funcTable.funcTable[Sin][i] = float32(sinFunc(x))
 		funcTable.funcTable[Power][i] = float32(powerFunc(x))
