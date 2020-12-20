@@ -2,6 +2,7 @@
 package config
 
 import (
+	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"time"
 )
 
@@ -20,6 +21,8 @@ type Config struct {
 	RSUNum                   int
 	CompromisedRSUPortionMax float32 // from 0 ~ 1
 	CompromisedRSUPortionMin float32 // from 0 ~ 1
+
+	TimeFactorType int
 
 	// time config
 	Genesis           time.Time
@@ -49,6 +52,7 @@ func GenYangNetConfig() *Config {
 	// sim config
 	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
 	cfg.FinalizedDelay = 2    // aligned with eth2.0 setup
+	cfg.TimeFactorType = timefactor.Power
 
 	// rsu config
 	cfg.CompromisedRSUPortionMax = 0.25

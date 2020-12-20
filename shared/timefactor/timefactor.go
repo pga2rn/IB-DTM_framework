@@ -15,11 +15,11 @@ type table struct {
 }
 
 const (
-	exp = iota
-	linear
-	power
-	sin
-	log
+	Exp = iota
+	Linear
+	Power
+	Sin
+	Log
 )
 
 var funcNums = 5
@@ -30,22 +30,22 @@ func InitTimeFactor(cfg *config.Config) {
 	length := cfg.SlotsPerEpoch
 	funcTable.length = int(length)
 
-	funcTable.funcTable[exp] = make([]float32, length)
-	funcTable.funcTable[linear] = make([]float32, length)
-	funcTable.funcTable[power] = make([]float32, length)
-	funcTable.funcTable[sin] = make([]float32, length)
-	funcTable.funcTable[log] = make([]float32, length)
+	funcTable.funcTable[Exp] = make([]float32, length)
+	funcTable.funcTable[Linear] = make([]float32, length)
+	funcTable.funcTable[Power] = make([]float32, length)
+	funcTable.funcTable[Sin] = make([]float32, length)
+	funcTable.funcTable[Log] = make([]float32, length)
 }
 
 // print the table
 func calculateTimeFactor(cfg config.Config) {
 	for i := 0; i < int(cfg.SlotsPerEpoch); i++ {
 		x := 0.0
-		funcTable.funcTable[sin][i] = float32(sinFunc(x))
-		funcTable.funcTable[power][i] = float32(powerFunc(x))
-		funcTable.funcTable[log][i] = float32(logFunc(x))
-		funcTable.funcTable[exp][i] = float32(expFunc(x))
-		funcTable.funcTable[linear][i] = float32(x)
+		funcTable.funcTable[Sin][i] = float32(sinFunc(x))
+		funcTable.funcTable[Power][i] = float32(powerFunc(x))
+		funcTable.funcTable[Log][i] = float32(logFunc(x))
+		funcTable.funcTable[Exp][i] = float32(expFunc(x))
+		funcTable.funcTable[Linear][i] = float32(x)
 	}
 }
 
