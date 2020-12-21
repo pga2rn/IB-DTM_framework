@@ -8,9 +8,9 @@ import (
 
 // SlotStartTime returns the start time in terms of its unix epoch
 // value.
-func SlotStartTime(genesis, slot uint64) time.Time {
+func SlotStartTime(genesis time.Time, slot uint64) time.Time {
 	duration := time.Second * time.Duration(slot*config.GenYangNetConfig().SecondsPerSlot)
-	startTime := time.Unix(int64(genesis), 0).Add(duration)
+	startTime := genesis.Add(duration)
 	return startTime
 }
 
@@ -41,10 +41,10 @@ func DivideSlotBy(timesPerSlot int64) time.Duration {
 func NextEpochTime(genesis time.Time, slot uint64) time.Time {
 	cfg := config.GenYangNetConfig()
 	slot = (slot/cfg.SlotsPerEpoch + 1) * cfg.SlotsPerEpoch // the start slot of next epoch
-	return SlotStartTime(uint64(genesis.Unix()), slot)
+	return SlotStartTime(genesis, slot)
 }
 
 // return the start time of the next slot
 func NextSlotTime(genesis time.Time, slot uint64) time.Time {
-	return SlotStartTime(uint64(genesis.Unix()), slot+1)
+	return SlotStartTime(genesis, slot+1)
 }

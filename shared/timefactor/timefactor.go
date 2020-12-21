@@ -3,8 +3,8 @@ package timefactor
 // TODO: decide the functions, and implement them
 
 import (
-	"errors"
 	"math"
+	"time"
 )
 
 // pre-calculated values
@@ -21,56 +21,20 @@ const (
 	Log
 )
 
-var funcNums = 5
-var funcTable table
-
-func InitTimeFactor(slotsPerEpoch uint64) {
-	funcTable = table{}
-	length := slotsPerEpoch
-	funcTable.length = int(length)
-
-	funcTable.funcTable = make(map[int][]float32)
-
-	funcTable.funcTable[Exp] = make([]float32, length)
-	funcTable.funcTable[Linear] = make([]float32, length)
-	funcTable.funcTable[Power] = make([]float32, length)
-	funcTable.funcTable[Sin] = make([]float32, length)
-	funcTable.funcTable[Log] = make([]float32, length)
-
-	// generate the table
-	for i := 0; i < int(slotsPerEpoch); i++ {
-		x := 0.0
-		funcTable.funcTable[Sin][i] = float32(sinFunc(x))
-		funcTable.funcTable[Power][i] = float32(powerFunc(x))
-		funcTable.funcTable[Log][i] = float32(logFunc(x))
-		funcTable.funcTable[Exp][i] = float32(expFunc(x))
-		funcTable.funcTable[Linear][i] = float32(x)
+func GetTimeFactor(timeFactorType int, genesis time.Time, slotTime time.Time, checkPointTime time.Time) float64 {
+	x := float64(checkPointTime.Unix()-genesis.Unix()) / float64(slotTime.Unix()-genesis.Unix())
+	res := float64(-1)
+	switch timeFactorType {
+	case Exp: // y = 2^x - 1
+		res = math.Pow(2, x) - 1
+	case Linear: // y = x
+		res = x
+	case Power: // y = x^2
+		res = math.Pow(x, 2)
+	case Sin: // y = sin(1/2 * pi * x)
+		res = math.Sin(0.5 * math.Pi * x)
+	case Log: // y = -0.5log(1/x)+1
+		res = -1*0.5*math.Log(1/x) + 1
 	}
-}
-
-// y = sin(1/2 * pi * x)
-func sinFunc(x float64) float64 {
-	return math.Sin(x * 0.5 * math.Pi)
-}
-
-// y = 2^x - 1
-func expFunc(x float64) float64 {
-	return math.Pow(2, x) - 1
-}
-
-// y = x^2
-func powerFunc(x float64) float64 {
-	return math.Pow(x, 2)
-}
-
-// y = -0.5log(1/x)+1
-func logFunc(x float64) float64 {
-	return -1*0.5*math.Log(1/x) + 1
-}
-
-func GetTimeFactor(funcType, index int) (float32, error) {
-	if index < 0 || index > funcTable.length || funcType < 0 || funcType > funcNums {
-		return -1, errors.New("invalid arguments")
-	}
-	return funcTable.funcTable[funcType][index], nil
+	return res
 }
