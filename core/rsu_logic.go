@@ -6,7 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
+	"github.com/pga2rn/ib-dtm_framework/dtm"
 )
 
 func (sim *SimulationSession) InitRSU() bool {

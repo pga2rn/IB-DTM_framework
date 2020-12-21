@@ -5,10 +5,10 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/config"
-	"github.com/pga2rn/ib-dtm_framework/simulator/dtm"
-	"github.com/pga2rn/ib-dtm_framework/simulator/sim-map"
-	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/sim-map"
+	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"math/rand"
 )
 

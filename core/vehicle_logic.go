@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"github.com/pga2rn/ib-dtm_framework/vehicle"
 )
 
 ////// simulation //////

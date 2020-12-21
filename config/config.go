@@ -42,7 +42,7 @@ func GenYangNetConfig() *Config {
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 6
-	cfg.SlotsPerEpoch = 6
+	cfg.SlotsPerEpoch = 2
 	cfg.RSUNum = 400
 
 	// map config

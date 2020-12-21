@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/config"
-	"github.com/pga2rn/ib-dtm_framework/simulator/core"
+	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/core"
 	"time"
 )
 
@@ -22,6 +22,7 @@ func main() {
 
 	session := core.PrepareSimulationSession(cfg)
 	go session.Run(ctx)
+
 
 	time.Sleep(360 * time.Second)
 	cancel()

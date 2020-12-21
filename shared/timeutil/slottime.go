@@ -2,7 +2,7 @@
 package timeutil
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/simulator/config"
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"time"
 )
 

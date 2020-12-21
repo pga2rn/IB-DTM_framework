@@ -1,8 +1,8 @@
 package simmap
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/simulator/config"
-	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/vehicle"
 )
 
 // each cross represents a CROSS within the map,

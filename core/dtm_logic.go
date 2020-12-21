@@ -6,7 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator/vehicle"
+	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
 
@@ -89,7 +89,6 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
 	logutil.LoggerList["core"].Debugf("[genTrustValue] start to process for epoch %v", slot/sim.Config.SlotsPerEpoch)
-	logutil.LoggerList["core"].Debugf("[genTrustValue] slot %v, deadline %v", slot, timeutil.NextEpochTime(sim.Config.Genesis, slot))
 	defer logutil.LoggerList["core"].
 		Debugf("[genTrustValue] epoch %v, slot %v done", slot/sim.Config.SlotsPerEpoch, slot)
 

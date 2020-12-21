@@ -1,2 +1,0 @@
-# RSU logic module implementation
-
