@@ -20,7 +20,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 		// add the vehicle into the map
-		sim.Map.Cross[pos.X][pos.Y].Vehicles[v.Id] = v
+		sim.Map.Cross[pos.X][pos.Y].Vehicles.Store(v.Id, v)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
@@ -28,7 +28,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		delete(sim.Map.Cross[pos.X][pos.Y].Vehicles, v.Id)
+		sim.Map.Cross[pos.X][pos.Y].Vehicles.Delete(v.Id)
 		// reset the vehicle after remove it from the map
 		v.ResetVehicle()
 	}
@@ -53,7 +53,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 		//logutil.LoggerList["core"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles[uint64(i)] = v
+		sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles.Store(uint64(i), v)
 	}
 
 	// init inactivate vehicles
@@ -127,11 +127,11 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehic
 }
 
 // move vehicle from one cross to another
-func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle) {
+func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos vehicle.Position) {
 	// unregister the vehicle from the old cross
-	delete(sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles, v.Id)
+	sim.Map.Cross[oldPos.X][oldPos.Y].Vehicles.Delete(v.Id)
 	// register the vehicle into the new cross
-	sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles[v.Id] = v
+	sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles.Store(v.Id, v)
 }
 
 // move a single vehicle
@@ -154,7 +154,7 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 	switch {
 	case v.Pos.X >= 0 && v.Pos.Y >= 0 && v.Pos.X < sim.Config.XLen && v.Pos.Y < sim.Config.YLen:
 		// finally update the vehicle's status on map
-		sim.updateVehiclePos(v)
+		sim.updateVehiclePos(v, oldPos)
 	default:
 		// the vehicle moves out of the map
 		sim.inactivateVehicle(v, oldPos)

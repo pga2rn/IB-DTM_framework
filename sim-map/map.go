@@ -2,7 +2,7 @@ package simmap
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/vehicle"
+	"sync"
 )
 
 // each cross represents a CROSS within the map,
@@ -14,7 +14,7 @@ import (
 // M
 type cross struct {
 	// a list of vehicle that appears
-	Vehicles map[uint64]*vehicle.Vehicle
+	Vehicles *sync.Map // map[uint64]*vehicle.Vehicle
 }
 
 type Map struct {
@@ -23,7 +23,7 @@ type Map struct {
 }
 
 func (c *cross) initCross() {
-	c.Vehicles = make(map[uint64]*vehicle.Vehicle)
+	c.Vehicles = &sync.Map{} // map[uint64]*vehicle.Vehicle)
 }
 
 // create a brand new map
