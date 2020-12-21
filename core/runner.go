@@ -2,16 +2,27 @@ package core
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
+	"time"
 )
+
+// init the simulation session
+func Run(ctx context.Context) {
+	cfg := config.GenYangNetConfig()
+	cfg.SetGenesis(time.Now().Add(3 * time.Second))
+	session := PrepareSimulationSession(cfg)
+
+	go session.run(ctx)
+}
 
 // start the simulation!
 // routines are as follow:
 // if checkpoint: processepoch
 // processslot
 // gather reports
-func (sim *SimulationSession) Run(ctx context.Context) {
+func (sim *SimulationSession) run(ctx context.Context) {
 	cleanup := sim.Done
 	defer cleanup()
 

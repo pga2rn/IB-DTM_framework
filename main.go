@@ -2,28 +2,24 @@ package main
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/core"
+	"github.com/pga2rn/ib-dtm_framework/service"
 	"time"
 )
 
-var ctx, cancel = context.WithCancel(context.Background())
-
-// TODO: separate init logic to service.go
-
 func main() {
-	// init all logger at startup
-	logutil.InitLogger()
+	ctx, cancel := context.WithDeadline(
+		context.Background(),
+		time.Now().Add(10*time.Minute),
+	)
+	defer cancel()
 
-	logutil.LoggerList["main"].Debugf("entering main")
-	cfg := config.GenYangNetConfig()
-	cfg.SetGenesis(time.Now().Add(3 * time.Second))
+	// fire up the simulation
+	service.Init()
+	service.Run(ctx)
 
-	session := core.PrepareSimulationSession(cfg)
-	go session.Run(ctx)
-
-
-	time.Sleep(360 * time.Second)
-	cancel()
+	// wait for content expire
+	select {
+	case <-ctx.Done():
+		return
+	}
 }

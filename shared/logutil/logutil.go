@@ -9,6 +9,8 @@ var PackageNameList = []string{
 	"simmap",
 	"vehicle",
 	"rsu",
+	"service",
+	"statistics",
 }
 
 func InitLogger() {
