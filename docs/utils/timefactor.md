@@ -2,15 +2,6 @@
 
 time factor is for tuning the raw value of trust value offset when generating trust value.
 
-## Trust value calculation
-
-RSUs query all trust value offsets of specific vehicles within an epoch.
-
-Trust value $V_i$ of vehicle $i$ in epoch $E$  can be calculated as follow, $S$ is the number of slots in $E$, $v_s$ is the sum of  trust value offsets for slot $s$, function $f$ is the time factor function, taking the start time $t_s$ of slot $s$ as parameter. 
-$$
-V_i=\sum^{S}_{s=0}{v_s \times f(t_s)},\quad V_i \in [-1, 1]
-$$
-
 ## time factor function
 
 There are 5 functions available in the simulation

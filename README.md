@@ -4,20 +4,20 @@ IB_DTM-framework implements a simulation framework for testing distributed trust
 
 ## Overview
 
-The simulation framework implements a N * M map, each cross in the map represents a RSU. The simulated vehicles will be moved from one cross to another cross, enter or leave the map, from time to time. The RSU collects the trust value offset of each vehicle, and further calculate the trust value of each vehicle.
+The simulation framework implements a N * M grid, each cross in the map represents a **RSU**. The simulated **vehicles** will move from one cross to another cross, enter or leave the map, from time to time. The RSU collects the **trust value offset** of each vehicle, and further calculate the **trust value** of each vehicle.
 
-The time stream of simulation is divided into many epochs, each epoch contains several slots which lasts for many seconds. The whole map will update at every slot, move vehicles and generate trust value offsets for each vehicle. At the end of each epoch, the trust value of each vehicles will be generated.
+The time stream of simulation is divided into many **epochs**, each epoch contains several **slots** which lasts for many seconds. The whole map will update at every slot, move vehicles and generate trust value offsets for each vehicle. At the end of each epoch, the trust value of each vehicles will be generated.
 
 ## Documents
 
 There are also documents in the subfolder, including:
 
 1. core/ : logics of simulation
-2. shared/timefactor: definition of timefactor
-3. shared/dtmtype: definition of data structure for holding trust value, trust value offsets and trust value storage
-4. sim-map/: definition and construction of the simulation map
-5. services: components of the simulator
-6. statistics:
+2. vehicles/: data structure definition of vehicle instance
+3. dtm/rsu: data structure definition of RSU instance 
+4. shared/timefactor: definition of timefactor
+5. shared/dtmtype: definition of data structure for holding trust value, trust value offsets and trust value storage
+6. sim-map/: definition and construction of the simulation map
 
 ## project Architecture:
 
@@ -27,7 +27,12 @@ There are also documents in the subfolder, including:
 
 2. core
 
-   core implements the core logics of simulation, including distributed trust management logic, rsu logics, vehicle movement logic, etc.
+   core implements the core logics of simulation, including:
+
+   - distributed trust management logic
+   - vehicle movement logic
+   - RSU logic
+   - simulation logic
 
 3. dtm
 
@@ -113,15 +118,7 @@ The variables that the simulations will use are as follow:
 
 3. weight of trust value offsets
 
-   each rating (trust value offsets) will be randomly assigned a weight,  including
-
-   ```go
-   const (
-   	Rountine = 0.5 // routinue message, like position and status broadcasting
-   	Crital   = 0.7 // critial on-road message, like traffic volume or normal event
-   	Fatal    = 0.9 // fatal on-road message, like traffic accident
-   )
-   ```
+   each rating (trust value offsets) will be randomly assigned a weight.
 
 4. timefactor
 

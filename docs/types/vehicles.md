@@ -6,10 +6,10 @@ Vehicle, together with RSU,  is the core elements in the simulation. During the 
 
 Each vehicle is being described as follow:
 
-1. Id: unique id to identify the each vehicle
-2. Position: indicate the location of the vehicle right now
-3. VehicleStatus: active, if the vehicle is on the map, or otherwise, inactive
-4. LastMovementDirection: record the direction of the vehicle's last maneuvering
+1. **Id**: unique id to identify the each vehicle
+2. **Position**: indicate the location of the vehicle right now
+3. **VehicleStatus**: active, if the vehicle is on the map, or otherwise, inactive
+4. **LastMovementDirection**: record the direction of the vehicle's last maneuvering
 
 ## Moving Logic
 

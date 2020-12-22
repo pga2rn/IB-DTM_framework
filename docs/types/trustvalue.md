@@ -1,9 +1,6 @@
-# shared/dtmtype
+# Trust value
 
-package dtmutil defined some data structure used for dtm logics
-
-## trustvalue.go
-trustvalue.go  defines the data structures to store trust value and trust value offsets
+The data structures to store trust value and trust value offsets are as follow:
 
 ### trust value & trust value offset
 
