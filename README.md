@@ -1,86 +1,136 @@
-# Simulator implementation
+# IB_DTM-framework
+
+IB_DTM-framework implements a simulation framework for testing distributed trust management application.
+
+## Overview
+
+The simulation framework implements a N * M map, each cross in the map represents a RSU. The simulated vehicles will be moved from one cross to another cross, enter or leave the map, from time to time. The RSU collects the trust value offset of each vehicle, and further calculate the trust value of each vehicle.
+
+The time stream of simulation is divided into many epochs, each epoch contains several slots which lasts for many seconds. The whole map will update at every slot, move vehicles and generate trust value offsets for each vehicle. At the end of each epoch, the trust value of each vehicles will be generated.
+
+## Documents
+
+There are also documents in the subfolder, including:
+
+1. core/ : logics of simulation
+2. shared/timefactor: definition of timefactor
+3. shared/dtmtype: definition of data structure for holding trust value, trust value offsets and trust value storage
+4. sim-map/: definition and construction of the simulation map
+5. services: components of the simulator
+6. statistics:
 
 ## project Architecture:
 
 1. config
+
+   config defines the available configurations for the simulation
+
 2. core
+
+   core implements the core logics of simulation, including distributed trust management logic, rsu logics, vehicle movement logic, etc.
+
 3. dtm
+
+   dtm defines the data structure needed for distributed trust managment, mainly the RSU.
+
 4. rpc
-5. sim-map
 
-6. statistics
+   rpc implements the RPC interface of the simulator, mainly for data query and debug.
 
-7. vehicle
+5. service
 
+   service inits and fires up each components of the simulator
 
-## package definition
+6. shared
 
-### core
+   shared implements some shared utils and data types for the simulator
 
-1. 负责simulation的逻辑
-2. simulation初始化:
-   1. 初始化session
-   2. 初始化vehicles
-   3. 初始化RSU
-3. simulation routine
-   1. 等待genesis
-   2. genesis达成
-4. trust value计算: 直接通过生成的trustvalueoffset来计算trust value
+7. sim-map
 
-### dtm
+   sim-map defines the map that simulation runs on.
 
-#### rsu
+8. vehicle
 
-1. rsu初始化逻辑
+   vehicle defines the data structure for individual vehicles
 
-   1. 数据结构初始化
+## Usage
 
-   2. 通过grpc连接到外部的RSU module
+1. install and config the go environment, version 1.15.* is recommended.
 
-2. rsu逻辑(在simulator内的)
+2. check out the config/ folder for configuration and apply changes to it as needed, available configurations are as follow:
 
-   主要是给simulator执行rsu逻辑的
-
-   1. processslot, 更新simulator内的rsu的数据结构, 每个RSU得到的trust value
+   ```go
+   type Config struct {
+       // map size
+   	XLen int
+   	YLen int
    
-3. 提供一个rpc接口供外部rsu module来获得当前可用的trust value offset值
+   	// simulation config
+       // range of number of simulated vehicles allowd in the map, 
+   	VehicleNumMax              int
+   	VehicleNumMin              int
+       // range of portion of compromised vehicle allowd in the map,
+       // applied once for a simulation session
+   	MisbehaveVehiclePortionMax float32
+   	MisbehaveVehiclePortionMin float32
+       // number of RSU in a simulation, should be the same as totall crosses of the map 
+   	RSUNum                   int // XLen * YLen
+       // portion of the compromised RSU, applied at every epoch
+   	CompromisedRSUPortionMax float32 // from 0 ~ 1
+   	CompromisedRSUPortionMin float32 // from 0 ~ 1
+       // the timefactor type for tunning the trust value offset raw value
+       // available type: Exp, Linear, Power, Sin, Log
+       // see shared/timefactor/README.md for detailed
+   	TimeFactorType int
+   
+   	// time config
+       // the kick start time of the simulation
+   	Genesis           time.Time
+   	SlotsPerEpoch     uint64
+   	SecondsPerSlot    uint64 // in seconds
+   }
+   ```
 
-### rpc
+3. cd into the IB_DTM-framework folder, execute the following commands:
 
-1. 主要是提供数据查询api,
+   ```shell
+   $ go run ./main.go
+   ```
 
-   提供如下信息:
+# Experiment
 
-   1. 当前session情报
-      1. epoch, slot
-      2. vehicles nums
-      3. compromised rsu portion, pos
+## Variables
 
+The variables that the simulations will use are as follow:
 
+1. misbehaving vehicles
 
+   portion of the vehicles will be assigned as misbehaving vehicles for a simulation session, their trust value offsets will always be -1 during the whole simulation
 
+2. compromised RSU
 
-# 最简易实验搭建
+   portion of RSU will be assigned as compromised RSU, they will alter the trust value offsets when generating the trust value
 
-1. 各个数据结构都准备好
-   1. sim session
-   2. config
-   3. map
-   4. rsu
-   5. vehicles
+3. weight of trust value offsets
 
-2. 简易实验流程
-   1. dtm/rsu不连接到外部rsu模块
-   2. genesis自定, 不和外部eth2模块进行通信
-   3. 不引入compromisedRSU
-   4. 直接把sim跑起来
+   each rating (trust value offsets) will be randomly assigned a weight,  including
 
+   ```go
+   const (
+   	Rountine = 0.5 // routinue message, like position and status broadcasting
+   	Crital   = 0.7 // critial on-road message, like traffic volume or normal event
+   	Fatal    = 0.9 // fatal on-road message, like traffic accident
+   )
+   ```
 
+4. timefactor
 
-# 实验metrics
+   the tuning factor applied to the raw trust value offsets when calculating trust value, see shared/timefactor/README.md for detailed. 
 
-1. efficiency
-   1. time efficiency by % (已经upload的和没有upload的trust value offset的比值)
-2. bias
-   1. bias caused by delay (和simulation里生成的accurate trust value进行比对)
-   2. 和sim里生成的即时bias trust value进行对比
+## Metrics
+
+Metrics we use to evaluate are as follow:
+
+1. bias: plain trust value bias caused by compromised RSU
+2. TP, FP, FN, TN
+3. Recall, Precision, Accuracy

@@ -1,4 +1,4 @@
-package dtmutil
+package dtmtype
 
 import "sync"
 
