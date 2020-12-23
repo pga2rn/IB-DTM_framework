@@ -1,6 +1,6 @@
 # Distributed trust management
 
-The dtm subfolder contains the data structure used for the simulation.
+The dtm subfolder contains the definition of data structure used for the simulation.
 
 ## RSU
 
@@ -17,4 +17,4 @@ the following properties describe a rsu instance:
 
 ### Compromised RSU
 
-Some of the RSU will be assigned to be the so-called **compromised RSU** at the beginning of an epoch, they will do evil relating to the trust value offsets, detailed can be founded at core/RSU_LOGIC.md.
+Some of the RSU will be assigned to be the so-called **compromised RSU** at the beginning of an epoch, they will do evil relating to the trust value offsets, detailed can be founded at docs/simulation/rsu_logic.md
