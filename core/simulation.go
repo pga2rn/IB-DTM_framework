@@ -13,12 +13,6 @@ func (sim *SimulationSession) SlotDeadline(slot uint64) time.Time {
 	return timeutil.NextSlotTime(sim.Config.Genesis, slot)
 }
 
-func (sim *SimulationSession) Done() {
-	// terminate the ticker
-	sim.Ticker.Done()
-	return
-}
-
 // wait for rsu data structure ready
 func (sim *SimulationSession) WaitForRSUInit() error {
 	logutil.LoggerList["core"].Debugf("[WaitForRSUInit] ..")
@@ -99,7 +93,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		// calculate trust value
 		sim.genTrustValue(ctx, slot)
 
-		// reset RSU storage
+		// TODO: reset RSU storage
 
 		// debug
 		logutil.LoggerList["core"].
@@ -108,6 +102,8 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 				sim.MisbehaviorVehiclePortion,
 				sim.CompromisedRSUPortion,
 			)
+		logutil.LoggerList["core"].
+			Debugf("[ProcessEpoch] active vehicles %v", sim.ActiveVehiclesNum)
 
 	}
 

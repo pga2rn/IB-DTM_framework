@@ -2,7 +2,8 @@ package core
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmutil"
+	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
@@ -46,7 +47,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 			}
 
 			slotIndex := int(slot % sim.Config.SlotsPerEpoch)
-			tvo := dtmutil.TrustValueOffset{
+			tvo := dtmtype.TrustValueOffset{
 				VehicleId: v.Id,
 				Slot:      slot,
 			}
@@ -71,12 +72,12 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 			// adjust trust value weight
 			possibility := sim.R.Float32()
 			switch {
-			case possibility < 1-dtmutil.Fatal:
-				tvo.Weight = dtmutil.Fatal
-			case possibility < 1-dtmutil.Crital && possibility > 1-dtmutil.Fatal:
-				tvo.Weight = dtmutil.Crital
+			case possibility < 1-dtmtype.Fatal:
+				tvo.Weight = dtmtype.Fatal
+			case possibility < 1-dtmtype.Crital && possibility > 1-dtmtype.Fatal:
+				tvo.Weight = dtmtype.Crital
 			default:
-				tvo.Weight = dtmutil.Rountine
+				tvo.Weight = dtmtype.Rountine
 			}
 
 			// update the value to RSU
@@ -106,7 +107,7 @@ func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
 
 		// init a data structure to store the trust value
 		trustValueRecord :=
-			dtmutil.InitTrustValueStorageObject(slot / sim.Config.SlotsPerEpoch)
+			dtmtype.InitTrustValueStorageObject(slot / sim.Config.SlotsPerEpoch)
 
 		wg := sync.WaitGroup{}
 
@@ -129,19 +130,17 @@ func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
 						// RSU: for every slots
 						for slotIndex := 0; slotIndex < int(sim.Config.SlotsPerEpoch); slotIndex++ {
 							// get the slot
-							slot := rsu.TrustValueOffsetPerSlot[slotIndex]
+							slotInstance := rsu.TrustValueOffsetPerSlot[slotIndex]
 							// dive into the slot
-							for vid, tvo := range slot {
+							for vid, tvo := range slotInstance {
 								if vid != tvo.VehicleId {
 									logutil.LoggerList["core"].
 										Warnf("[genTrustValue] mismatch vid! %v in vehicle and %v in tvo", vid, tvo.VehicleId)
 									continue // ignore invalid trust value offset record
 								}
 
-								// TODO: compromised RSU logic is not applied here
-								// tune and add calculated trust value to the storage
-								timeFactor, _ := timefactor.GetTimeFactor(sim.Config.TimeFactorType, slotIndex)
-								tunedTrustValueOffset := timeFactor * tvo.TrustValueOffset
+								//
+								tunedTrustValueOffset := sim.genTrustValueHelper(rsu, tvo.TrustValueOffset, slot)
 								if op, ok := trustValueRecord.TrustValueList.LoadOrStore(vid, tunedTrustValueOffset); ok {
 									// ok means there is already value stored in place
 									// the existed value is loaded to variable op
@@ -161,6 +160,30 @@ func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
 		cancel()
 
 		// TODO: realize background tracking services to keep records of trust value
-		// TODO: utilize the generated trustvaluestorage object
+		sim.TrustValueList = trustValueRecord.TrustValueList
 	}
+}
+
+// return tuned trust value offset!(may be or may not be compromised!)
+func (sim *SimulationSession) genTrustValueHelper(rsu *dtm.RSU, tvo float32, slot uint64) float32 {
+	timeFactor := timefactor.GetTimeFactor(
+		sim.Config.TimeFactorType,
+		sim.Config.Genesis,
+		timeutil.SlotStartTime(sim.Config.Genesis, slot),
+		timeutil.NextEpochTime(sim.Config.Genesis, slot),
+	)
+	res := float32(timeFactor) * tvo
+
+	if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
+		// randomly do a kind of evil
+		switch sim.R.RandIntRange(0, dtm.DropPositiveTrustValueOffset) {
+		case dtm.FlipTrustValueOffset:
+			res = -res
+		case dtm.DropPositiveTrustValueOffset:
+			if res > 0 {
+				res = 0
+			}
+		}
+	}
+	return res
 }

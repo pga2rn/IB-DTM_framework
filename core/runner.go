@@ -9,12 +9,23 @@ import (
 )
 
 // init the simulation session
-func Run(ctx context.Context) {
+func Run(ctx context.Context) *SimulationSession {
 	cfg := config.GenYangNetConfig()
 	cfg.SetGenesis(time.Now().Add(3 * time.Second))
 	session := PrepareSimulationSession(cfg)
 
 	go session.run(ctx)
+	return session
+}
+
+func Done(session *SimulationSession) {
+	session.done()
+}
+
+func (sim *SimulationSession) done() {
+	// terminate the ticker
+	sim.Ticker.Done()
+	return
 }
 
 // start the simulation!
@@ -23,19 +34,16 @@ func Run(ctx context.Context) {
 // processslot
 // gather reports
 func (sim *SimulationSession) run(ctx context.Context) {
-	cleanup := sim.Done
-	defer cleanup()
-
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(); err != nil {
-		cleanup()
+		sim.done()
 		logutil.LoggerList["core"].Fatal("Could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(); err != nil {
-		cleanup()
+		sim.done()
 		logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
 	}
 

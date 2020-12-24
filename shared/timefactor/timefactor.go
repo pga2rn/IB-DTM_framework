@@ -21,8 +21,8 @@ const (
 	Log
 )
 
-func GetTimeFactor(timeFactorType int, genesis time.Time, slotTime time.Time, checkPointTime time.Time) float64 {
-	x := float64(checkPointTime.Unix()-genesis.Unix()) / float64(slotTime.Unix()-genesis.Unix())
+func GetTimeFactor(timeFactorType int, startTime time.Time, slotTime time.Time, endTime time.Time) float64 {
+	x := float64(endTime.Unix()-startTime.Unix()) / float64(slotTime.Unix()-startTime.Unix())
 	res := float64(-1)
 	switch timeFactorType {
 	case Exp: // y = 2^x - 1

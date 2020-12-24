@@ -16,6 +16,7 @@ func main() {
 	// fire up the simulation
 	service.Init()
 	service.Run(ctx)
+	defer service.Done()
 
 	// wait for content expire
 	select {

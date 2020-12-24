@@ -2,11 +2,10 @@ package core
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
 
 func (sim *SimulationSession) InitRSU() bool {
@@ -24,10 +23,10 @@ func (sim *SimulationSession) InitRSU() bool {
 
 			// init the data structure of trust value offset storage
 			r.TrustValueOffsetPerSlot =
-				make([]map[uint64]*dtmutil.TrustValueOffset, sim.Config.SlotsPerEpoch)
+				make([]map[uint64]*dtmtype.TrustValueOffset, sim.Config.SlotsPerEpoch)
 			for i := range r.TrustValueOffsetPerSlot {
 				// init map structure for every slot
-				r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmutil.TrustValueOffset)
+				r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmtype.TrustValueOffset)
 			}
 
 			// not yet connected with external RSU module
@@ -57,10 +56,10 @@ func (sim *SimulationSession) resetRSUAtCheckpoint(ctx context.Context, slot uin
 // reset RSU data fields at the end of epoch
 func (sim *SimulationSession) resetRSUTrustValueOffsetStorage(r *dtm.RSU) {
 	r.TrustValueOffsetPerSlot =
-		make([]map[uint64]*dtmutil.TrustValueOffset, sim.Config.SlotsPerEpoch)
+		make([]map[uint64]*dtmtype.TrustValueOffset, sim.Config.SlotsPerEpoch)
 	for i := range r.TrustValueOffsetPerSlot {
 		// init map structure for every slot
-		r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmutil.TrustValueOffset)
+		r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmtype.TrustValueOffset)
 	}
 }
 
@@ -94,15 +93,14 @@ func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 		return
 	default:
 		count := 0
-		sim.CompromisedRSUPortion = randutil.RandFloatRange(
-			sim.R,
+		sim.CompromisedRSUPortion = sim.R.RandFloatRange(
 			sim.Config.CompromisedRSUPortionMin,
 			sim.Config.CompromisedRSUPortionMax,
 		)
 		target := int(float32(sim.Config.RSUNum) * sim.CompromisedRSUPortion)
 
 		for count < target {
-			index := randutil.RandIntRange(sim.R, 0, sim.Config.RSUNum)
+			index := sim.R.RandIntRange(0, sim.Config.RSUNum)
 			if !sim.CompromisedRSUBitMap.Get(index) {
 				sim.CompromisedRSUBitMap.Set(index, true)
 				count++

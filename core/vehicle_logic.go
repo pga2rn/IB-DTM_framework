@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 )
 
@@ -92,27 +91,38 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context) {
 	default:
 		// activate extra vehicles
 		interval := sim.Config.VehicleNumMax - sim.ActiveVehiclesNum
-		newCount, newTarget := 0, randutil.RandIntRange(sim.R, interval/3, interval*2/3)
+		newTarget := sim.R.RandIntRange(interval/3, interval*2/3)
+		c := make(chan bool)
+		// emit signal in the background to activate vehicles
+		go func() {
+			for i := 0; i < newTarget; i++ {
+				c <- true
+			}
+			close(c)
+		}()
 
 		// randomly pick vehicle, iterating the whole list
 		for _, i := range sim.R.Perm(int(sim.Config.VehicleNumMax)) {
-			v := sim.Vehicles[i]
-			//isActive := sim.ActiveVehiclesBitMap.Get(i)
-			switch isActive := sim.ActiveVehiclesBitMap.Get(i); isActive {
-			case true:
-				sim.moveVehicle(v)
-			case false:
-				if newCount < newTarget {
-					newCount++
-					// when we activate a new vehicle
-					// first we update the vehicle object
-					v.EnterMap(sim.R, sim.Config.XLen, sim.Config.YLen)
-					// then we update it onto the map
-					sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
-					// finally we move it!
+			go func(i int) {
+				v := sim.Vehicles[i]
+				switch sim.ActiveVehiclesBitMap.Get(i) {
+				case true:
 					sim.moveVehicle(v)
+				case false:
+					for { // activate new vehicles
+						if f, ok := <-c; ok && f {
+							// when we activate a new vehicle
+							// first we update the vehicle object
+							v.EnterMap(sim.R, sim.Config.XLen, sim.Config.YLen)
+							// then we update it onto the map
+							sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
+							// finally we move it!
+							sim.moveVehicle(v)
+						}
+						return
+					}
 				}
-			}
+			}(i) // go routine
 		}
 	}
 }
@@ -168,8 +178,7 @@ func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
 		return
 	default:
 		count := 0
-		sim.MisbehaviorVehiclePortion = randutil.RandFloatRange(
-			sim.R,
+		sim.MisbehaviorVehiclePortion = sim.R.RandFloatRange(
 			sim.Config.MisbehaveVehiclePortionMin,
 			sim.Config.MisbehaveVehiclePortionMax,
 		)
@@ -177,7 +186,7 @@ func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
 		target := int(float32(sim.Config.VehicleNumMax) * sim.MisbehaviorVehiclePortion)
 
 		for count < target {
-			index := randutil.RandIntRange(sim.R, 0, sim.Config.VehicleNumMax)
+			index := sim.R.RandIntRange(0, sim.Config.VehicleNumMax)
 			if !sim.MisbehaviorVehicleBitMap.Get(index) {
 				sim.MisbehaviorVehicleBitMap.Set(index, true)
 				count++

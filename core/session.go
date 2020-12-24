@@ -2,14 +2,13 @@ package core
 
 import (
 	"github.com/boljen/go-bitmap"
-	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
-	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
-	"math/rand"
+	"sync"
 )
 
 // struct that store the status of a simulation session
@@ -37,9 +36,8 @@ type SimulationSession struct {
 	// store the ID(index) of compromised RSU of this slot
 	CompromisedRSUBitMap *bitmap.Threadsafe
 	// a complete list that stores every vehicle's trust value
-	// TODO: not yet utilize the following 2 fields for trust value storage
-	//AccurateTrustValueList []float32 // without bias
-	//BiasedTrustValueList   []float32 // with bias
+	TrustValueList       *sync.Map // without bias
+	BiasedTrustValueList *sync.Map // with bias
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
@@ -48,7 +46,7 @@ type SimulationSession struct {
 	RSUs [][]*dtm.RSU
 
 	// a random generator, for determined random
-	R *rand.Rand
+	R *randutil.RandUtil
 }
 
 // construct a simulationsession object
@@ -57,7 +55,7 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
 	sim.Config = cfg
 
 	// init time factor
-	timefactor.InitTimeFactor(cfg.SlotsPerEpoch)
+	//timefactor.InitTimeFactor(cfg.SlotsPerEpoch)
 
 	// init map
 	m := simmap.CreateMap(cfg)
