@@ -24,7 +24,7 @@ Trust value offset, or trust rating, represents the vehicle's trustworthiness at
 ```go
 // defined in shared/dtmtype/trustvalue.go
 const (
-	Rountine = 0.5 // routinue message, like position and status broadcasting
+	Routine = 0.5 // routinue message, like position and status broadcasting
 	Crital   = 0.7 // critial on-road message, like traffic volume or normal event
 	Fatal    = 0.9 // fatal on-road message, like traffic accident
 )
@@ -39,7 +39,7 @@ Trust value represents the on-going vehicle's trustworthiness for a specific epo
 When at the end of an epoch, RSUs query all trust value offsets of specific vehicles within an epoch. Trust value $V_i$ of vehicle $i$ in epoch $E$  can be calculated as follow, $S$ is the number of slots in $E$, $v_s$ is the sum of  trust value offsets for slot $s$, function $f$ is the time factor function, taking the start time $t_s$ of slot $s$ as parameter. 
 
 $$
-V_i=\sum^{S}_{s=0}{v_s \times f(t_s)},\quad V_i \in [-1, 1]
+V_i=\sum^{S}_{s=0}{\frac{v_s}{S} \times f(t_s)},\quad V_i \in [-1, 1]
 $$
 
 ## RSU behavior
