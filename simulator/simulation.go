@@ -1,4 +1,4 @@
-package core
+package simulator
 
 import (
 	"context"
@@ -16,19 +16,9 @@ func (sim *SimulationSession) SlotDeadline(slot uint64) time.Time {
 // wait for rsu data structure ready
 func (sim *SimulationSession) WaitForRSUInit() error {
 	logutil.LoggerList["core"].Debugf("[WaitForRSUInit] ..")
-	if ok := sim.InitRSU(); !ok {
+	if ok := sim.InitRSUs(); !ok {
 		return errors.New("failed to init RSU")
 	}
-	if err := sim.InitExternalRSUModule(); err != nil {
-		return errors.New("failed to finished external RSU module initializing")
-	}
-	return nil
-}
-
-// contact and init with external RSU module
-// DEPRECATED!: useless if we decouple RSU with validator
-func (sim *SimulationSession) InitExternalRSUModule() error {
-	// TODO: implement external RSU module contact
 	return nil
 }
 
@@ -48,7 +38,7 @@ func (sim *SimulationSession) WaitForVehiclesInit() error {
 // 1. move vehicles!
 // 2. generate trust value offset!
 func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error {
-	logutil.LoggerList["core"].Debugf("[ProcessSlot] entering ..")
+	logutil.LoggerList["core"].Debugf("[ProcessSlot] slot %v", slot)
 	SlotCtx, cancel := context.WithCancel(ctx)
 
 	select {
@@ -59,12 +49,13 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 	default:
 		// move the vehicles!
 		sim.moveVehiclesPerSlot(SlotCtx)
-		// execute dtm logic, update RSU status
+		// generate trust value offsets
 		sim.executeDTMLogicPerSlot(SlotCtx, slot)
 
 		cancel()
 		return nil
 	}
+
 }
 
 // process epoch
@@ -82,23 +73,24 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		logutil.LoggerList["core"].Debugf("[ProcessEpoch] context canceled")
 		return errors.New("context canceled")
 	default:
+		// only init misbehaving vehicles at the start
+		// TODO: init logic may be placed to other place
+		if slot == 0 {
+			sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
+			sim.InitAssignMisbehaveVehicle(ctx)
+		}
+
 		// reassign the compromised RSU
 		sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
 		sim.initAssignCompromisedRSU(ctx)
 
-		// reassign the misbehavior vehicle
-		sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
-		sim.InitAssignMisbehaveVehicle(ctx)
-
 		// calculate trust value
-		sim.genTrustValue(ctx, slot)
-
-		// TODO: reset RSU storage
+		//sim.genTrustValue(ctx, slot)
+		//
 
 		// debug
 		logutil.LoggerList["core"].
-			Debugf("[ProcessEpoch] epoch: %v, mdvp: %v, crsup: %v",
-				sim.Epoch,
+			Debugf("[ProcessEpoch] mdvp: %v, crsup: %v",
 				sim.MisbehaviorVehiclePortion,
 				sim.CompromisedRSUPortion,
 			)

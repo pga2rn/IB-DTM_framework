@@ -31,10 +31,10 @@ type Config struct {
 	OutOfSyncTolerant uint64 // in slots
 	FinalizedDelay    uint64 // in epoch
 
-	// vehicle config
-}
+	// rsu config
+	RingLength int
 
-type RSUConfig struct {
+	// vehicle config
 }
 
 func GenYangNetConfig() *Config {
@@ -43,11 +43,11 @@ func GenYangNetConfig() *Config {
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 6
 	cfg.SlotsPerEpoch = 2
-	cfg.RSUNum = 400
+	cfg.RSUNum = 25
 
 	// map config
-	cfg.XLen = 20
-	cfg.YLen = 20
+	cfg.XLen = 5
+	cfg.YLen = 5
 
 	// sim config
 	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
@@ -57,6 +57,7 @@ func GenYangNetConfig() *Config {
 	// rsu config
 	cfg.CompromisedRSUPortionMax = 0.25
 	cfg.CompromisedRSUPortionMin = 0.05
+	cfg.RingLength = 3 * int(cfg.SlotsPerEpoch)
 
 	// vehicle
 	cfg.MisbehaveVehiclePortionMax = 0.3

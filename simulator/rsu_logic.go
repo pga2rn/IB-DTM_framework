@@ -1,89 +1,27 @@
-package core
+package simulator
 
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
-	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
 
-func (sim *SimulationSession) InitRSU() bool {
+func (sim *SimulationSession) InitRSUs() bool {
 	for x := range sim.RSUs {
 		// init every RSU data structure
 		for y := range sim.RSUs[x] {
-			r := sim.RSUs[x][y]
-
-			r.Id = uint64(y)*uint64(sim.Config.XLen) + uint64(x)
-			r.Epoch = 0
-			r.Slot = 0
+			r := dtm.InitRSU(
+				uint64(sim.CoordToIndex(x, y)),
+				x, y,
+				sim.Config.RingLength,
+				)
 
 			// uploading tracker
-			r.NextSlotForUpload = 0
-
-			// init the data structure of trust value offset storage
-			r.TrustValueOffsetPerSlot =
-				make([]map[uint64]*dtmtype.TrustValueOffset, sim.Config.SlotsPerEpoch)
-			for i := range r.TrustValueOffsetPerSlot {
-				// init map structure for every slot
-				r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmtype.TrustValueOffset)
-			}
-
-			// not yet connected with external RSU module
-			r.ExternalRSUModuleInitFlag = false
+			r.SetNextUploadSlot(0)
+			sim.RSUs[x][y] = r
 		}
 	}
 
 	return true
-}
-
-//
-func (sim *SimulationSession) resetRSUAtCheckpoint(ctx context.Context, slot uint64) {
-	if slot%sim.Config.SlotsPerEpoch != 0 {
-		logutil.LoggerList["core"].Warnf("[resetRSUAtCheckpoint] being called at non-checkpoint slot, abort")
-		return
-	}
-
-	// reset the rsu trust value offset storage
-	for x := range sim.RSUs {
-		for y := range sim.RSUs[x] {
-			rsu := sim.RSUs[x][y]
-			sim.resetRSUTrustValueOffsetStorage(rsu)
-		}
-	}
-}
-
-// reset RSU data fields at the end of epoch
-func (sim *SimulationSession) resetRSUTrustValueOffsetStorage(r *dtm.RSU) {
-	r.TrustValueOffsetPerSlot =
-		make([]map[uint64]*dtmtype.TrustValueOffset, sim.Config.SlotsPerEpoch)
-	for i := range r.TrustValueOffsetPerSlot {
-		// init map structure for every slot
-		r.TrustValueOffsetPerSlot[i] = make(map[uint64]*dtmtype.TrustValueOffset)
-	}
-}
-
-// do rsu should do
-func (sim *SimulationSession) executeRSULogic(ctx context.Context, slot uint64) {
-	select {
-	case <-ctx.Done():
-		return
-	default:
-		// update epoch and slot
-		for x := range sim.RSUs {
-			for y := range sim.RSUs[x] {
-				// sync epoch and slot
-				r := sim.RSUs[x][y]
-				r.Slot, r.Epoch =
-					timeutil.SlotsSinceGenesis(sim.Config.Genesis),
-					timeutil.EpochsSinceGenesis(sim.Config.Genesis)
-
-				if r.Slot != slot {
-					logutil.LoggerList["core"].Debugf("[executeRSULogic] async with slot!")
-				}
-			}
-		}
-	}
 }
 
 // helper function for processEpoch to assign compromisedRSU

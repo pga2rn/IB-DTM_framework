@@ -1,4 +1,4 @@
-package core
+package simulator
 
 import (
 	"context"
@@ -112,6 +112,12 @@ func (sim *SimulationSession) run(ctx context.Context) {
 				}
 				cancel()
 			}()
+
+			// debug
+			sim.rmu.Lock()
+			logutil.LoggerList["core"].
+				Debugf("[processSlot] RSU 2-1, tvos %v", sim.RSUs[2][1].GetSlotsInRing(slot))
+			sim.rmu.Unlock()
 
 			cancel() // terminate ctx for this slot
 		} // slot

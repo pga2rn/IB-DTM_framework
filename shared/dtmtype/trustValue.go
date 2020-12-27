@@ -35,14 +35,14 @@ type TrustValueStorage struct {
 func InitTrustValueStorage() *TrustValueStorageHead {
 	return &TrustValueStorageHead{
 		mu:         sync.Mutex{},
-		headEpoch:  -1,
+		headEpoch:  0,
 		epochCount: 0,
 	}
 }
 
 // init a storage for specific epoch
 func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64) (*TrustValueStorage, error) {
-	if epoch != (head.headEpoch + 1){
+	if epoch != (head.headEpoch + 1) && epoch != 0{
 		return nil, errors.New("storage is out of sync with the simulation")
 	}
 
@@ -56,10 +56,17 @@ func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64) (*T
 
 	head.mu.Lock()
 	// update the head block
-	head.headPtr.ptrNext = storage
+	if head.headPtr != nil{
+		head.headPtr.ptrNext = storage
+		head.headPtr = storage
+	} else {
+		// for slot 0
+		head.headPtr.ptrNext = storage
+		head.ptrNext = storage
+	}
 
 	// update the head information in the head
-	head.headPtr, head.headEpoch, head.epochCount = storage, epoch, head.epochCount+1
+	head.headEpoch, head.epochCount = epoch, head.epochCount+1
 	head.mu.Unlock()
 
 	return storage, nil

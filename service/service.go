@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/core"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/simulator"
 	"github.com/pga2rn/ib-dtm_framework/statistics"
 )
 
@@ -21,7 +21,7 @@ func Run(ctx context.Context) {
 
 	// fire up simulation session
 	go func() {
-		serviceList["simulation"] = core.Run(ctx)
+		serviceList["simulation"] = simulator.Run(ctx)
 	}()
 	go func() {
 		serviceList["statistics"] = statistics.Run(ctx)
@@ -29,6 +29,6 @@ func Run(ctx context.Context) {
 }
 
 func Done() {
-	core.Done(serviceList["simulation"].(*core.SimulationSession))
+	simulator.Done(serviceList["simulation"].(*simulator.SimulationSession))
 	statistics.Done()
 }

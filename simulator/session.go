@@ -1,4 +1,4 @@
-package core
+package simulator
 
 import (
 	"github.com/boljen/go-bitmap"
@@ -41,10 +41,11 @@ type SimulationSession struct {
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
+	vmu	sync.Mutex
 	// a 2d array store the RSU data structure
 	// aligned with the map structure
 	RSUs [][]*dtm.RSU
-
+	rmu sync.Mutex
 	// a random generator, for determined random
 	R *randutil.RandUtil
 }
@@ -54,27 +55,22 @@ func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 
-	// init time factor
-	//timefactor.InitTimeFactor(cfg.SlotsPerEpoch)
-
 	// init map
 	m := simmap.CreateMap(cfg)
 	sim.Map = m
+
+	// init mutex
+	sim.vmu = sync.Mutex{}
+	sim.rmu = sync.Mutex{}
 
 	// init each data fields
 	sim.ActiveVehiclesNum = 0
 	sim.ActiveVehiclesBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.MisbehaviorVehicleBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
-
 	sim.RSUs = make([][]*dtm.RSU, cfg.YLen)
 	for x := range sim.RSUs {
 		sim.RSUs[x] = make([]*dtm.RSU, cfg.XLen)
-		// init every RSU data structure
-		for y := 0; y < int(cfg.XLen); y++ {
-			r := dtm.RSU{}
-			sim.RSUs[x][y] = &r
-		}
 	}
 
 	sim.CompromisedRSUBitMap = bitmap.NewTS(100) // all 0 bits

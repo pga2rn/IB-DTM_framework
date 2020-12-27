@@ -11,6 +11,7 @@ var PackageNameList = []string{
 	"rsu",
 	"service",
 	"statistics",
+	"dtm",
 }
 
 func InitLogger() {
