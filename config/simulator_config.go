@@ -2,12 +2,11 @@
 package config
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"time"
 )
 
-// Config is used to define a simulation
-type Config struct {
+// SimConfig is used to define a simulation
+type SimConfig struct {
 	////// map config ///////
 	XLen int
 	YLen int
@@ -22,7 +21,8 @@ type Config struct {
 	CompromisedRSUPortionMax float32 // from 0 ~ 1
 	CompromisedRSUPortionMin float32 // from 0 ~ 1
 
-	TimeFactorType int
+	// how many previous epochs' tvos will be used to calculate tv
+	TrustValueOffsetsTraceBackEpoch int
 
 	// time config
 	Genesis           time.Time
@@ -37,8 +37,8 @@ type Config struct {
 	// vehicle config
 }
 
-func GenYangNetConfig() *Config {
-	cfg := &Config{}
+func GenYangNetConfig() *SimConfig {
+	cfg := &SimConfig{}
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 6
@@ -52,12 +52,12 @@ func GenYangNetConfig() *Config {
 	// sim config
 	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
 	cfg.FinalizedDelay = 2    // aligned with eth2.0 setup
-	cfg.TimeFactorType = timefactor.Power
+	cfg.TrustValueOffsetsTraceBackEpoch = 3
 
 	// rsu config
 	cfg.CompromisedRSUPortionMax = 0.25
 	cfg.CompromisedRSUPortionMin = 0.05
-	cfg.RingLength = 3 * int(cfg.SlotsPerEpoch)
+	cfg.RingLength = cfg.TrustValueOffsetsTraceBackEpoch * int(cfg.SlotsPerEpoch)
 
 	// vehicle
 	cfg.MisbehaveVehiclePortionMax = 0.3
@@ -68,6 +68,6 @@ func GenYangNetConfig() *Config {
 	return cfg
 }
 
-func (cfg *Config) SetGenesis(genesis time.Time) {
+func (cfg *SimConfig) SetGenesis(genesis time.Time) {
 	cfg.Genesis = genesis
 }

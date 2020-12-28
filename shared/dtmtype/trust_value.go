@@ -40,23 +40,24 @@ func InitTrustValueStorage() *TrustValueStorageHead {
 	}
 }
 
-// init a storage for specific epoch
+// init a storage for specific epoch, the way to add a new block into the linked list
+// and then we can attach the trust value list to the returned new block via SetTrustValueList
 func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64) (*TrustValueStorage, error) {
-	if epoch != (head.headEpoch + 1) && epoch != 0{
+	if epoch != (head.headEpoch+1) && epoch != 0 {
 		return nil, errors.New("storage is out of sync with the simulation")
 	}
 
 	// init the new storage object
 	storage := &TrustValueStorage{
-		epoch:       epoch,
+		epoch:          epoch,
 		trustValueList: nil,
-		ptrNext:     nil,
-		ptrPrevious: head.headPtr,
+		ptrNext:        nil,
+		ptrPrevious:    head.headPtr,
 	}
 
 	head.mu.Lock()
 	// update the head block
-	if head.headPtr != nil{
+	if head.headPtr != nil {
 		head.headPtr.ptrNext = storage
 		head.headPtr = storage
 	} else {
@@ -72,24 +73,24 @@ func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64) (*T
 	return storage, nil
 }
 
-func (head *TrustValueStorageHead) GetEpochInformation() (uint64, int){
+func (head *TrustValueStorageHead) GetEpochInformation() (uint64, int) {
 	return head.headEpoch, head.epochCount
 }
 
-func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch (epoch uint64) *TrustValueStorage{
+func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint64) *TrustValueStorage {
 	if epoch > head.headEpoch {
 		return nil
 	}
 
 	ptr := head.ptrNext
-	for i := uint64(0); i < epoch; i++{
+	for i := uint64(0); i < epoch; i++ {
 		ptr = ptr.ptrNext
 	}
 	return ptr
 }
 
 // assign trust value list to a storage object
-func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustValuesPerEpoch) error{
+func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustValuesPerEpoch) error {
 	if storage.epoch != epoch {
 		return errors.New("mismatch input epoch and storage epoch")
 	}
@@ -97,6 +98,6 @@ func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustVal
 	return nil
 }
 
-func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch){
+func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch) {
 	return storage.epoch, storage.trustValueList
 }

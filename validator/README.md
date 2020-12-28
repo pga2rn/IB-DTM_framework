@@ -1,1 +1,0 @@
-# Extra helper functions for validator

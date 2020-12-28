@@ -59,13 +59,6 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 }
 
 // process epoch
-// routine:
-// 1. reassign the compromised RSU
-// 2. reassign the misbehavior vehicles
-// 3. gather previous epoch's data
-// 2. calculated trust value and stored in the session
-
-// TODO: mutex should be applied to trustvalue storage
 func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) error {
 	logutil.LoggerList["core"].Debugf("[ProcessEpoch] processing epoch %v", slot/sim.Config.SlotsPerEpoch)
 	select {
@@ -73,20 +66,17 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		logutil.LoggerList["core"].Debugf("[ProcessEpoch] context canceled")
 		return errors.New("context canceled")
 	default:
-		// only init misbehaving vehicles at the start
-		// TODO: init logic may be placed to other place
-		if slot == 0 {
+		switch slot {
+		case uint64(0):
 			sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
 			sim.InitAssignMisbehaveVehicle(ctx)
+			// TODO: call the dtm module for init
+		default:
+			// TODO: call the dtm module for executing the previous epoch before clean up
+			// reassign the compromised RSU
+			sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
+			sim.initAssignCompromisedRSU(ctx)
 		}
-
-		// reassign the compromised RSU
-		sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
-		sim.initAssignCompromisedRSU(ctx)
-
-		// calculate trust value
-		//sim.genTrustValue(ctx, slot)
-		//
 
 		// debug
 		logutil.LoggerList["core"].
@@ -96,7 +86,6 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 			)
 		logutil.LoggerList["core"].
 			Debugf("[ProcessEpoch] active vehicles %v", sim.ActiveVehiclesNum)
-
 	}
 
 	return nil

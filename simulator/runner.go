@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// init the simulation session
+// run the simulation, and return the pointer to the simulation object
 func Run(ctx context.Context) *SimulationSession {
 	cfg := config.GenYangNetConfig()
 	cfg.SetGenesis(time.Now().Add(3 * time.Second))
@@ -25,14 +25,11 @@ func Done(session *SimulationSession) {
 func (sim *SimulationSession) done() {
 	// terminate the ticker
 	sim.Ticker.Done()
+	close(sim.ChanDTM)
 	return
 }
 
 // start the simulation!
-// routines are as follow:
-// if checkpoint: processepoch
-// processslot
-// gather reports
 func (sim *SimulationSession) run(ctx context.Context) {
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(); err != nil {
@@ -47,11 +44,12 @@ func (sim *SimulationSession) run(ctx context.Context) {
 		logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
 	}
 
-	// wait for the blockchain
-	// WaitForBlockchainStart
-	// Ignored it! I will manually start blockchain and simulator
-
-	// wait for statistics collecting modules
+	// wait for dtm logic module
+	// TODO: finish init dtmlogic module
+	if err := sim.WaitForDTMLogicModule(); err != nil {
+		sim.done()
+		logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
+	}
 
 	// start the main loop
 	logutil.LoggerList["core"].Debugf("[Run] Genesis kicks start!")
@@ -92,26 +90,7 @@ func (sim *SimulationSession) run(ctx context.Context) {
 					cancel()
 					logutil.LoggerList["core"].Fatalf("failed to process epoch: %v", err)
 				}
-				// spawn a new go routine for gathering reports for epoch
-				go func() {
-					// the report generation should be done before the next epoch
-					epochCtx, cancel :=
-						context.WithDeadline(ctx, timeutil.NextEpochTime(sim.Config.Genesis, slot))
-					if err := sim.PrepareReportPerEpoch(epochCtx, slot); err != nil {
-						logutil.LoggerList["core"].Debugf("failed to gather reports for epoch: %v", err)
-					}
-					cancel()
-				}()
 			}
-
-			// spawn a new go routine to collect per slot report
-			go func() {
-				slotCtx, cancel := context.WithDeadline(ctx, sim.SlotDeadline(slot))
-				if err := sim.PrepareReportPerSlot(slotCtx, slot); err != nil {
-					logutil.LoggerList["core"].Debugf("failed to gather reports for slot: %v", err)
-				}
-				cancel()
-			}()
 
 			// debug
 			sim.rmu.Lock()

@@ -14,10 +14,14 @@ import (
 // struct that store the status of a simulation session
 type SimulationSession struct {
 	// config of the current simulation session
-	Config *config.Config
+	Config *config.SimConfig
 
 	// pointer to the map
 	Map *simmap.Map
+
+	// channel for inter-module-communication
+	// TODO: initialized chanDTM channel
+	ChanDTM chan interface{}
 
 	// time
 	Ticker timeutil.Ticker
@@ -41,17 +45,17 @@ type SimulationSession struct {
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
-	vmu	sync.Mutex
+	vmu      sync.Mutex
 	// a 2d array store the RSU data structure
 	// aligned with the map structure
 	RSUs [][]*dtm.RSU
-	rmu sync.Mutex
+	rmu  sync.Mutex
 	// a random generator, for determined random
 	R *randutil.RandUtil
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
+func PrepareSimulationSession(cfg *config.SimConfig) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 

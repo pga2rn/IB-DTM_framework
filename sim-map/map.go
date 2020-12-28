@@ -7,11 +7,6 @@ import (
 
 // each cross represents a CROSS within the map,
 // which holds a RSU and 0 or more vehicles
-// map looks like this:
-// 0->N
-// |
-// v
-// M
 type cross struct {
 	// a list of vehicle that appears
 	Vehicles *sync.Map // map[uint64]*vehicle.Vehicle
@@ -27,7 +22,7 @@ func (c *cross) initCross() {
 }
 
 // create a brand new map
-func CreateMap(cfg *config.Config) *Map {
+func CreateMap(cfg *config.SimConfig) *Map {
 	m := &Map{}
 
 	// prepare the map

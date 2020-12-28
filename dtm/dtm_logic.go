@@ -1,26 +1,33 @@
 package dtm
 
+// factors for generating trust values
+// 1. raw trust value offsets(from RSU)
+// 2. time factor function(genesis, slot, trace back epoch)
+// 3. compromised RSU? (compromised RSU bitmap, experiments setup)
+// 4. epoch length(from simConfig)
+//func (session *DTMLogicSession) genTrustValueHelper() float32 {
 //
-//func (sim *SimulationSession) genTrustValue(ctx context.Context, slot uint64) {
-//	logutil.LoggerList["core"].Debugf("[genTrustValue] start to process for epoch %v", slot/sim.Config.SlotsPerEpoch)
+//}
+
+//func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) {
+//	logutil.LoggerList["dtm"].Debugf("[genTrustValue] start to process for epoch %v", slot/session.SimConfig.SlotsPerEpoch)
 //	defer logutil.LoggerList["core"].
-//		Debugf("[genTrustValue] epoch %v, slot %v done", slot/sim.Config.SlotsPerEpoch, slot)
+//		Debugf("[genTrustValue] epoch %v, slot %v done", slot/session.SimConfig.SlotsPerEpoch)
 //
 //	select {
 //	case <-ctx.Done():
 //		return
 //	default:
-//		if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {
+//		if slot != timeutil.SlotsSinceGenesis(session.SimConfig.Genesis) {
 //			logutil.LoggerList["core"].
 //				Warnf("[genTrustValue] mismatch slot index! potential async")
 //		}
-//		if slot%sim.Config.SlotsPerEpoch != 0 {
+//		if slot%session.SimConfig.SlotsPerEpoch != 0 {
 //			logutil.LoggerList["core"].Fatalf("[genTrustValue] call func at non checkpoint slot, abort")
 //		}
 //
 //		// init a data structure to store the trust value
-//		trustValueRecord :=
-//			dtmtype.InitTrustValueStorageObject(slot / sim.Config.SlotsPerEpoch)
+//		head := session.TrustValueStorageHead
 //
 //		wg := sync.WaitGroup{}
 //
@@ -76,6 +83,7 @@ package dtm
 //		sim.TrustValueList = trustValueRecord.TrustValueList
 //	}
 //}
+
 //
 //
 //// return tuned trust value offset!(may be or may not be compromised!)

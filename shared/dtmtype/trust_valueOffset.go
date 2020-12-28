@@ -28,16 +28,16 @@ const (
 
 // sync.map can be used directly without extra initializing
 type TrustValueOffsetsPerSlotRing struct {
-	mu sync.Mutex
-	r *ring.Ring // *TrustValueOffsetsPerSlot
-	baseSlot, currentSlot uint64 // ring base slot
+	mu                    sync.Mutex
+	r                     *ring.Ring // *TrustValueOffsetsPerSlot
+	baseSlot, currentSlot uint64     // ring base slot
 }
 
-func InitRing(len int) *TrustValueOffsetsPerSlotRing{
+func InitRing(len int) *TrustValueOffsetsPerSlotRing {
 	return &TrustValueOffsetsPerSlotRing{
-		mu: sync.Mutex{},
-		r: ring.New(len),
-		baseSlot: 0,
+		mu:          sync.Mutex{},
+		r:           ring.New(len),
+		baseSlot:    0,
 		currentSlot: 0,
 	}
 }
@@ -52,10 +52,10 @@ func (r *TrustValueOffsetsPerSlotRing) SetElement(element *TrustValueOffsetsPerS
 	r.mu.Unlock()
 }
 
-func (r *TrustValueOffsetsPerSlotRing) GetRing() (*ring.Ring, *sync.Mutex){
+func (r *TrustValueOffsetsPerSlotRing) GetRing() (*ring.Ring, *sync.Mutex) {
 	return r.r, &r.mu
 }
 
-func (r *TrustValueOffsetsPerSlotRing) GetProperties()(baseSlot uint64, currentSlot uint64){
+func (r *TrustValueOffsetsPerSlotRing) GetProperties() (baseSlot uint64, currentSlot uint64) {
 	return r.baseSlot, r.currentSlot
 }
