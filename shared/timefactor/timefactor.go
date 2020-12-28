@@ -22,7 +22,7 @@ const (
 )
 
 func GetTimeFactor(timeFactorType int, startTime time.Time, slotTime time.Time, endTime time.Time) float64 {
-	x := float64(endTime.Unix()-startTime.Unix()) / float64(slotTime.Unix()-startTime.Unix())
+	x := float64(slotTime.Unix()-startTime.Unix()) / float64(endTime.Unix()-startTime.Unix())
 	res := float64(-1)
 	switch timeFactorType {
 	case Exp: // y = 2^x - 1
