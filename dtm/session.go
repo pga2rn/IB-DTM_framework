@@ -4,6 +4,7 @@ import (
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
@@ -35,4 +36,7 @@ type DTMLogicSession struct {
 	// trust value storage for each setups
 	// each experiment instance has its own trust value storage
 	TrustValueStorageHead *map[string]*dtmtype.TrustValueStorageHead
+
+	// a random source
+	R *randutil.RandUtil
 }

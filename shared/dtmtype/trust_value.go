@@ -77,6 +77,10 @@ func (head *TrustValueStorageHead) GetEpochInformation() (uint64, int) {
 	return head.headEpoch, head.epochCount
 }
 
+func (head *TrustValueStorageHead) GetHeadBlock() *TrustValueStorage {
+	return head.headPtr
+}
+
 func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint64) *TrustValueStorage {
 	if epoch > head.headEpoch {
 		return nil
@@ -87,6 +91,20 @@ func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint64) *T
 		ptr = ptr.ptrNext
 	}
 	return ptr
+}
+
+func (storage *TrustValueStorage) AddValue(vid uint64, v float32) {
+	list := storage.trustValueList
+	if op, ok := list.LoadOrStore(vid, v); ok {
+		list.Store(vid, v+op.(float32))
+	}
+}
+func (storage *TrustValueStorage) GetValue(vid uint64) (float32, bool) {
+	list := storage.trustValueList
+	if res, ok := list.Load(vid); ok {
+		return res.(float32), true
+	}
+	return 0, false
 }
 
 // assign trust value list to a storage object

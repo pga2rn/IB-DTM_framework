@@ -78,6 +78,14 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 			sim.initAssignCompromisedRSU(ctx)
 		}
 
+		// wait for dtm logic module finish its job
+		for {
+			if v, ok := <-sim.ChanDTM; v.(bool) && ok {
+				logutil.LoggerList["core"].Debugf("[processEpoch] dtm logic finished")
+				break
+			}
+		}
+
 		// debug
 		logutil.LoggerList["core"].
 			Debugf("[ProcessEpoch] mdvp: %v, crsup: %v",
