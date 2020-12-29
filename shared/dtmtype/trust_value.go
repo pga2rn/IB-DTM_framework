@@ -66,8 +66,8 @@ func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64, cfg
 		head.headPtr = storage
 	} else {
 		// for slot 0
-		head.headPtr.ptrNext = storage
 		head.ptrNext = storage
+		head.headPtr = storage
 	}
 
 	// update the head information in the head

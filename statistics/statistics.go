@@ -13,7 +13,7 @@ type Statistics struct {
 	// 4 basic metrics
 	TP, FP, FN, TN float64
 	// 4 advanced metrics
-	Recall, Precision, F1score, ACC float64
+	Recall, Precision, F1ssimulator, ACC float64
 }
 
 // compare the results and calculate the statistics
@@ -45,9 +45,9 @@ func GenStatisicsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Stat
 	// advanced metrics
 	recall := tp / (tp + fn)
 	precision := tp / (tp + fp)
-	f1score := 2 * recall * precision / (recall + precision)
+	f1ssimulator := 2 * recall * precision / (recall + precision)
 	acc := (tp + tn) / (tp + tn + fp + fn)
-	res.Recall, res.Precision, res.F1score, res.ACC = recall, precision, f1score, acc
+	res.Recall, res.Precision, res.F1ssimulator, res.ACC = recall, precision, f1ssimulator, acc
 
 	return res
 }

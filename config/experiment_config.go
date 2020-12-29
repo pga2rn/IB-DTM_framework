@@ -15,11 +15,11 @@ type ExperimentConfig struct {
 }
 
 // return a map of experiment config
-func InitExperimentConfig() *map[string]ExperimentConfig {
-	m := make(map[string]ExperimentConfig)
+func InitBaselineExperimentConfig() *map[string]*ExperimentConfig {
+	m := make(map[string]*ExperimentConfig)
 
 	// baseline 0
-	m["Baseline0"] = ExperimentConfig{
+	m["Baseline0"] = &ExperimentConfig{
 		Name:                             "Baseline0",
 		Description:                      "base line setup 0",
 		CompromisedRSUFlag:               false,
@@ -29,7 +29,7 @@ func InitExperimentConfig() *map[string]ExperimentConfig {
 	}
 
 	// baseline 1
-	m["Baseline1"] = ExperimentConfig{
+	m["Baseline1"] = &ExperimentConfig{
 		Name:                             "Baseline1",
 		Description:                      "base line setup 1",
 		CompromisedRSUFlag:               true,
@@ -39,17 +39,23 @@ func InitExperimentConfig() *map[string]ExperimentConfig {
 	}
 
 	// baseline 2
-	m["Baseline2"] = ExperimentConfig{
+	m["Baseline2"] = &ExperimentConfig{
 		Name:                             "Baseline2",
 		Description:                      "base line setup 2",
 		CompromisedRSUFlag:               true,
 		TimeFactorFlag:                   false,
 		TimeFactorType:                   -1,
-		TrustValueOffsetsTraceBackEpochs: 3,
+		TrustValueOffsetsTraceBackEpochs: 1,
 	}
 
+	return &m
+}
+
+func InitProposalExperimentConfig() *map[string]*ExperimentConfig {
+	m := make(map[string]*ExperimentConfig)
+
 	// proposal 0
-	m["Proposal0"] = ExperimentConfig{
+	m["Proposal0"] = &ExperimentConfig{
 		Name:                             "Proposal0",
 		Description:                      "proposal 0",
 		CompromisedRSUFlag:               false,
@@ -59,7 +65,7 @@ func InitExperimentConfig() *map[string]ExperimentConfig {
 	}
 
 	// proposal 1
-	m["Proposal1"] = ExperimentConfig{
+	m["Proposal1"] = &ExperimentConfig{
 		Name:                             "Proposal1",
 		Description:                      "proposal 1",
 		CompromisedRSUFlag:               true,

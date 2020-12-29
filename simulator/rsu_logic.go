@@ -2,18 +2,18 @@ package simulator
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/rsu"
 )
 
 func (sim *SimulationSession) InitRSUs() bool {
 	for x := range sim.RSUs {
 		// init every RSU data structure
 		for y := range sim.RSUs[x] {
-			r := dtm.InitRSU(
+			r := rsu.InitRSU(
 				uint64(sim.CoordToIndex(x, y)),
 				x, y,
 				sim.Config.RingLength,
-				)
+			)
 
 			// uploading tracker
 			r.SetNextUploadSlot(0)

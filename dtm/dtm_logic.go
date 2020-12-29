@@ -2,6 +2,7 @@ package dtm
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
@@ -18,7 +19,8 @@ import (
 
 // init the storage area
 func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint64) {
-	for expName, _ := range *session.Config {
+	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
+	for expName := range *session.Config {
 		head := (*session.TrustValueStorageHead)[expName]
 		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
 			logutil.LoggerList["dtm"].
@@ -45,10 +47,10 @@ func (session *DTMLogicSession) genTrustValueHelper(
 
 	// compromised RSU
 	if compromisedRSUFlag {
-		switch session.R.RandIntRange(0, len(RSUEvilsType)) {
-		case FlipTrustValueOffset:
+		switch session.R.RandIntRange(0, len(rsu.RSUEvilsType)) {
+		case rsu.FlipTrustValueOffset:
 			res = -res
-		case DropPositiveTrustValueOffset:
+		case rsu.DropPositiveTrustValueOffset:
 			if res > 0 {
 				res = 0
 			}
@@ -78,33 +80,24 @@ func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint64) fl
 	return timefactor.GetTimeFactor(cfg.TimeFactorType, start, slotTime, end)
 }
 
-func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) {
-	logutil.LoggerList["dtm"].Debugf("[genTrustValue] start to process for epoch %v", slot/session.SimConfig.SlotsPerEpoch)
-	defer logutil.LoggerList["core"].
-		Debugf("[genTrustValue] epoch %v, slot %v done", slot/session.SimConfig.SlotsPerEpoch)
+func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint64) {
+	logutil.LoggerList["dtm"].Debugf("[genTrustValue] start to process for epoch %v", epoch)
+	defer logutil.LoggerList["dtm"].
+		Debugf("[genTrustValue] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
+		logutil.LoggerList["dtm"].Fatalf("[genTrustValue] context canceled")
 		return
 	default:
-		if slot != timeutil.SlotsSinceGenesis(session.SimConfig.Genesis) {
-			logutil.LoggerList["core"].
-				Warnf("[genTrustValue] mismatch slot index! potential async")
-		}
-		if slot%session.SimConfig.SlotsPerEpoch != 0 {
-			logutil.LoggerList["core"].Fatalf("[genTrustValue] call func at non checkpoint slot, abort")
-		}
-
 		// for go routine
 		wg := sync.WaitGroup{}
 
 		// iterate all RSU
-		// set deadline
-		epochCtx, cancel := context.WithDeadline(ctx, timeutil.NextEpochTime(session.SimConfig.Genesis, slot))
 		for x := range *session.RSUs {
 			for y := range (*session.RSUs)[x] {
 				session.rmu.Lock()
-				rsu := (*session.RSUs)[x][y]
+				r := (*session.RSUs)[x][y]
 				session.rmu.Unlock()
 
 				// use go routines to collect every RSU's data
@@ -112,14 +105,16 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 				wg.Add(1)
 				go func() {
 					select {
-					case <-epochCtx.Done():
-						logutil.LoggerList["core"].Fatalf("[genTrustValue] times up for collecting RSU data at the end of epoch, abort")
+					case <-ctx.Done():
+						logutil.LoggerList["simulator"].Fatalf("[genTrustValue] times up for collecting RSU data at the end of epoch, abort")
 						return
 					default:
+						baseSlot, currentSlot := r.GetRingInformation()
+
 						// RSU: for every slots
-						for slotIndex := 0; slotIndex < int(session.SimConfig.SlotsPerEpoch); slotIndex++ {
+						for slotIndex := baseSlot; slotIndex <= currentSlot; slotIndex++ {
 							// get the slot (a sync map)
-							slotInstance := rsu.GetSlotsInRing(slot)
+							slotInstance := r.GetSlotInRing(slotIndex)
 
 							// dive into the slot
 							c := make(chan []interface{})
@@ -131,14 +126,14 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 							// the following routine will capture the key and value from the sync map
 							go func() {
 								select {
-								case <-epochCtx.Done():
-									logutil.LoggerList["core"].Fatalf("[genTrustValue] times up for collecting RSU data at the end of epoch, abort")
+								case <-ctx.Done():
+									logutil.LoggerList["simulator"].Fatalf("[genTrustValue] times up for collecting RSU data at the end of epoch, abort")
 									return
 								default:
 									for pair := range c {
 										key, value := pair[0].(uint64), pair[1].(*dtmtype.TrustValueOffset)
 										if key != value.VehicleId {
-											logutil.LoggerList["core"].
+											logutil.LoggerList["simulator"].
 												Warnf("[genTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 											continue // ignore invalid trust value offset record
 										}
@@ -149,11 +144,14 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 											tvStorageHead := (*session.TrustValueStorageHead)[expName]
 											tvStorageBlock := tvStorageHead.GetHeadBlock()
 
+											// whether to respect compromisedRSU assignment or not
+											compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(r.Id)) && exp.CompromisedRSUFlag
+
 											// generate!
-											tfactor := session.genTimeFactorHelper(expName, slot)
+											tfactor := session.genTimeFactorHelper(expName, slotIndex)
 											res := session.genTrustValueHelper(
 												float32(tfactor), value,
-												exp.CompromisedRSUFlag, exp.TimeFactorFlag,
+												compromisedRSUFlag, exp.TimeFactorFlag,
 											)
 											// add value to the storage block
 											tvStorageBlock.AddValue(key, res)
@@ -162,40 +160,41 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 								} // context
 							}() // go routine
 
-							// iterate through the sync.Map
+							// iterate through the all slots in sync.Map
 							slotInstance.Range(f)
 							close(c)
 						}
 					} // select
 					wg.Done() // job done,
 				}() // go routine
-			}
-		}
+			} // iterate RSUs inner for loop
+		} // outer for loop
 
 		// wait for all work to finish their job
 		wg.Wait()
-		// after all the workers finish their job, cancel the context
-		cancel()
 	}
 }
 
 // iterate through the trust value storage for the specific epoch
-// flag out the misbehaving vehicles accoringly
+// flag out the misbehaving vehicles accordingly
 // trust value below 0 will be treated as misbehaving
-func (session *DTMLogicSession) flagMisbehavingVehicle(ctx context.Context, slot uint64) {
-	epoch := slot / session.SimConfig.SlotsPerEpoch
+func (session *DTMLogicSession) flagMisbehavingVehicle(ctx context.Context, epoch uint64) {
+	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] epoch %v", epoch)
+	defer logutil.LoggerList["dtm"].
+		Debugf("[flagMisbehavingVehicle] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] context canceled")
 		return
 	default:
-		for expName, _ := range *session.Config {
+		for expName := range *session.Config {
 			// get the head of the storage
 			head := (*session.TrustValueStorageHead)[expName]
 			headBlock := head.GetHeadBlock()
 			ep, list, bmap := headBlock.GetTrustValueList()
 			if ep != epoch {
+				logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] epoch mismatch! ep %v, epoch %v", ep, epoch)
 				return
 			}
 

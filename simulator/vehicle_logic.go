@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
+	"sync"
 )
 
 ////// simulation //////
@@ -48,7 +49,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 		sim.Vehicles[i] = v
 		sim.ActiveVehiclesBitMap.Set(i, true)
 
-		//logutil.LoggerList["core"].Debugf("pos %v", v.Pos)
+		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
 		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint64(i), v)
 	}
@@ -69,13 +70,17 @@ func (sim *SimulationSession) InitVehicles() bool {
 	return true
 }
 
-func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context) {
-	logutil.LoggerList["core"].Debugf("[moveVehiclesPerSlot] entering..")
+func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint64) {
+	logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] entering..")
+
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["core"].Debugf("[moveVehiclesPerSlot] context canceled")
+		logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] context canceled")
 		return
 	default:
+		// sync
+		wg := sync.WaitGroup{}
+
 		// activate extra vehicles
 		interval := sim.Config.VehicleNumMax - sim.ActiveVehiclesNum
 		newTarget := sim.R.RandIntRange(interval/3, interval*2/3)
@@ -90,28 +95,41 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context) {
 
 		// randomly pick vehicle, iterating the whole list
 		for _, i := range sim.R.Perm(int(sim.Config.VehicleNumMax)) {
+			wg.Add(1)
+
 			go func(i int) {
-				v := sim.Vehicles[i]
-				switch sim.ActiveVehiclesBitMap.Get(i) {
-				case true:
-					sim.moveVehicle(v)
-				case false:
-					for { // activate new vehicles
-						if f, ok := <-c; ok && f {
-							// when we activate a new vehicle
-							// first we update the vehicle object
-							v.EnterMap(sim.R, sim.Config.XLen, sim.Config.YLen)
-							// then we update it onto the map
-							sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
-							// finally we move it!
-							sim.moveVehicle(v)
+				select {
+				case <-ctx.Done():
+					wg.Done()
+					return
+				default:
+					v := sim.Vehicles[i]
+					switch sim.ActiveVehiclesBitMap.Get(i) {
+					case true:
+						sim.moveVehicle(v)
+					case false:
+						for {
+							if val, ok := <-c; ok && val { // activate new vehicles
+								// when we activate a new vehicle
+								// first we update the vehicle object
+								v.EnterMap(sim.R, sim.Config.XLen, sim.Config.YLen)
+								// then we update it onto the map
+								sim.UpdateVehicleStatus(v, v.Pos, vehicle.Active)
+								// finally we move it!
+								sim.moveVehicle(v)
+							} else { // no more new vehicles are needed
+								break
+							}
 						}
-						return
 					}
-				}
+				} // select
+				wg.Done()
 			}(i) // go routine
-		}
-	}
+		} // for loop
+
+		// wait for all jobs to be done
+		wg.Wait()
+	} // select
 }
 
 // mark a specific vehicle as inactive, and unregister it from the map
@@ -151,10 +169,10 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 	// check whether the vehicle is still in the map
 	switch {
 	case v.Pos.X >= 0 && v.Pos.Y >= 0 && v.Pos.X < sim.Config.XLen && v.Pos.Y < sim.Config.YLen:
-		// finally update the vehicle's status on map
+		// if the vehicle still in the map, update its position
 		sim.updateVehiclePos(v, oldPos)
 	default:
-		// the vehicle moves out of the map
+		// else inactivate the vehicle because it is out of the map
 		sim.inactivateVehicle(v, oldPos)
 	}
 

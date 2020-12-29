@@ -1,4 +1,4 @@
-package dtm
+package rsu
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
@@ -64,7 +64,7 @@ func (rsu *RSU) InsertSlotsInRing(slot uint64, element *dtmtype.TrustValueOffset
 	rsu.ring.SetElement(element, baseSlot, curSlot)
 }
 
-func (rsu *RSU) GetSlotsInRing(slot uint64) *dtmtype.TrustValueOffsetsPerSlot {
+func (rsu *RSU) GetSlotInRing(slot uint64) *dtmtype.TrustValueOffsetsPerSlot {
 	rin, rinMu := rsu.ring.GetRing()
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -98,4 +98,8 @@ func (rsu *RSU) SetNextUploadSlot(slot uint64) {
 		rsu.nextSlotForUpload = slot + 1
 	}
 	rsu.uploadMu.Unlock()
+}
+
+func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint64) {
+	return rsu.ring.GetProperties()
 }

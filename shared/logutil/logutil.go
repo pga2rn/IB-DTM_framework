@@ -4,7 +4,7 @@ import log "github.com/sirupsen/logrus"
 
 var LoggerList = make(map[string]*log.Entry)
 var PackageNameList = []string{
-	"core",
+	"simulator",
 	"main",
 	"simmap",
 	"vehicle",

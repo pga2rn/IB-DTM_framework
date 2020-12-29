@@ -3,7 +3,7 @@ package simulator
 import (
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
@@ -20,7 +20,6 @@ type SimulationSession struct {
 	Map *simmap.Map
 
 	// channel for inter-module-communication
-	// TODO: initialized chanDTM channel
 	ChanDTM chan interface{}
 
 	// time
@@ -48,16 +47,19 @@ type SimulationSession struct {
 	vmu      sync.Mutex
 	// a 2d array store the RSU data structure
 	// aligned with the map structure
-	RSUs [][]*dtm.RSU
+	RSUs [][]*rsu.RSU
 	rmu  sync.Mutex
 	// a random generator, for determined random
 	R *randutil.RandUtil
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.SimConfig) *SimulationSession {
+func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
+
+	// inter module
+	sim.ChanDTM = c
 
 	// init map
 	m := simmap.CreateMap(cfg)
@@ -72,9 +74,9 @@ func PrepareSimulationSession(cfg *config.SimConfig) *SimulationSession {
 	sim.ActiveVehiclesBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.MisbehaviorVehicleBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
-	sim.RSUs = make([][]*dtm.RSU, cfg.YLen)
+	sim.RSUs = make([][]*rsu.RSU, cfg.YLen)
 	for x := range sim.RSUs {
-		sim.RSUs[x] = make([]*dtm.RSU, cfg.XLen)
+		sim.RSUs[x] = make([]*rsu.RSU, cfg.XLen)
 	}
 
 	sim.CompromisedRSUBitMap = bitmap.NewTS(100) // all 0 bits
