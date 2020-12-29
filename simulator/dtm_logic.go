@@ -105,11 +105,6 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						tvo.Weight = dtmtype.Routine
 					}
 
-					// debug
-					if v.Pos.X >= 10 || v.Pos.Y >= 10 {
-						logutil.LoggerList["simulator"].Fatalf("!?!?")
-					}
-
 					// update the value to RSU
 					// update each slot
 					sim.rmu.Lock()

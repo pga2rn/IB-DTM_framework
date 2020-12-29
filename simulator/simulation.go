@@ -61,7 +61,7 @@ func (sim *SimulationSession) dialDTMLogicModule(ctx context.Context, slot uint6
 	case <-ctx.Done():
 		return
 	default:
-		pack := shared.SimDTMCommunication{}
+		pack := shared.SimDTMEpochCommunication{}
 		pack.Slot, pack.CompromisedRSUBitMap = slot, sim.CompromisedRSUBitMap
 		sim.ChanDTM <- pack
 		// wait for dtm logic module to finish

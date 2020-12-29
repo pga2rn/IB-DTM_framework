@@ -8,9 +8,13 @@ import (
 )
 
 // struct that used for communication between simulator module and DTM module
-type SimDTMCommunication struct {
+type SimDTMEpochCommunication struct {
 	Slot                 uint64
 	CompromisedRSUBitMap *bitmap.Threadsafe // only pass the pointer
+}
+
+// for proposal
+type SimDTMSlotCommunication struct {
 }
 
 // struct for initializing the dtm
