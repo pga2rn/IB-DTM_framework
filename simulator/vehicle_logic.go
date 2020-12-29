@@ -9,8 +9,6 @@ import (
 ////// simulation //////
 // a helper function to sync the vehicle status between session and vehicle object
 func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicle.Position, status int) {
-	//logutil.LoggerList["core"].Debugf("vs %v, bitms %v, status %v",
-	//	v.VehicleStatus, sim.ActiveVehiclesBitMap.Get(int(v.Id)), status)
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
@@ -68,17 +66,6 @@ func (sim *SimulationSession) InitVehicles() bool {
 		sim.Vehicles[i] = v
 		sim.ActiveVehiclesBitMap.Set(i, false)
 	}
-
-	// init all vehicles' trust value
-	//sim.AccurateTrustValueList = make([]float32, sim.Config.VehicleNumMax)
-	//for i := range sim.AccurateTrustValueList {
-	//	sim.AccurateTrustValueList[i] = 0
-	//}
-	//sim.BiasedTrustValueList = make([]float32, sim.Config.VehicleNumMax)
-	//for i := range sim.BiasedTrustValueList {
-	//	sim.BiasedTrustValueList[i] = 0
-	//}
-
 	return true
 }
 
@@ -137,11 +124,12 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehic
 }
 
 // move vehicle from one cross to another
+// wrap the operation
 func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos vehicle.Position) {
 	// unregister the vehicle from the old cross
-	sim.Map.Cross[oldPos.X][oldPos.Y].Vehicles.Delete(v.Id)
+	sim.Map.Cross[oldPos.X][oldPos.Y].RemoveVehicle(v.Id)
 	// register the vehicle into the new cross
-	sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles.Store(v.Id, v)
+	sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(v.Id, v)
 }
 
 // move a single vehicle
@@ -157,7 +145,7 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 	// update the vehicle object
 	newDirection := v.MovementDecisionMaker(sim.R, sim.Config.XLen, sim.Config.YLen)
 	oldPos := v.Pos
-	v.MoveHelper(newDirection)
+	v.VehicleMove(newDirection)
 
 	// after the vehicle object is updated,
 	// check whether the vehicle is still in the map

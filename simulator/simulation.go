@@ -5,13 +5,7 @@ import (
 	"errors"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
-	"time"
 )
-
-func (sim *SimulationSession) SlotDeadline(slot uint64) time.Time {
-	return timeutil.NextSlotTime(sim.Config.Genesis, slot)
-}
 
 // wait for rsu data structure ready
 func (sim *SimulationSession) WaitForRSUInit() error {
