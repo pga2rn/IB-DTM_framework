@@ -48,3 +48,8 @@ func NextEpochTime(genesis time.Time, slot uint64) time.Time {
 func NextSlotTime(genesis time.Time, slot uint64) time.Time {
 	return SlotStartTime(genesis, slot+1)
 }
+
+// return a deadline for next slot
+func SlotDeadline(genesis time.Time, slot uint64) time.Time {
+	return NextSlotTime(genesis, slot)
+}

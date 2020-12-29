@@ -1,26 +1,29 @@
 package main
 
 import (
-	"context"
 	"github.com/pga2rn/ib-dtm_framework/service"
-	"time"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/urfave/cli/v2"
+	"os"
+	runtimeDebug "runtime/debug"
 )
 
 func main() {
-	ctx, cancel := context.WithDeadline(
-		context.Background(),
-		time.Now().Add(10*time.Minute),
-	)
-	defer cancel()
+	app := &cli.App{
+		Name:   "framework",
+		Action: service.Entry,
+		Before: service.Init,
+		After:  service.Done,
+	}
 
-	// fire up the simulation
-	service.Init()
-	service.Run(ctx)
-	defer service.Done()
+	defer func() {
+		if x := recover(); x != nil {
+			logutil.LoggerList["main"].Errorf("Runtime panic: %v\n%v", x, string(runtimeDebug.Stack()))
+			panic(x)
+		}
+	}()
 
-	// wait for content expire
-	select {
-	case <-ctx.Done():
-		return
+	if err := app.Run(os.Args); err != nil {
+		logutil.LoggerList["main"].Fatalf("failed to start the application")
 	}
 }

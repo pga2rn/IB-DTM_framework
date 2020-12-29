@@ -1,9 +1,9 @@
-package core
+package simulator
 
 import (
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
@@ -14,10 +14,13 @@ import (
 // struct that store the status of a simulation session
 type SimulationSession struct {
 	// config of the current simulation session
-	Config *config.Config
+	Config *config.SimConfig
 
 	// pointer to the map
 	Map *simmap.Map
+
+	// channel for inter-module-communication
+	ChanDTM chan interface{}
 
 	// time
 	Ticker timeutil.Ticker
@@ -41,40 +44,39 @@ type SimulationSession struct {
 
 	// a list of all vehicles in the map
 	Vehicles []*vehicle.Vehicle
+	vmu      sync.Mutex
 	// a 2d array store the RSU data structure
 	// aligned with the map structure
-	RSUs [][]*dtm.RSU
-
+	RSUs [][]*rsu.RSU
+	rmu  sync.Mutex
 	// a random generator, for determined random
 	R *randutil.RandUtil
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.Config) *SimulationSession {
+func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 
-	// init time factor
-	//timefactor.InitTimeFactor(cfg.SlotsPerEpoch)
+	// inter module
+	sim.ChanDTM = c
 
 	// init map
 	m := simmap.CreateMap(cfg)
 	sim.Map = m
+
+	// init mutex
+	sim.vmu = sync.Mutex{}
+	sim.rmu = sync.Mutex{}
 
 	// init each data fields
 	sim.ActiveVehiclesNum = 0
 	sim.ActiveVehiclesBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.MisbehaviorVehicleBitMap = bitmap.NewTS(int(sim.Config.VehicleNumMax))
 	sim.Vehicles = make([]*vehicle.Vehicle, cfg.VehicleNumMax)
-
-	sim.RSUs = make([][]*dtm.RSU, cfg.YLen)
+	sim.RSUs = make([][]*rsu.RSU, cfg.YLen)
 	for x := range sim.RSUs {
-		sim.RSUs[x] = make([]*dtm.RSU, cfg.XLen)
-		// init every RSU data structure
-		for y := 0; y < int(cfg.XLen); y++ {
-			r := dtm.RSU{}
-			sim.RSUs[x][y] = &r
-		}
+		sim.RSUs[x] = make([]*rsu.RSU, cfg.XLen)
 	}
 
 	sim.CompromisedRSUBitMap = bitmap.NewTS(100) // all 0 bits
