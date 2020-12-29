@@ -21,14 +21,14 @@ func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot u
 	}
 }
 
-func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint64){
+func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint64) {
 	logutil.LoggerList["core"].Debugf("[prepareRSUsForSlot] slot %v", slot)
 	select {
 	case <-ctx.Done():
 		return
 	default:
-		for x:= 0; x < sim.Config.XLen;x++{
-			for y := 0; y<sim.Config.YLen;y++{
+		for x := 0; x < sim.Config.XLen; x++ {
+			for y := 0; y < sim.Config.YLen; y++ {
 				sim.rmu.Lock()
 				rsu := sim.RSUs[x][y]
 				sim.rmu.Unlock()
@@ -38,12 +38,10 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint6
 	}
 }
 
-
 // trust value offsets are stored on each RSU components
 func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint64) {
 	logutil.LoggerList["core"].Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
 	defer logutil.LoggerList["core"].Debugf("[genTrustValueOffset] done")
-
 
 	select {
 	case <-ctx.Done():
@@ -73,8 +71,8 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					// locate to the cross in the map, assign the trust value to cross RSU
 					flag := sim.R.Float32()
 					switch {
-					// 10% possibility to no be evil
-					case flag < 0.1:
+					// 5% possibility to no be evil
+					case flag < 0.05:
 						tvo.TrustValueOffset = 1
 					default:
 						tvo.TrustValueOffset = -1
@@ -101,6 +99,6 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 				sim.RSUs[v.Pos.X][v.Pos.Y].GetSlotsInRing(slot).Store(v.Id, &tvo)
 				sim.rmu.Unlock()
 			}(id, v) // go routine
-		}// for loop
+		} // for loop
 	}
 }

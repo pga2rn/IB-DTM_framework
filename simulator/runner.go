@@ -46,10 +46,10 @@ func (sim *SimulationSession) run(ctx context.Context) {
 
 	// wait for dtm logic module
 	// TODO: finish init dtmlogic module
-	if err := sim.WaitForDTMLogicModule(); err != nil {
-		sim.done()
-		logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
-	}
+	//if err := sim.WaitForDTMLogicModule(); err != nil {
+	//	sim.done()
+	//	logutil.LoggerList["core"].Fatal("External RSU module is not ready: %v", err)
+	//}
 
 	// start the main loop
 	logutil.LoggerList["core"].Debugf("[Run] Genesis kicks start!")
@@ -78,7 +78,7 @@ func (sim *SimulationSession) run(ctx context.Context) {
 			sim.Epoch = timeutil.EpochsSinceGenesis(sim.Config.Genesis)
 
 			// the following process must be finished within the slot
-			slotCtx, cancel := context.WithDeadline(ctx, sim.SlotDeadline(slot))
+			slotCtx, cancel := context.WithDeadline(ctx, timeutil.SlotDeadline(sim.Config.Genesis, slot))
 			if err := sim.ProcessSlot(slotCtx, slot); err != nil {
 				cancel()
 				logutil.LoggerList["core"].Fatalf("failed to process slot: %v", err)

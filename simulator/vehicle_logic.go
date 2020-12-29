@@ -50,7 +50,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 		//logutil.LoggerList["core"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.Cross[v.Pos.X][v.Pos.Y].Vehicles.Store(uint64(i), v)
+		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint64(i), v)
 	}
 
 	// init inactivate vehicles

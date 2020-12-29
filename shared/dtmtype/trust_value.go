@@ -2,6 +2,8 @@ package dtmtype
 
 import (
 	"errors"
+	"github.com/boljen/go-bitmap"
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"sync"
 )
 
@@ -25,10 +27,11 @@ type TrustValueStorageHead struct {
 
 // data structure to hold every vehicle's trust value of specific epoch
 type TrustValueStorage struct {
-	epoch          uint64
-	trustValueList *TrustValuesPerEpoch
-	ptrNext        *TrustValueStorage
-	ptrPrevious    *TrustValueStorage
+	epoch                    uint64
+	trustValueList           *TrustValuesPerEpoch
+	misbehavingVehicleBitMap *bitmap.Threadsafe
+	ptrNext                  *TrustValueStorage
+	ptrPrevious              *TrustValueStorage
 }
 
 // constructor of trust value storage
@@ -42,17 +45,18 @@ func InitTrustValueStorage() *TrustValueStorageHead {
 
 // init a storage for specific epoch, the way to add a new block into the linked list
 // and then we can attach the trust value list to the returned new block via SetTrustValueList
-func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64) (*TrustValueStorage, error) {
+func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64, cfg *config.SimConfig) (*TrustValueStorage, error) {
 	if epoch != (head.headEpoch+1) && epoch != 0 {
 		return nil, errors.New("storage is out of sync with the simulation")
 	}
 
 	// init the new storage object
 	storage := &TrustValueStorage{
-		epoch:          epoch,
-		trustValueList: nil,
-		ptrNext:        nil,
-		ptrPrevious:    head.headPtr,
+		epoch:                    epoch,
+		trustValueList:           &TrustValuesPerEpoch{},
+		misbehavingVehicleBitMap: bitmap.NewTS(cfg.VehicleNumMax),
+		ptrNext:                  nil,
+		ptrPrevious:              head.headPtr,
 	}
 
 	head.mu.Lock()
@@ -116,6 +120,6 @@ func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustVal
 	return nil
 }
 
-func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch) {
-	return storage.epoch, storage.trustValueList
+func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch, *bitmap.Threadsafe) {
+	return storage.epoch, storage.trustValueList, storage.misbehavingVehicleBitMap
 }

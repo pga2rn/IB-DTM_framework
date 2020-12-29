@@ -16,6 +16,17 @@ import (
 // 3. compromised RSU? (compromised RSU bitmap, experiments setup)
 // 4. epoch length(from simConfig)
 
+// init the storage area
+func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint64) {
+	for expName, _ := range *session.Config {
+		head := (*session.TrustValueStorageHead)[expName]
+		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
+			logutil.LoggerList["dtm"].
+				Fatalf("[initDataStructureForEpoch] failed to allocate storage, expName %v", expName)
+		}
+	}
+}
+
 func (session *DTMLogicSession) genTrustValueHelper(
 	tfactor float32,
 	tvo *dtmtype.TrustValueOffset,
@@ -136,7 +147,6 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 										for expName, exp := range *session.Config {
 											// get the storage head & storage block
 											tvStorageHead := (*session.TrustValueStorageHead)[expName]
-											// TODO: we should init the storage block for the epoch before the tv generation function being called
 											tvStorageBlock := tvStorageHead.GetHeadBlock()
 
 											// generate!
@@ -166,5 +176,48 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, slot uint64) 
 		wg.Wait()
 		// after all the workers finish their job, cancel the context
 		cancel()
+	}
+}
+
+// iterate through the trust value storage for the specific epoch
+// flag out the misbehaving vehicles accoringly
+// trust value below 0 will be treated as misbehaving
+func (session *DTMLogicSession) flagMisbehavingVehicle(ctx context.Context, slot uint64) {
+	epoch := slot / session.SimConfig.SlotsPerEpoch
+
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] context canceled")
+		return
+	default:
+		for expName, _ := range *session.Config {
+			// get the head of the storage
+			head := (*session.TrustValueStorageHead)[expName]
+			headBlock := head.GetHeadBlock()
+			ep, list, bmap := headBlock.GetTrustValueList()
+			if ep != epoch {
+				return
+			}
+
+			// iterate through sync.Map
+			c := make(chan []interface{})
+			f := func(key, value interface{}) bool {
+				c <- []interface{}{key, value}
+				return true
+			}
+
+			// trust value
+			go func() {
+				for pair := range c {
+					if vid, tv := pair[0].(uint64), pair[1].(float32); tv < 0 {
+						bmap.Set(int(vid), true)
+					}
+				}
+			}()
+
+			// iterate via Range
+			list.Range(f)
+			close(c)
+		}
 	}
 }
