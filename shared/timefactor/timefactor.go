@@ -35,6 +35,8 @@ func GetTimeFactor(timeFactorType int, startTime time.Time, slotTime time.Time, 
 		res = math.Sin(0.5 * math.Pi * x)
 	case Log: // y = -0.5log(1/x)+1
 		res = -1*0.5*math.Log(1/x) + 1
+	default:
+		res = 1
 	}
 	return res
 }
