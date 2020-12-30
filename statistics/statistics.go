@@ -17,7 +17,7 @@ type Statistics struct {
 }
 
 // compare the results and calculate the statistics
-func GenStatisicsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Statistics {
+func GenStatisticsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Statistics {
 	length := answer.Len()
 	res := &Statistics{Epoch: epoch, VehiclesNum: length}
 
@@ -26,18 +26,18 @@ func GenStatisicsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Stat
 	for i := 0; i < length; i++ {
 		a, r := answer.Get(i), result.Get(i)
 		switch {
-		// result correctly flags out the misbehaving vehicle
+		// correctly flag misbehaving vehicles
 		case a == r && a == true:
 			tp++
-		// result correctly flags out the normal vehicle
+		// correctly flag normal vehicles
 		case a == r && a == false:
-			tn++
-		// result incorrectly flags out the misbehaving vehicle as normal
+			fp++
+		// incorrectly flag as normal vehicles
 		case a != r && a == true:
 			fn++
-		// result incorrectly flags out the normal vehicle as misbehaving
+		// incorrectly flags as misbehaving vehicles
 		case a != r && a == false:
-			fp++
+			tn++
 		}
 	}
 	res.TP, res.TN, res.FN, res.FP = tp, tn, fn, fp
