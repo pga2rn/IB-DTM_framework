@@ -2,7 +2,6 @@ package dtm
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
@@ -45,18 +44,22 @@ func (session *DTMLogicSession) genTrustValueHelper(
 	res := tvo.TrustValueOffset * tfactor * tvo.Weight /
 		float32(session.SimConfig.SlotsPerEpoch)
 
-	// compromised RSU
+	// compromised RSU will do the following evils:
+	// 1. flip the trust value
+	// 2. drop trust value offset: 0.3
 	if compromisedRSUFlag {
-		switch session.R.RandIntRange(0, len(rsu.RSUEvilsType)) {
-		case rsu.FlipTrustValueOffset:
-			res = -res
-		case rsu.DropPositiveTrustValueOffset:
-			if res > 0 {
+		rn := session.R.Float32()
+		// check the weight
+		if res < 0 {
+			if rn < 0.6 {
+				res = -res
+			} else {
 				res = 0
 			}
+		} else {
+			res = -res
 		}
 	}
-
 	return res
 }
 
@@ -178,23 +181,24 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint64)
 // iterate through the trust value storage for the specific epoch
 // flag out the misbehaving vehicles accordingly
 // trust value below 0 will be treated as misbehaving
-func (session *DTMLogicSession) flagMisbehavingVehicle(ctx context.Context, epoch uint64) {
-	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] epoch %v", epoch)
+func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epoch uint64) {
+	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch %v", epoch)
 	defer logutil.LoggerList["dtm"].
-		Debugf("[flagMisbehavingVehicle] epoch %v done", epoch)
+		Debugf("[flagMisbehavingVehicles] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] context canceled")
+		logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] context canceled")
 		return
 	default:
+		// iterate through every experiment's data storage
 		for expName := range *session.Config {
 			// get the head of the storage
 			head := (*session.TrustValueStorageHead)[expName]
 			headBlock := head.GetHeadBlock()
 			ep, list, bmap := headBlock.GetTrustValueList()
 			if ep != epoch {
-				logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicle] epoch mismatch! ep %v, epoch %v", ep, epoch)
+				logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch mismatch! ep %v, epoch %v", ep, epoch)
 				return
 			}
 
@@ -205,7 +209,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicle(ctx context.Context, epoc
 				return true
 			}
 
-			// trust value
+			// flag misbehaving vehicles
 			go func() {
 				for pair := range c {
 					if vid, tv := pair[0].(uint64), pair[1].(float32); tv < 0 {

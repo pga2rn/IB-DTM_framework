@@ -21,8 +21,8 @@ type TrustValueOffsetsPerSlot = sync.Map // map[<vehicleId>uint64]*TrustValueOff
 
 // trust value offset weight
 const (
-	Routine  = 0.5
-	Critical = 0.7
+	Routine  = 0.15
+	Critical = 0.6
 	Fatal    = 0.9
 )
 

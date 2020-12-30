@@ -25,17 +25,17 @@ func InitBaselineExperimentConfig() *map[string]*ExperimentConfig {
 		CompromisedRSUFlag:               false,
 		TimeFactorFlag:                   false,
 		TimeFactorType:                   -1,
-		TrustValueOffsetsTraceBackEpochs: 0,
+		TrustValueOffsetsTraceBackEpochs: 1,
 	}
 
 	// baseline 1
 	m["Baseline1"] = &ExperimentConfig{
 		Name:                             "Baseline1",
 		Description:                      "base line setup 1",
-		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   false,
-		TimeFactorType:                   -1,
-		TrustValueOffsetsTraceBackEpochs: 0,
+		CompromisedRSUFlag:               false,
+		TimeFactorFlag:                   true,
+		TimeFactorType:                   timefactor.Power,
+		TrustValueOffsetsTraceBackEpochs: 1,
 	}
 
 	// baseline 2
@@ -45,6 +45,16 @@ func InitBaselineExperimentConfig() *map[string]*ExperimentConfig {
 		CompromisedRSUFlag:               true,
 		TimeFactorFlag:                   false,
 		TimeFactorType:                   -1,
+		TrustValueOffsetsTraceBackEpochs: 1,
+	}
+
+	// baseline 3
+	m["Baseline3"] = &ExperimentConfig{
+		Name:                             "Baseline3",
+		Description:                      "base line setup 3",
+		CompromisedRSUFlag:               true,
+		TimeFactorFlag:                   true,
+		TimeFactorType:                   timefactor.Power,
 		TrustValueOffsetsTraceBackEpochs: 1,
 	}
 

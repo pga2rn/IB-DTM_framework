@@ -69,7 +69,10 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 				session.initDataStructureForEpoch(session.Epoch)
 				// execute dtm logic
 				session.genTrustValue(slotCtx, session.Epoch)
-				session.flagMisbehavingVehicle(slotCtx, session.Epoch)
+				session.flagMisbehavingVehicles(slotCtx, session.Epoch)
+				// generate statistics
+				session.genStatistics(slotCtx, session.Epoch)
+
 				// cancel the context for this epoch's process
 				cancel()
 				logutil.LoggerList["dtm"].Debugf("[Run] epoch %v done", session.Epoch)

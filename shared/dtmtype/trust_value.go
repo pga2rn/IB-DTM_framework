@@ -4,14 +4,9 @@ import (
 	"errors"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/statistics"
 	"sync"
 )
-
-type TrustValue struct {
-	VehicleId  uint64
-	Epoch      uint64
-	TrustValue float32
-}
 
 // thread safe map
 type TrustValuesPerEpoch = sync.Map // map[<vehicleId>uint64]float32
@@ -30,6 +25,7 @@ type TrustValueStorage struct {
 	epoch                    uint64
 	trustValueList           *TrustValuesPerEpoch
 	misbehavingVehicleBitMap *bitmap.Threadsafe
+	statisticsBundle         *statistics.Statistics
 	ptrNext                  *TrustValueStorage
 	ptrPrevious              *TrustValueStorage
 }
@@ -122,4 +118,8 @@ func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustVal
 
 func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch, *bitmap.Threadsafe) {
 	return storage.epoch, storage.trustValueList, storage.misbehavingVehicleBitMap
+}
+
+func (storage *TrustValueStorage) SetStatistics(bundle *statistics.Statistics) {
+	storage.statisticsBundle = bundle
 }

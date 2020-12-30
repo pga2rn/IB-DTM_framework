@@ -104,12 +104,12 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 
 			// debug
 			logutil.LoggerList["simulator"].
-				Debugf("[ProcessEpoch] mdvp: %v, crsup: %v",
+				Infof("[ProcessEpoch] mdvp: %v, crsup: %v",
 					sim.MisbehaviorVehiclePortion,
 					sim.CompromisedRSUPortion,
 				)
 			logutil.LoggerList["simulator"].
-				Debugf("[ProcessEpoch] active vehicles %v", sim.ActiveVehiclesNum)
+				Infof("[ProcessEpoch] active vehicles %v", sim.ActiveVehiclesNum)
 		}
 	}
 

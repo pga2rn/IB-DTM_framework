@@ -77,32 +77,36 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						Slot:      slot,
 					}
 
+					// adjust trust value weight
+					possibility := sim.R.Float32()
+					switch {
+					case possibility < 0.1:
+						tvo.Weight = dtmtype.Fatal
+					case possibility >= 0.1 && possibility < 0.25:
+						tvo.Weight = dtmtype.Critical
+					default:
+						tvo.Weight = dtmtype.Routine
+					}
+
 					if sim.MisbehaviorVehicleBitMap.Get(int(v.Id)) {
 						// the vehicle is assigned to be a bad vehicle
 						// md vehicles choose randomly to do evil or not, but do evil more
 						// locate to the cross in the map, assign the trust value to cross RSU
+
+						// the idea is that the vehicle will try to do very bad things,
+						// or they will behave normally
 						flag := sim.R.Float32()
 						switch {
-						// 5% possibility to no be evil
-						case flag < 0.05:
+						case tvo.Weight == dtmtype.Routine:
 							tvo.TrustValueOffset = 1
+						case tvo.Weight == dtmtype.Critical && flag < 0.3:
+							tvo.TrustValueOffset = -1
 						default:
 							tvo.TrustValueOffset = -1
 						}
 					} else {
 						// I am a good vehicle!
 						tvo.TrustValueOffset = 1
-					}
-
-					// adjust trust value weight
-					possibility := sim.R.Float32()
-					switch {
-					case possibility < 1-dtmtype.Fatal:
-						tvo.Weight = dtmtype.Fatal
-					case possibility < 1-dtmtype.Critical && possibility > 1-dtmtype.Fatal:
-						tvo.Weight = dtmtype.Critical
-					default:
-						tvo.Weight = dtmtype.Routine
 					}
 
 					// update the value to RSU

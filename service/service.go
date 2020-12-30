@@ -53,7 +53,7 @@ func Init(uCtx *cli.Context) error {
 func Entry(ctx *cli.Context) error {
 	// derive context from urfave's cli.Contexts
 	// init all logger at startup
-	logutil.LoggerList["service"].Debugf("[Entry] fire up all services")
+	logutil.LoggerList["service"].Debugf("[Entry] main routine starts")
 
 	// fire up each components
 	for name, component := range services.servicesList {
