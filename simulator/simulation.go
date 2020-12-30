@@ -55,8 +55,8 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 
 }
 
-func (sim *SimulationSession) dialDTMLogicModule(ctx context.Context, slot uint64) {
-	logutil.LoggerList["simulator"].Debugf("[dialDTMLogicModule] epoch %v", slot/sim.Config.SlotsPerEpoch-1)
+func (sim *SimulationSession) dialDTMLogicModulePerEpoch(ctx context.Context, slot uint64) {
+	logutil.LoggerList["simulator"].Debugf("[dialDTMLogicModulePerEpoch] epoch %v", slot/sim.Config.SlotsPerEpoch-1)
 	select {
 	case <-ctx.Done():
 		return
@@ -66,14 +66,19 @@ func (sim *SimulationSession) dialDTMLogicModule(ctx context.Context, slot uint6
 		sim.ChanDTM <- pack
 		// wait for dtm logic module to finish
 		<-sim.ChanDTM
-		logutil.LoggerList["simulator"].Debugf("[dialDTMLogicModule] dtm logic module finished")
+		logutil.LoggerList["simulator"].Debugf("[dialDTMLogicModulePerEpoch] dtm logic module finished")
 	}
 
 }
 
 // process epoch
 func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) error {
-	logutil.LoggerList["simulator"].Debugf("[ProcessEpoch] processing epoch %v", slot/sim.Config.SlotsPerEpoch-1)
+	epoch := slot / sim.Config.SlotsPerEpoch
+	if epoch != 0 {
+		epoch -= 1
+	}
+	logutil.LoggerList["simulator"].Debugf("[ProcessEpoch] processing epoch %v", epoch)
+
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["simulator"].Debugf("[ProcessEpoch] context canceled")
@@ -81,6 +86,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 	default:
 		switch slot {
 		case uint64(0):
+			// both misbehaving vehicles and compromised RSU will be assigned only at the beginning of the simulation
 			sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
 			sim.InitAssignMisbehaveVehicle(ctx)
 
@@ -94,11 +100,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 			}
 		default:
 			// call the dtm module for executing the previous epoch before new cRSU assignment
-			sim.dialDTMLogicModule(ctx, slot)
-
-			// prepare for new epoch
-			sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
-			sim.initAssignCompromisedRSU(ctx)
+			sim.dialDTMLogicModulePerEpoch(ctx, slot)
 
 			// debug
 			logutil.LoggerList["simulator"].
