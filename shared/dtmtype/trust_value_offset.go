@@ -13,7 +13,16 @@ type TrustValueOffset struct {
 	Slot             uint64
 	TrustValueOffset float32
 	Weight           float32
+	// for compromisedRSU
+	AlterType int
 }
+
+// alter type const
+const (
+	Flipped = iota
+	Dropped
+	Forged
+)
 
 // we use sync.map for thread safe
 type TrustValueOffsetsPerSlot = sync.Map // map[<vehicleId>uint64]*TrustValueOffset
@@ -22,7 +31,7 @@ type TrustValueOffsetsPerSlot = sync.Map // map[<vehicleId>uint64]*TrustValueOff
 // trust value offset weight
 const (
 	Routine  = 0.15
-	Critical = 0.6
+	Critical = 0.5
 	Fatal    = 0.9
 )
 

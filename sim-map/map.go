@@ -55,6 +55,10 @@ func (c *cross) GetVehicleNum() int {
 	return count
 }
 
+func (c *cross) CheckIfVehicleInManagementZone(vid uint64) bool {
+	return c.VehiclesList.Get(int(vid))
+}
+
 // create a brand new map
 func CreateMap(cfg *config.SimConfig) *Map {
 	m := &Map{}

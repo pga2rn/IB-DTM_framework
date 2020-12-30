@@ -32,8 +32,8 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint64)
 				headBlock.SetStatistics(bundle)
 
 				// debug
-				logutil.LoggerList["dtm"].Infof("[genStatistics] epoch %v: exp %v, tp %v, fp %v, fn %v, tn %v, recall %v, precision %v, f1 %v, acc %v",
-					epoch, expName, bundle.TP, bundle.FP, bundle.FN, bundle.TN, bundle.Recall, bundle.Precision, bundle.F1ssimulator, bundle.ACC)
+				logutil.LoggerList["dtm"].Infof("[genStatistics] epoch %v: exp %v, tp %v, tn %v, fp %v, fn %v, recall %v, precision %v, f1 %v, acc %v",
+					epoch, expName, bundle.TP, bundle.TN, bundle.FP, bundle.FN, bundle.Recall, bundle.Precision, bundle.F1ssimulator, bundle.ACC)
 
 			}(expName)
 		}

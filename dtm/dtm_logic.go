@@ -48,16 +48,11 @@ func (session *DTMLogicSession) genTrustValueHelper(
 	// 1. flip the trust value
 	// 2. drop trust value offset: 0.3
 	if compromisedRSUFlag {
-		rn := session.R.Float32()
-		// check the weight
-		if res < 0 {
-			if rn < 0.6 {
-				res = -res
-			} else {
-				res = 0
-			}
-		} else {
+		switch tvo.AlterType {
+		case dtmtype.Flipped:
 			res = -res
+		case dtmtype.Dropped:
+			res = 0
 		}
 	}
 	return res

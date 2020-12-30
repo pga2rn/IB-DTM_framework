@@ -80,9 +80,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					// adjust trust value weight
 					possibility := sim.R.Float32()
 					switch {
-					case possibility < 0.1:
+					case possibility < 0.15:
 						tvo.Weight = dtmtype.Fatal
-					case possibility >= 0.1 && possibility < 0.25:
+					case possibility >= 0.15 && possibility < 0.3:
 						tvo.Weight = dtmtype.Critical
 					default:
 						tvo.Weight = dtmtype.Routine
@@ -112,7 +112,24 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					// update the value to RSU
 					// update each slot
 					sim.rmu.Lock()
-					sim.RSUs[v.Pos.X][v.Pos.Y].GetSlotInRing(slot).Store(v.Id, &tvo)
+					rsu := sim.RSUs[v.Pos.X][v.Pos.Y]
+
+					// if the RSU is compromised, decide which type of evil it will do to the tvo
+					if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
+						rn := sim.R.Float32()
+						// assign altered type
+						if tvo.TrustValueOffset < 0 {
+							if rn < 0.8 {
+								tvo.AlterType = dtmtype.Flipped
+							} else {
+								tvo.AlterType = dtmtype.Dropped
+							}
+						} else {
+							tvo.AlterType = dtmtype.Flipped
+						}
+					}
+
+					rsu.GetSlotInRing(slot).Store(v.Id, &tvo)
 					sim.rmu.Unlock()
 
 					wg.Done() // job done

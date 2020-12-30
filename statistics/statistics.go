@@ -26,18 +26,19 @@ func GenStatisticsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Sta
 	for i := 0; i < length; i++ {
 		a, r := answer.Get(i), result.Get(i)
 		switch {
+		// positive is misbehaving, negative is normal
 		// correctly flag misbehaving vehicles
 		case a == r && a == true:
 			tp++
 		// correctly flag normal vehicles
 		case a == r && a == false:
-			fp++
+			tn++
 		// incorrectly flag as normal vehicles
 		case a != r && a == true:
 			fn++
 		// incorrectly flags as misbehaving vehicles
 		case a != r && a == false:
-			tn++
+			fp++
 		}
 	}
 	res.TP, res.TN, res.FN, res.FP = tp, tn, fn, fp
