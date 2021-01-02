@@ -49,6 +49,7 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint32) erro
 		// generate trust value offsets
 		sim.executeDTMLogicPerSlot(SlotCtx, slot)
 
+		// TODO: call blockchain module here
 		cancel()
 		return nil
 	}

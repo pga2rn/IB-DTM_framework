@@ -35,15 +35,14 @@ func Init(uCtx *cli.Context) error {
 	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after 2 seconds")
 
 	// init experiment config
-	expCfg := config.InitBaselineExperimentConfig()
-	proCfg := config.InitProposalExperimentConfig()
+	expCfg := config.InitExperimentConfig()
 
 	// init the channel for intercommunication
 	simDTMcomm := make(chan interface{})
 
 	// init and register the services
 	services.servicesList["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMcomm)
-	services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, proCfg, simDTMcomm)
+	services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMcomm)
 
 	logutil.LoggerList["service"].Debugf("[Init] register of services finished")
 	return nil

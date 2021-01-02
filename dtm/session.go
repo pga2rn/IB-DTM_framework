@@ -14,9 +14,8 @@ import (
 
 type DTMLogicSession struct {
 	// configs
-	BaselineConfig *map[string]*config.ExperimentConfig
-	ProposalConfig *map[string]*config.ExperimentConfig
-	SimConfig      *config.SimConfig
+	ExpConfig *map[string]*config.ExperimentConfig
+	SimConfig *config.SimConfig
 	// the correct answer
 	MisbehavingVehicleBitMap *bitmap.Threadsafe
 	CompromisedRSUBitMap     *bitmap.Threadsafe
@@ -47,15 +46,14 @@ type DTMLogicSession struct {
 }
 
 func PrepareDTMLogicModuleSession(
-	simCfg *config.SimConfig,
-	baselineCfg *map[string]*config.ExperimentConfig, proposalCfg *map[string]*config.ExperimentConfig,
+	simCfg *config.SimConfig, expCfg *map[string]*config.ExperimentConfig,
 	c chan interface{}) *DTMLogicSession {
 
 	dtmSession := &DTMLogicSession{}
 
 	// init the simulator config and experiment config
 	dtmSession.SimConfig = simCfg
-	dtmSession.BaselineConfig = baselineCfg
+	dtmSession.ExpConfig = expCfg
 
 	// inter module communication
 	dtmSession.ChanSim = c
@@ -63,17 +61,13 @@ func PrepareDTMLogicModuleSession(
 	// random source
 	dtmSession.R = randutil.InitRand(123)
 
-	// prepare baseline experiments
+	// prepare experiments
 	dtmSession.TrustValueStorageHead = dtmtype.InitTrustValueStorageHeadMap()
-	for expName := range *baselineCfg {
+	for expName, exp := range *expCfg {
 		(*dtmSession.TrustValueStorageHead)[expName] = dtmtype.InitTrustValueStorage()
-	}
-
-	// prepare proposal experiments
-	dtmSession.ProposalStorage = InitIBDTMStorageMap()
-	for expName := range *proposalCfg {
-		(*dtmSession.TrustValueStorageHead)[expName] = dtmtype.InitTrustValueStorage()
-		(*dtmSession.ProposalStorage)[expName] = InitIBDTMStorage()
+		if exp.Type == config.Proposal {
+			dtmSession.ProposalStorage = InitIBDTMStorageMap()
+		}
 	}
 
 	return dtmSession

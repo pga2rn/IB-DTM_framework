@@ -15,7 +15,7 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32)
 		return
 	default:
 		// iterate through every experiment's data storage
-		for expName := range *session.BaselineConfig {
+		for expName := range *session.ExpConfig {
 			head := (*session.TrustValueStorageHead)[expName]
 
 			go func(expName string) {

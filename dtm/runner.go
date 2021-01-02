@@ -52,7 +52,11 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 			// using reflect to detect what is being passed to the dtm runner
 			switch v.(type) {
 			case shared.SimDTMSlotCommunication: // signal for slot
+				pack := v.(shared.SimDTMSlotCommunication)
 				// TODO: proposal logic here
+				_, cancel :=
+					context.WithDeadline(ctx, timeutil.SlotDeadline(session.SimConfig.Genesis, pack.Slot))
+				cancel()
 			case shared.SimDTMEpochCommunication: // signal for epoch
 				// unpack
 				pack := v.(shared.SimDTMEpochCommunication)
@@ -68,8 +72,10 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 				// init storage
 				session.initDataStructureForEpoch(session.Epoch)
 				// execute dtm logic
-				session.genTrustValue(slotCtx, session.Epoch)
-				session.execRSULogics(slotCtx, session.Epoch)
+				session.genBaselineTrustValue(slotCtx, session.Epoch)
+				// TODO: implement proposal trust value generation logic here
+				session.genProposalTrustValue(slotCtx, session.Epoch)
+
 				session.flagMisbehavingVehicles(slotCtx, session.Epoch)
 				// generate statistics
 				session.genStatistics(slotCtx, session.Epoch)

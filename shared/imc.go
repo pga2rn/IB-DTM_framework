@@ -15,6 +15,7 @@ type SimDTMEpochCommunication struct {
 
 // for proposal
 type SimDTMSlotCommunication struct {
+	Slot uint32
 }
 
 // struct for initializing the dtm
