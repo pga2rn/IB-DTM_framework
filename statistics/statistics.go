@@ -7,7 +7,7 @@ import (
 )
 
 type Statistics struct {
-	Epoch uint64
+	Epoch uint32
 	// total vehicles num
 	VehiclesNum int
 	// 4 basic metrics
@@ -17,7 +17,7 @@ type Statistics struct {
 }
 
 // compare the results and calculate the statistics
-func GenStatisticsForEpoch(epoch uint64, answer, result *bitmap.Threadsafe) *Statistics {
+func GenStatisticsForEpoch(epoch uint32, answer, result *bitmap.Threadsafe) *Statistics {
 	length := answer.Len()
 	res := &Statistics{Epoch: epoch, VehiclesNum: length}
 

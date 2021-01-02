@@ -61,7 +61,7 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			logutil.LoggerList["simulator"].Debugf("Context canceled, stop the simulation.")
 			cancel()
 			return
-		// the ticker will tick a uint64 slot index very slot
+		// the ticker will tick a uint32 slot index very slot
 		case slot := <-sim.Ticker.C():
 			logutil.LoggerList["simulator"].Debugf("[SlotTicker] Slot %v", slot)
 

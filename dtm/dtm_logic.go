@@ -17,7 +17,7 @@ import (
 // 4. epoch length(from simConfig)
 
 // init the storage area
-func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint64) {
+func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
 	for expName := range *session.Config {
 		head := (*session.TrustValueStorageHead)[expName]
@@ -59,26 +59,26 @@ func (session *DTMLogicSession) genTrustValueHelper(
 }
 
 // generate time factor for different experiment setup
-func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint64) float64 {
+func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint32) float64 {
 	var start, end time.Time
 	cfg, genesis := (*session.Config)[name], session.SimConfig.Genesis
 
 	slotTime := timeutil.SlotStartTime(genesis, slot)
 	epoch := slot / session.SimConfig.SlotsPerEpoch
 
-	if epoch < uint64(cfg.TrustValueOffsetsTraceBackEpochs) {
+	if epoch < uint32(cfg.TrustValueOffsetsTraceBackEpochs) {
 		// not enough previous epochs for trace back
 		start = session.SimConfig.Genesis
 		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
 	} else {
 		start = timeutil.NextEpochTime(
-			session.SimConfig.Genesis, epoch-uint64(cfg.TrustValueOffsetsTraceBackEpochs))
+			session.SimConfig.Genesis, epoch-uint32(cfg.TrustValueOffsetsTraceBackEpochs))
 		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
 	}
 	return timefactor.GetTimeFactor(cfg.TimeFactorType, start, slotTime, end)
 }
 
-func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint64) {
+func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[genTrustValue] start to process for epoch %v", epoch)
 	defer logutil.LoggerList["dtm"].
 		Debugf("[genTrustValue] epoch %v done", epoch)
@@ -129,7 +129,7 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint64)
 									return
 								default:
 									for pair := range c {
-										key, value := pair[0].(uint64), pair[1].(*dtmtype.TrustValueOffset)
+										key, value := pair[0].(uint32), pair[1].(*dtmtype.TrustValueOffset)
 										if key != value.VehicleId {
 											logutil.LoggerList["simulator"].
 												Warnf("[genTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
@@ -176,7 +176,7 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint64)
 // iterate through the trust value storage for the specific epoch
 // flag out the misbehaving vehicles accordingly
 // trust value below 0 will be treated as misbehaving
-func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epoch uint64) {
+func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch %v", epoch)
 	defer logutil.LoggerList["dtm"].
 		Debugf("[flagMisbehavingVehicles] epoch %v done", epoch)
@@ -207,7 +207,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 			// flag misbehaving vehicles
 			go func() {
 				for pair := range c {
-					if vid, tv := pair[0].(uint64), pair[1].(float32); tv < 0 {
+					if vid, tv := pair[0].(uint32), pair[1].(float32); tv < 0 {
 						bmap.Set(int(vid), true)
 					}
 				}

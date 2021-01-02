@@ -9,8 +9,8 @@ import (
 // starts from 0
 
 type TrustValueOffset struct {
-	VehicleId        uint64
-	Slot             uint64
+	VehicleId        uint32
+	Slot             uint32
 	TrustValueOffset float32
 	Weight           float32
 	// for compromisedRSU
@@ -25,8 +25,8 @@ const (
 )
 
 // we use sync.map for thread safe
-type TrustValueOffsetsPerSlot = sync.Map // map[<vehicleId>uint64]*TrustValueOffset
-//type TrustValueOffsetsPerEpoch = sync.Map // map[<slot>uint64]*TrustValueOffsetsPerSlot
+type TrustValueOffsetsPerSlot = sync.Map // map[<vehicleId>uint32]*TrustValueOffset
+//type TrustValueOffsetsPerEpoch = sync.Map // map[<slot>uint32]*TrustValueOffsetsPerSlot
 
 // trust value offset weight
 const (
@@ -39,7 +39,7 @@ const (
 type TrustValueOffsetsPerSlotRing struct {
 	mu                    sync.Mutex
 	r                     *ring.Ring // *TrustValueOffsetsPerSlot
-	baseSlot, currentSlot uint64     // ring base slot
+	baseSlot, currentSlot uint32     // ring base slot
 }
 
 func InitRing(len int) *TrustValueOffsetsPerSlotRing {
@@ -51,7 +51,7 @@ func InitRing(len int) *TrustValueOffsetsPerSlotRing {
 	}
 }
 
-func (r *TrustValueOffsetsPerSlotRing) SetElement(element *TrustValueOffsetsPerSlot, base, current uint64) {
+func (r *TrustValueOffsetsPerSlotRing) SetElement(element *TrustValueOffsetsPerSlot, base, current uint32) {
 	r.mu.Lock()
 	rin := r.r.Next()
 	rin.Value = element
@@ -65,6 +65,6 @@ func (r *TrustValueOffsetsPerSlotRing) GetRing() (*ring.Ring, *sync.Mutex) {
 	return r.r, &r.mu
 }
 
-func (r *TrustValueOffsetsPerSlotRing) GetProperties() (baseSlot uint64, currentSlot uint64) {
+func (r *TrustValueOffsetsPerSlotRing) GetProperties() (baseSlot uint32, currentSlot uint32) {
 	return r.baseSlot, r.currentSlot
 }

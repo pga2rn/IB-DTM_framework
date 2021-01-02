@@ -20,7 +20,7 @@ type DTMLogicSession struct {
 	MisbehavingVehicleBitMap *bitmap.Threadsafe
 
 	// session status
-	Slot, Epoch          uint64
+	Slot, Epoch          uint32
 	CompromisedRSUBitMap *bitmap.Threadsafe // only valid for specific epoch
 
 	// pointer to the vehicles and RSU

@@ -9,7 +9,7 @@ import (
 
 // struct that used for communication between simulator module and DTM module
 type SimDTMEpochCommunication struct {
-	Slot                 uint64
+	Slot                 uint32
 	CompromisedRSUBitMap *bitmap.Threadsafe // only pass the pointer
 }
 

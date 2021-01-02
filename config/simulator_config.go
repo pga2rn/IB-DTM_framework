@@ -26,10 +26,10 @@ type SimConfig struct {
 
 	// time config
 	Genesis           time.Time
-	SlotsPerEpoch     uint64
-	SecondsPerSlot    uint64 // in seconds
-	OutOfSyncTolerant uint64 // in slots
-	FinalizedDelay    uint64 // in epoch
+	SlotsPerEpoch     uint32
+	SecondsPerSlot    uint32 // in seconds
+	OutOfSyncTolerant uint32 // in slots
+	FinalizedDelay    uint32 // in epoch
 
 	// rsu config
 	RingLength int
@@ -62,8 +62,8 @@ func GenYangNetConfig() *SimConfig {
 	// vehicle
 	cfg.MisbehaveVehiclePortionMax = 0.25
 	cfg.MisbehaveVehiclePortionMin = 0.2
-	cfg.VehicleNumMin = 1000
-	cfg.VehicleNumMax = 1200
+	cfg.VehicleNumMin = 2500
+	cfg.VehicleNumMax = 3000
 
 	return cfg
 }

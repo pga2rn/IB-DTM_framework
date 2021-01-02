@@ -11,7 +11,7 @@ import (
 // which holds a RSU and 0 or more vehicles
 type cross struct {
 	// a list of vehicle that appears
-	Vehicles     *sync.Map // map[uint64]*vehicle.Vehicle
+	Vehicles     *sync.Map // map[uint32]*vehicle.Vehicle
 	VehiclesList *bitmap.Threadsafe
 }
 
@@ -21,25 +21,25 @@ type Map struct {
 }
 
 func (c *cross) initCross(vnum int) {
-	c.Vehicles = &sync.Map{} // map[uint64]*vehicle.Vehicle)
+	c.Vehicles = &sync.Map{} // map[uint32]*vehicle.Vehicle)
 	c.VehiclesList = bitmap.NewTS(vnum)
 }
 
-func (c *cross) RemoveVehicle(vid uint64) {
+func (c *cross) RemoveVehicle(vid uint32) {
 	c.Vehicles.Delete(vid)
 	c.VehiclesList.Set(int(vid), false)
 }
 
-func (c *cross) AddVehicle(vid uint64, v *vehicle.Vehicle) {
+func (c *cross) AddVehicle(vid uint32, v *vehicle.Vehicle) {
 	c.Vehicles.Store(vid, v)
 	c.VehiclesList.Set(int(vid), true)
 }
 
-func (c *cross) GetVehicleList() *[]uint64 {
-	res := make([]uint64, 16, 32)
+func (c *cross) GetVehicleList() *[]uint32 {
+	res := make([]uint32, 16, 32)
 	for i := 0; i < c.VehiclesList.Len(); i++ {
 		if c.VehiclesList.Get(i) {
-			res = append(res, uint64(i))
+			res = append(res, uint32(i))
 		}
 	}
 	return &res
@@ -55,7 +55,7 @@ func (c *cross) GetVehicleNum() int {
 	return count
 }
 
-func (c *cross) CheckIfVehicleInManagementZone(vid uint64) bool {
+func (c *cross) CheckIfVehicleInManagementZone(vid uint32) bool {
 	return c.VehiclesList.Get(int(vid))
 }
 

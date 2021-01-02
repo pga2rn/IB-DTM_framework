@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot uint32) {
 	logutil.LoggerList["simulator"].Debugf("[executeDTMLogicPerSlot] entering ..")
 	select {
 	case <-ctx.Done():
@@ -22,7 +22,7 @@ func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot u
 	}
 }
 
-func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint32) {
 	logutil.LoggerList["simulator"].Debugf("[prepareRSUsForSlot] slot %v", slot)
 	select {
 	case <-ctx.Done():
@@ -41,7 +41,7 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint6
 }
 
 // trust value offsets are stored on each RSU components
-func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint32) {
 	logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
 	defer logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] done")
 
@@ -62,7 +62,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					wg.Done() // job done
 					return
 				default:
-					if v.Id != uint64(id) {
+					if v.Id != uint32(id) {
 						logutil.LoggerList["simulator"].
 							Fatalf("[genTrustValueOffset] index and vehicle id mismatches, %v, %v", id, v.Id)
 					}

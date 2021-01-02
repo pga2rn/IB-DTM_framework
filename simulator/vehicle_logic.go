@@ -39,7 +39,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 	// init activated vehicles
 	for i := 0; i < int(sim.Config.VehicleNumMin); i++ {
 		v := vehicle.InitVehicle(
-			uint64(i),
+			uint32(i),
 			sim.Config.XLen, sim.Config.YLen,
 			vehicle.Active,
 			sim.R,
@@ -51,13 +51,13 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint64(i), v)
+		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint32(i), v)
 	}
 
 	// init inactivate vehicles
 	for i := sim.Config.VehicleNumMin; i < sim.Config.VehicleNumMax; i++ {
 		v := vehicle.InitVehicle(
-			uint64(i),
+			uint32(i),
 			sim.Config.XLen, sim.Config.YLen,
 			vehicle.InActive,
 			sim.R,
@@ -70,7 +70,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 	return true
 }
 
-func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint32) {
 	logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] entering..")
 
 	select {
@@ -135,7 +135,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 // mark a specific vehicle as inactive, and unregister it from the map
 func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehicle.Position) {
 	// filter out invalid vehicle
-	if v == nil || v.Id > uint64(sim.Config.VehicleNumMax) {
+	if v == nil || v.Id > uint32(sim.Config.VehicleNumMax) {
 		return
 	}
 	sim.UpdateVehicleStatus(v, oldPos, vehicle.InActive)

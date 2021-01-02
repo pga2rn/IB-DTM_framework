@@ -2,14 +2,14 @@
 // this module serve as simulator as well as a central authority
 
 message Vehicle {
-    uint64 id = 1;
+    uint32 id = 1;
     Position pos = 2;
 }
 
 // position of specific vehicle
 message Position {
-    uint64 x = 1;
-    uint64 y = 2;
+    uint32 x = 1;
+    uint32 y = 2;
 }
 
 message SimulatedMap {

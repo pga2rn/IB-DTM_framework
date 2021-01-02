@@ -21,37 +21,37 @@ option php_namespace = "Ethereum\\Eth\\v1alpha1";
 // RSUProperty stores properties of RSU
 message RSUProperty {
     // unique ID for RSU
-    uint64 id = 1;
+    uint32 id = 1;
 
     // bound of cits stake
     // stake will not exceed the upperbound and lower bound
-    uint64 cits_stake_upperbound = 2;
-    uint64 cits_stake_lowerbound = 3;
+    uint32 cits_stake_upperbound = 2;
+    uint32 cits_stake_lowerbound = 3;
 }
 
 // RSUInfo stores the status of RSU in a given epoch
 message RSUInfo {
     // unique ID of RSU
-    uint64 id = 1;
+    uint32 id = 1;
 
     // the epoch that this info for
-    uint64 epoch = 2;
+    uint32 epoch = 2;
 
     // the real cits_balance in the epoch
-    uint64 cits_balance = 3;
+    uint32 cits_balance = 3;
 
     // the rounded cits_balance in the epoch, considering the upperbound and cits_stake_lowerbound
-    uint64 effective_cits_balance = 4;
+    uint32 effective_cits_balance = 4;
 }
 
 // RSU logic module
 
 message TrustValueOffset {
     // unique vehicle id
-    uint64 vehicle_id = 1;
+    uint32 vehicle_id = 1;
 
-    // uint64 timestamp
-    uint64 time_stamp = 2;
+    // uint32 timestamp
+    uint32 time_stamp = 2;
 
     // trust value offset as float
     // value range from -1 to 1 
@@ -63,15 +63,15 @@ message TrustValueOffsetPack {
 }
 
 message TrustValueOffsetRequest {
-    uint64 epoch = 1;
+    uint32 epoch = 1;
 }
 
 message TrustValue {
     // unique vehicle id
-    uint64 vehicle_id = 1;
+    uint32 vehicle_id = 1;
 
     // trust value is related to specific epoch
-    uint64 epoch = 2;
+    uint32 epoch = 2;
 
     // trust value as float
     // value range from -1 to 1
@@ -79,14 +79,14 @@ message TrustValue {
 }
 
 message ListTrustValue {
-    uint64 epoch = 1;
+    uint32 epoch = 1;
     repeated TrustValue = 2;
 }
 
 // we can request many vehicles' trust value in a specific epoch
 message TrustValueRequest {
-    repeated uint64 vehicle_id = 1;
-    uint64 epoch = 2;
+    repeated uint32 vehicle_id = 1;
+    uint32 epoch = 2;
 }
 
 // interfaces of RSU model

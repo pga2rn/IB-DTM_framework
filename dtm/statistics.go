@@ -6,7 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/statistics"
 )
 
-func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint64) {
+func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[genStatistics] epoch %v", epoch)
 
 	select {

@@ -21,7 +21,7 @@ func InitLogger() {
 }
 
 func RegisterLogger(prefix string) {
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	fields := log.Fields{
 		"package": prefix,
 	}

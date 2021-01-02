@@ -34,7 +34,7 @@ func (sim *SimulationSession) WaitForVehiclesInit() error {
 // routine:
 // 1. move vehicles!
 // 2. generate trust value offset!
-func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) error {
+func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint32) error {
 	logutil.LoggerList["simulator"].Debugf("[ProcessSlot] slot %v", slot)
 	SlotCtx, cancel := context.WithCancel(ctx)
 
@@ -55,7 +55,7 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint64) erro
 
 }
 
-func (sim *SimulationSession) dialDTMLogicModulePerEpoch(ctx context.Context, slot uint64) {
+func (sim *SimulationSession) dialDTMLogicModulePerEpoch(ctx context.Context, slot uint32) {
 	logutil.LoggerList["simulator"].Debugf("[dialDTMLogicModulePerEpoch] epoch %v", slot/sim.Config.SlotsPerEpoch-1)
 	select {
 	case <-ctx.Done():
@@ -72,7 +72,7 @@ func (sim *SimulationSession) dialDTMLogicModulePerEpoch(ctx context.Context, sl
 }
 
 // process epoch
-func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) error {
+func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) error {
 	epoch := slot / sim.Config.SlotsPerEpoch
 	if epoch != 0 {
 		epoch -= 1
@@ -85,7 +85,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint64) err
 		return errors.New("context canceled")
 	default:
 		switch slot {
-		case uint64(0):
+		case uint32(0):
 			// both misbehaving vehicles and compromised RSU will be assigned only at the beginning of the simulation
 			sim.MisbehaviorVehicleBitMap = bitmap.NewTS(sim.Config.VehicleNumMax)
 			sim.InitAssignMisbehaveVehicle(ctx)

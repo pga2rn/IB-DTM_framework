@@ -12,7 +12,7 @@ type Position struct {
 // defined the data structure in a life cycle
 type Vehicle struct {
 	// unique id of each vehicle
-	Id uint64
+	Id uint32
 
 	// current Pos of the vehicle
 	// set to nil for inactive
@@ -38,7 +38,7 @@ const (
 // IMPORTANT! the vehicle is not being placed into the map yet!
 // IMPORTANT! the syncing with active vehicle bitmap relies on the caller!
 func InitVehicle(
-	id uint64, // id of the vehicle
+	id uint32, // id of the vehicle
 	xlen, ylen int, // the size of the map
 	active int,
 	r *randutil.RandUtil, // random generator provided by the caller

@@ -25,8 +25,8 @@ type SimulationSession struct {
 	// time
 	Ticker timeutil.Ticker
 	// epoch and slot stored in session should only be used when gathering reports
-	Epoch uint64
-	Slot  uint64
+	Epoch uint32
+	Slot  uint32
 
 	// current status
 	// vehicle

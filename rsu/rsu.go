@@ -14,7 +14,7 @@ type position struct {
 // RSU will storage N epochs trust value offsets data
 type RSU struct {
 	// unique id of an RSU, index in the sim-session object
-	Id uint64
+	Id uint32
 
 	// pos
 	Pos position
@@ -24,7 +24,7 @@ type RSU struct {
 	ringLen int
 
 	// for dtm logic use
-	nextSlotForUpload uint64 // the slot that available for uploading trust value offset
+	nextSlotForUpload uint32 // the slot that available for uploading trust value offset
 	uploadMu          sync.Mutex
 }
 
@@ -38,7 +38,7 @@ const (
 var RSUEvilsType = []int{FlipTrustValueOffset, DropPositiveTrustValueOffset}
 
 // RSU constructor
-func InitRSU(id uint64, x, y int, ringLen int) *RSU {
+func InitRSU(id uint32, x, y int, ringLen int) *RSU {
 	return &RSU{
 		Id:       id,
 		uploadMu: sync.Mutex{},
@@ -48,7 +48,7 @@ func InitRSU(id uint64, x, y int, ringLen int) *RSU {
 	}
 }
 
-func (rsu *RSU) InsertSlotsInRing(slot uint64, element *dtmtype.TrustValueOffsetsPerSlot) {
+func (rsu *RSU) InsertSlotsInRing(slot uint32, element *dtmtype.TrustValueOffsetsPerSlot) {
 	//logutil.LoggerList["dtm"].Debugf("[InsertSlotsInRing] RSU %v, slot %v", rsu.Id, slot)
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -57,14 +57,14 @@ func (rsu *RSU) InsertSlotsInRing(slot uint64, element *dtmtype.TrustValueOffset
 		return
 	}
 
-	if curSlot >= uint64(rsu.ringLen) { // ring is full
+	if curSlot >= uint32(rsu.ringLen) { // ring is full
 		baseSlot += 1
 	}
 	curSlot = slot
 	rsu.ring.SetElement(element, baseSlot, curSlot)
 }
 
-func (rsu *RSU) GetSlotInRing(slot uint64) *dtmtype.TrustValueOffsetsPerSlot {
+func (rsu *RSU) GetSlotInRing(slot uint32) *dtmtype.TrustValueOffsetsPerSlot {
 	rin, rinMu := rsu.ring.GetRing()
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -79,7 +79,7 @@ func (rsu *RSU) GetSlotInRing(slot uint64) *dtmtype.TrustValueOffsetsPerSlot {
 	return res
 }
 
-func (rsu *RSU) GetNextUploadSlot() uint64 {
+func (rsu *RSU) GetNextUploadSlot() uint32 {
 	rsu.uploadMu.Lock()
 	res := rsu.nextSlotForUpload
 	rsu.uploadMu.Unlock()
@@ -87,7 +87,7 @@ func (rsu *RSU) GetNextUploadSlot() uint64 {
 }
 
 // input is the latest uploaded slot
-func (rsu *RSU) SetNextUploadSlot(slot uint64) {
+func (rsu *RSU) SetNextUploadSlot(slot uint32) {
 	if slot < rsu.nextSlotForUpload {
 		return
 	}
@@ -100,6 +100,6 @@ func (rsu *RSU) SetNextUploadSlot(slot uint64) {
 	rsu.uploadMu.Unlock()
 }
 
-func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint64) {
+func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint32) {
 	return rsu.ring.GetProperties()
 }
