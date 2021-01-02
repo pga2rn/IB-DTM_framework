@@ -29,14 +29,14 @@ func InitBaselineExperimentConfig() *map[string]*ExperimentConfig {
 	}
 
 	// baseline 1
-	m["Baseline1"] = &ExperimentConfig{
-		Name:                             "Baseline1",
-		Description:                      "base line setup 1",
-		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
-		TrustValueOffsetsTraceBackEpochs: 1,
-	}
+	//m["Baseline1"] = &ExperimentConfig{
+	//	Name:                             "Baseline1",
+	//	Description:                      "base line setup 1",
+	//	CompromisedRSUFlag:               false,
+	//	TimeFactorFlag:                   true,
+	//	TimeFactorType:                   timefactor.Power,
+	//	TrustValueOffsetsTraceBackEpochs: 1,
+	//}
 
 	// baseline 2
 	m["Baseline2"] = &ExperimentConfig{
@@ -49,14 +49,14 @@ func InitBaselineExperimentConfig() *map[string]*ExperimentConfig {
 	}
 
 	// baseline 3
-	m["Baseline3"] = &ExperimentConfig{
-		Name:                             "Baseline3",
-		Description:                      "base line setup 3",
-		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
-		TrustValueOffsetsTraceBackEpochs: 1,
-	}
+	//m["Baseline3"] = &ExperimentConfig{
+	//	Name:                             "Baseline3",
+	//	Description:                      "base line setup 3",
+	//	CompromisedRSUFlag:               true,
+	//	TimeFactorFlag:                   true,
+	//	TimeFactorType:                   timefactor.Power,
+	//	TrustValueOffsetsTraceBackEpochs: 1,
+	//}
 
 	return &m
 }

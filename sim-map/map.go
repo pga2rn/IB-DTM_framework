@@ -17,7 +17,11 @@ type cross struct {
 
 type Map struct {
 	// a 2d array represents the map
-	Cross [][]*cross
+	cross [][]*cross
+}
+
+func (m *Map) GetCross(x, y int) *cross {
+	return m.cross[x][y]
 }
 
 func (c *cross) initCross(vnum int) {
@@ -64,14 +68,14 @@ func CreateMap(cfg *config.SimConfig) *Map {
 	m := &Map{}
 
 	// prepare the map
-	m.Cross = make([][]*cross, cfg.YLen)
-	for i := range m.Cross {
-		m.Cross[i] = make([]*cross, cfg.XLen)
+	m.cross = make([][]*cross, cfg.YLen)
+	for i := range m.cross {
+		m.cross[i] = make([]*cross, cfg.XLen)
 		// init cross
 		for j := 0; j < int(cfg.XLen); j++ {
 			c := cross{}
 			c.initCross(cfg.VehicleNumMax)
-			m.Cross[i][j] = &c
+			m.cross[i][j] = &c
 		}
 	}
 

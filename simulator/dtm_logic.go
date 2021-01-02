@@ -19,6 +19,8 @@ func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot u
 		sim.prepareRSUsForSlot(ctx, slot)
 		// generate and dispatch trust value offsets to every RSUs
 		sim.genTrustValueOffset(ctx, slot)
+		// execute related RSU logic
+		sim.execRSULogic(ctx, slot)
 	}
 }
 
@@ -97,7 +99,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// or they will behave normally
 						flag := sim.R.Float32()
 						switch {
-						case tvo.Weight == dtmtype.Routine:
+						case tvo.Weight == dtmtype.Routine && flag < 0.7:
 							tvo.TrustValueOffset = 1
 						case tvo.Weight == dtmtype.Critical && flag < 0.3:
 							tvo.TrustValueOffset = -1
@@ -113,22 +115,6 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					// update each slot
 					sim.rmu.Lock()
 					rsu := sim.RSUs[v.Pos.X][v.Pos.Y]
-
-					// if the RSU is compromised, decide which type of evil it will do to the tvo
-					if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
-						rn := sim.R.Float32()
-						// assign altered type
-						if tvo.TrustValueOffset < 0 {
-							if rn < 0.8 {
-								tvo.AlterType = dtmtype.Flipped
-							} else {
-								tvo.AlterType = dtmtype.Dropped
-							}
-						} else {
-							tvo.AlterType = dtmtype.Flipped
-						}
-					}
-
 					rsu.GetSlotInRing(slot).Store(v.Id, &tvo)
 					sim.rmu.Unlock()
 
@@ -139,5 +125,31 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 		// wait for all jobs to be done
 		wg.Wait()
+	} // select
+}
+
+// execute compromised RSU logic here
+func (sim *SimulationSession) execRSULogic(ctx context.Context, slot uint32) {
+	logutil.LoggerList["simulator"].Debugf("[execRSULogic] slot %v", slot)
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		for x := range sim.RSUs {
+			for y := range sim.RSUs[x] {
+				rsu := sim.RSUs[x][y]
+				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos.X, rsu.Pos.Y).GetVehicleNum()
+
+				// execute compromised RSU evil logics
+				if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
+					// evil type 1
+					sim.alterTrustValueOffset(ctx, rsu, slot)
+					// evil type 2
+					sim.forgeTrustValueOffset(ctx, rsu, slot)
+				} // if is evil RSU
+			}
+		} // iterate RSU for loop
+
 	} // select
 }

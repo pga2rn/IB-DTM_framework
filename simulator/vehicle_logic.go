@@ -18,7 +18,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 		// add the vehicle into the map
-		sim.Map.Cross[pos.X][pos.Y].Vehicles.Store(v.Id, v)
+		sim.Map.GetCross(pos.X, pos.Y).Vehicles.Store(v.Id, v)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
@@ -26,7 +26,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		sim.Map.Cross[pos.X][pos.Y].Vehicles.Delete(v.Id)
+		sim.Map.GetCross(pos.X, pos.Y).Vehicles.Delete(v.Id)
 		// reset the vehicle after remove it from the map
 		v.ResetVehicle()
 	}
@@ -51,7 +51,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint32(i), v)
+		sim.Map.GetCross(v.Pos.X, v.Pos.Y).AddVehicle(uint32(i), v)
 	}
 
 	// init inactivate vehicles
@@ -145,9 +145,9 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehic
 // wrap the operation
 func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos vehicle.Position) {
 	// unregister the vehicle from the old cross
-	sim.Map.Cross[oldPos.X][oldPos.Y].RemoveVehicle(v.Id)
+	sim.Map.GetCross(oldPos.X, oldPos.Y).RemoveVehicle(v.Id)
 	// register the vehicle into the new cross
-	sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(v.Id, v)
+	sim.Map.GetCross(v.Pos.X, v.Pos.Y).AddVehicle(v.Id, v)
 }
 
 // move a single vehicle

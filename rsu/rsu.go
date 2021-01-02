@@ -23,6 +23,10 @@ type RSU struct {
 	ring    *dtmtype.TrustValueOffsetsPerSlotRing
 	ringLen int
 
+	// managed zone info is stored at the cross object
+	// the most recent slot's managed vehicles num
+	ManagedVehicles int
+
 	// for dtm logic use
 	nextSlotForUpload uint32 // the slot that available for uploading trust value offset
 	uploadMu          sync.Mutex

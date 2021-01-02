@@ -30,6 +30,11 @@ type TrustValueStorage struct {
 	ptrPrevious              *TrustValueStorage
 }
 
+func InitTrustValueStorageHeadMap() *map[string]*TrustValueStorageHead {
+	tmp := make(map[string]*TrustValueStorageHead)
+	return &tmp
+}
+
 // constructor of trust value storage
 func InitTrustValueStorage() *TrustValueStorageHead {
 	return &TrustValueStorageHead{

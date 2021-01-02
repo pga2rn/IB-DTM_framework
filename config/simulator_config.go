@@ -42,12 +42,12 @@ func GenYangNetConfig() *SimConfig {
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 2
-	cfg.SlotsPerEpoch = 6
-	cfg.RSUNum = 400
+	cfg.SlotsPerEpoch = 3
+	cfg.RSUNum = 625
 
 	// map config
-	cfg.XLen = 20
-	cfg.YLen = 20
+	cfg.XLen = 25
+	cfg.YLen = 25
 
 	// sim config
 	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
@@ -62,8 +62,8 @@ func GenYangNetConfig() *SimConfig {
 	// vehicle
 	cfg.MisbehaveVehiclePortionMax = 0.25
 	cfg.MisbehaveVehiclePortionMin = 0.2
-	cfg.VehicleNumMin = 2500
-	cfg.VehicleNumMax = 3000
+	cfg.VehicleNumMin = 3750
+	cfg.VehicleNumMax = 4000
 
 	return cfg
 }

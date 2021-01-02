@@ -69,6 +69,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 				session.initDataStructureForEpoch(session.Epoch)
 				// execute dtm logic
 				session.genTrustValue(slotCtx, session.Epoch)
+				session.execRSULogics(slotCtx, session.Epoch)
 				session.flagMisbehavingVehicles(slotCtx, session.Epoch)
 				// generate statistics
 				session.genStatistics(slotCtx, session.Epoch)

@@ -19,13 +19,27 @@ import (
 // init the storage area
 func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
-	for expName := range *session.Config {
+	// baseline
+	for expName := range *session.BaselineConfig {
 		head := (*session.TrustValueStorageHead)[expName]
 		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
 			logutil.LoggerList["dtm"].
 				Fatalf("[initDataStructureForEpoch] failed to allocate storage, expName %v", expName)
 		}
 	}
+	// proposal
+	//for expName := range *session.ProposalConfig {
+	//	head := (*session.TrustValueStorageHead)[expName]
+	//	if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
+	//		logutil.LoggerList["dtm"].
+	//			Fatalf("[initDataStructureForEpoch] failed to allocate storage, expName %v", expName)
+	//	}
+	//}
+}
+
+// trust value altered logics are separated and moved here
+func (session *DTMLogicSession) execRSULogics(ctx context.Context, epoch uint32) {
+	return
 }
 
 func (session *DTMLogicSession) genTrustValueHelper(
@@ -61,7 +75,7 @@ func (session *DTMLogicSession) genTrustValueHelper(
 // generate time factor for different experiment setup
 func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint32) float64 {
 	var start, end time.Time
-	cfg, genesis := (*session.Config)[name], session.SimConfig.Genesis
+	cfg, genesis := (*session.BaselineConfig)[name], session.SimConfig.Genesis
 
 	slotTime := timeutil.SlotStartTime(genesis, slot)
 	epoch := slot / session.SimConfig.SlotsPerEpoch
@@ -94,9 +108,7 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint32)
 		// iterate all RSU
 		for x := range *session.RSUs {
 			for y := range (*session.RSUs)[x] {
-				session.rmu.Lock()
 				r := (*session.RSUs)[x][y]
-				session.rmu.Unlock()
 
 				// use go routines to collect every RSU's data
 				// add one worker to wait group
@@ -137,10 +149,16 @@ func (session *DTMLogicSession) genTrustValue(ctx context.Context, epoch uint32)
 										}
 
 										// for each pair of trust value offsets, trust value will be calculated for every experiments
-										for expName, exp := range *session.Config {
+										for expName, exp := range *session.BaselineConfig {
 											// get the storage head & storage block
 											tvStorageHead := (*session.TrustValueStorageHead)[expName]
 											tvStorageBlock := tvStorageHead.GetHeadBlock()
+
+											// if the trust value offset is forged, and cRSU setting is not activated
+											// the tvo will not be counted
+											if !exp.CompromisedRSUFlag && value.AlterType == dtmtype.Forged {
+												continue
+											}
 
 											// whether to respect compromisedRSU assignment or not
 											compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(r.Id)) && exp.CompromisedRSUFlag
@@ -187,7 +205,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 		return
 	default:
 		// iterate through every experiment's data storage
-		for expName := range *session.Config {
+		for expName := range *session.BaselineConfig {
 			// get the head of the storage
 			head := (*session.TrustValueStorageHead)[expName]
 			headBlock := head.GetHeadBlock()
