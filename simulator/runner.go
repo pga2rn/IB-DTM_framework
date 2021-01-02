@@ -55,7 +55,7 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 			return
 		// the ticker will tick a uint32 slot index very slot
 		case slot := <-sim.Ticker.C():
-			logutil.LoggerList["simulator"].Debugf("[slotTicker] Slot %v", slot)
+			logutil.LoggerList["simulator"].Debugf("[simulator] Slot %v", slot)
 
 			// check if the session's epoch and slot record is correct
 			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {

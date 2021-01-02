@@ -2,11 +2,13 @@ package config
 
 import "github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 
+type ExperimentType uint32
+
 type ExperimentConfig struct {
 	Name        string
 	Description string
 
-	Type int // baseline proposal
+	Type ExperimentType // baseline proposal
 
 	// has compromisedRSU or not
 	CompromisedRSUFlag bool

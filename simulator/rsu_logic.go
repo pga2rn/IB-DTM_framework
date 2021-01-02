@@ -5,6 +5,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"sync"
 )
 
@@ -14,7 +15,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 		for y := range sim.RSUs[x] {
 			r := rsu.InitRSU(
 				uint32(sim.CoordToIndex(x, y)),
-				x, y,
+				pair.Position{x, y},
 				sim.Config.RingLength,
 			)
 
@@ -126,7 +127,7 @@ func (sim *SimulationSession) forgeTrustValueOffset(ctx context.Context, rsu *rs
 	for i := 0; i < target; {
 		vid := uint32(sim.R.RandIntRange(0, sim.Config.VehicleNumMax))
 
-		if sim.Map.GetCross(rsu.Pos.X, rsu.Pos.Y).VehiclesList.Get(int(vid)) {
+		if sim.Map.GetCross(rsu.Pos).VehiclesList.Get(int(vid)) {
 			continue
 		} else {
 			i++

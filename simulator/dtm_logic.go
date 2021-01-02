@@ -139,7 +139,7 @@ func (sim *SimulationSession) execRSULogic(ctx context.Context, slot uint32) {
 		for x := range sim.RSUs {
 			for y := range sim.RSUs[x] {
 				rsu := sim.RSUs[x][y]
-				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos.X, rsu.Pos.Y).GetVehicleNum()
+				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
 
 				// execute compromised RSU evil logics
 				if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {

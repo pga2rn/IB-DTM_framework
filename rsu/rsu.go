@@ -3,13 +3,9 @@ package rsu
 import (
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"sync"
 )
-
-type position struct {
-	X int
-	Y int
-}
 
 // RSU will storage N epochs trust value offsets data
 type RSU struct {
@@ -17,7 +13,7 @@ type RSU struct {
 	Id uint32
 
 	// pos
-	Pos position
+	Pos pair.Position
 
 	// trust value offsets storage
 	ring    *dtmtype.TrustValueOffsetsPerSlotRing
@@ -33,20 +29,19 @@ type RSU struct {
 }
 
 // type of evil
+// only for reference, see dtmtype/trust_value_offset.go
 const (
 	FlipTrustValueOffset = iota
 	DropPositiveTrustValueOffset
 	ForgeTrustValueOffset
 )
 
-var RSUEvilsType = []int{FlipTrustValueOffset, DropPositiveTrustValueOffset}
-
 // RSU constructor
-func InitRSU(id uint32, x, y int, ringLen int) *RSU {
+func InitRSU(id uint32, pos pair.Position, ringLen int) *RSU {
 	return &RSU{
 		Id:       id,
 		uploadMu: sync.Mutex{},
-		Pos:      position{x, y},
+		Pos:      pos,
 		ringLen:  ringLen,
 		ring:     dtmtype.InitRing(ringLen),
 	}

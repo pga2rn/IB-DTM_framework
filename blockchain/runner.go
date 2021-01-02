@@ -17,7 +17,7 @@ func (session *BlockchainSession) Run(ctx context.Context) {
 		case <-ctx.Done():
 			logutil.LoggerList["blockchain"].Fatal("[Run] context canceled, abort")
 		case slot := <-session.Ticker.C():
-			logutil.LoggerList["blockchain"].Debugf("[Run] slot %v", slot)
+			logutil.LoggerList["blockchain"].Debugf("[blockchain] slot %v", slot)
 
 			// TODO: keep implementing proposal logic
 			if _, err := session.Blockchain.InitBlockchainBlock(slot, session.Config); err != nil {

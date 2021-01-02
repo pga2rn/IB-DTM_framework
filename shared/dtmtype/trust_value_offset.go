@@ -14,8 +14,10 @@ type TrustValueOffset struct {
 	TrustValueOffset float32
 	Weight           float32
 	// for compromisedRSU
-	AlterType int
+	AlterType TrustValueOffsetAlertedType
 }
+
+type TrustValueOffsetAlertedType = uint32
 
 // alter type const
 const (

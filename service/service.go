@@ -21,8 +21,10 @@ var services Services
 
 // logger init, simconfig init
 func Init(uCtx *cli.Context) error {
+	cfg := config.GenYangNetConfig()
+
 	// init the logger
-	logutil.InitLogger()
+	logutil.InitLogger(cfg.Loglevel)
 	logutil.LoggerList["service"].Debugf("[Init] init logger")
 	// init the package global services object
 	services = Services{
@@ -31,7 +33,6 @@ func Init(uCtx *cli.Context) error {
 	}
 
 	// init the simulation config
-	cfg := config.GenYangNetConfig()
 	cfg.SetGenesis(time.Now().Add(2 * time.Second))
 	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after 2 seconds")
 
@@ -74,7 +75,7 @@ func Entry(ctx *cli.Context) error {
 func Done(ctx *cli.Context) error {
 	logutil.LoggerList["service"].Debugf("application terminated")
 
-	// fire up each components
+	// call each module's termination functions
 	for name, component := range services.servicesList {
 		logutil.LoggerList["service"].Debugf("[Done] terminate %v service", name)
 		go reflect.ValueOf(&component).MethodByName("Done").Call([]reflect.Value{})

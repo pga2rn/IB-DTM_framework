@@ -3,13 +3,14 @@ package simulator
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
+	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
 
 ////// simulation //////
 // a helper function to sync the vehicle status between session and vehicle object
-func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicle.Position, status int) {
+func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos pair.Position, status int) {
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
@@ -18,7 +19,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 		// add the vehicle into the map
-		sim.Map.GetCross(pos.X, pos.Y).Vehicles.Store(v.Id, v)
+		sim.Map.GetCross(pos).Vehicles.Store(v.Id, v)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
@@ -26,7 +27,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		sim.Map.GetCross(pos.X, pos.Y).Vehicles.Delete(v.Id)
+		sim.Map.GetCross(pos).Vehicles.Delete(v.Id)
 		// reset the vehicle after remove it from the map
 		v.ResetVehicle()
 	}
@@ -51,7 +52,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 
 		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.GetCross(v.Pos.X, v.Pos.Y).AddVehicle(uint32(i), v)
+		sim.Map.GetCross(v.Pos).AddVehicle(uint32(i), v)
 	}
 
 	// init inactivate vehicles
@@ -133,7 +134,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 }
 
 // mark a specific vehicle as inactive, and unregister it from the map
-func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehicle.Position) {
+func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos pair.Position) {
 	// filter out invalid vehicle
 	if v == nil || v.Id > uint32(sim.Config.VehicleNumMax) {
 		return
@@ -143,11 +144,11 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehic
 
 // move vehicle from one cross to another
 // wrap the operation
-func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos vehicle.Position) {
+func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos pair.Position) {
 	// unregister the vehicle from the old cross
-	sim.Map.GetCross(oldPos.X, oldPos.Y).RemoveVehicle(v.Id)
+	sim.Map.GetCross(oldPos).RemoveVehicle(v.Id)
 	// register the vehicle into the new cross
-	sim.Map.GetCross(v.Pos.X, v.Pos.Y).AddVehicle(v.Id, v)
+	sim.Map.GetCross(v.Pos).AddVehicle(v.Id, v)
 }
 
 // move a single vehicle

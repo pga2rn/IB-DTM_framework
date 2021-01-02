@@ -63,7 +63,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 				session.Epoch = pack.Slot/session.SimConfig.SlotsPerEpoch - 1
 				session.CompromisedRSUBitMap = pack.CompromisedRSUBitMap
 
-				logutil.LoggerList["dtm"].Debugf("[Run] epoch %v", session.Epoch)
+				logutil.LoggerList["dtm"].Debugf("[dtm] epoch %v", session.Epoch)
 				// init context
 				// must be finished within a slot, otherwise the storage of RSU will be altered in the new epoch
 				slotCtx, cancel :=

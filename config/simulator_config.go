@@ -2,6 +2,7 @@
 package config
 
 import (
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -33,12 +34,14 @@ type SimConfig struct {
 
 	// rsu config
 	RingLength int
+	Loglevel   logrus.Level
 
 	// vehicle config
 }
 
 func GenYangNetConfig() *SimConfig {
 	cfg := &SimConfig{}
+	cfg.Loglevel = logrus.DebugLevel
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 2
