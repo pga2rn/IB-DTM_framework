@@ -8,12 +8,7 @@ import (
 )
 
 // main entry of simulator
-
-func Done(session *SimulationSession) {
-	session.done()
-}
-
-func (sim *SimulationSession) done() {
+func (sim *SimulationSession) Done() {
 	// terminate the ticker
 	sim.Ticker.Done()
 	close(sim.ChanDTM)
@@ -40,30 +35,27 @@ func (sim *SimulationSession) WaitForDTMLogicModule() error {
 func (sim *SimulationSession) Run(ctx context.Context) {
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(); err != nil {
-		sim.done()
-		logutil.LoggerList["simulator"].Fatal("Could not init vehicles: %v", err)
+		sim.Done()
+		logutil.LoggerList["simulator"].Fatal("could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(); err != nil {
-		sim.done()
-		logutil.LoggerList["simulator"].Fatal("External RSU module is not ready: %v", err)
+		sim.Done()
+		logutil.LoggerList["simulator"].Fatal("external RSU module is not ready: %v", err)
 	}
 
 	// start the main loop
-	logutil.LoggerList["simulator"].Debugf("[Run] Genesis kicks start!")
+	logutil.LoggerList["simulator"].Debugf("[Run] genesis kicks start!")
 	for {
-		ctx, cancel := context.WithCancel(ctx)
-
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["simulator"].Debugf("Context canceled, stop the simulation.")
-			cancel()
+			logutil.LoggerList["simulator"].Debugf("context canceled, stop the simulation.")
 			return
 		// the ticker will tick a uint32 slot index very slot
 		case slot := <-sim.Ticker.C():
-			logutil.LoggerList["simulator"].Debugf("[SlotTicker] Slot %v", slot)
+			logutil.LoggerList["simulator"].Debugf("[slotTicker] Slot %v", slot)
 
 			// check if the session's epoch and slot record is correct
 			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {

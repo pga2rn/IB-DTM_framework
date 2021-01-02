@@ -98,13 +98,13 @@ func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint32) *T
 	return ptr
 }
 
-func (storage *TrustValueStorage) AddValue(vid uint32, v float32) {
+func (storage *TrustValueStorage) AddTrustRatingForVehicle(vid uint32, v float32) {
 	list := storage.trustValueList
 	if op, ok := list.LoadOrStore(vid, v); ok {
 		list.Store(vid, v+op.(float32))
 	}
 }
-func (storage *TrustValueStorage) GetValue(vid uint32) (float32, bool) {
+func (storage *TrustValueStorage) GetTrustRatingForVehicle(vid uint32) (float32, bool) {
 	list := storage.trustValueList
 	if res, ok := list.Load(vid); ok {
 		return res.(float32), true

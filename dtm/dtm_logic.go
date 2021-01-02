@@ -178,7 +178,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 													compromisedRSUFlag, exp.TimeFactorFlag,
 												)
 												// add value to the storage block
-												tvStorageBlock.AddValue(key, res)
+												tvStorageBlock.AddTrustRatingForVehicle(key, res)
 											case config.Proposal:
 												continue // proposal experiment logic is executed at other place
 											}

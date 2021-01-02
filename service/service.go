@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/blockchain"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
@@ -38,11 +39,14 @@ func Init(uCtx *cli.Context) error {
 	expCfg := config.InitExperimentConfig()
 
 	// init the channel for intercommunication
-	simDTMcomm := make(chan interface{})
+	simDTMComm := make(chan interface{})
+	simBCComm := make(chan interface{})
+	DTMBCComm := make(chan interface{})
 
 	// init and register the services
-	services.servicesList["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMcomm)
-	services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMcomm)
+	services.servicesList["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm)
+	services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm)
+	services.servicesList["blockchain"] = blockchain.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
 
 	logutil.LoggerList["service"].Debugf("[Init] register of services finished")
 	return nil

@@ -12,6 +12,7 @@ var PackageNameList = []string{
 	"service",
 	"statistics",
 	"dtm",
+	"blockchain",
 }
 
 func InitLogger() {
@@ -21,7 +22,7 @@ func InitLogger() {
 }
 
 func RegisterLogger(prefix string) {
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 	fields := log.Fields{
 		"package": prefix,
 	}
