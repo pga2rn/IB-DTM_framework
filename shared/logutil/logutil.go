@@ -13,6 +13,7 @@ var PackageNameList = []string{
 	"statistics",
 	"dtm",
 	"blockchain",
+	"rpc",
 }
 
 func InitLogger(level log.Level) {

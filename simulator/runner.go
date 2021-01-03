@@ -8,7 +8,7 @@ import (
 )
 
 // main entry of simulator
-func (sim *SimulationSession) Done() {
+func (sim *SimulationSession) Done(ctx context.Context) {
 	// terminate the ticker
 	sim.Ticker.Done()
 	close(sim.ChanDTM)
@@ -35,14 +35,14 @@ func (sim *SimulationSession) WaitForDTMLogicModule() error {
 func (sim *SimulationSession) Run(ctx context.Context) {
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(); err != nil {
-		sim.Done()
+		sim.Done(ctx)
 		logutil.LoggerList["simulator"].Fatal("could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(); err != nil {
-		sim.Done()
+		sim.Done(ctx)
 		logutil.LoggerList["simulator"].Fatal("external RSU module is not ready: %v", err)
 	}
 

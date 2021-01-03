@@ -1,19 +1,15 @@
 package service
 
 import (
-	"context"
-	"github.com/pga2rn/ib-dtm_framework/blockchain"
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/dtm"
+	"github.com/pga2rn/ib-dtm_framework/rpc"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/simulator"
 	"github.com/urfave/cli/v2"
 	"reflect"
 	"time"
 )
 
 type Services struct {
-	ctx          context.Context
 	servicesList map[string]interface{}
 }
 
@@ -28,7 +24,6 @@ func Init(uCtx *cli.Context) error {
 	logutil.LoggerList["service"].Debugf("[Init] init logger")
 	// init the package global services object
 	services = Services{
-		ctx:          uCtx.Context,
 		servicesList: make(map[string]interface{}),
 	}
 
@@ -37,17 +32,19 @@ func Init(uCtx *cli.Context) error {
 	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after 2 seconds")
 
 	// init experiment config
-	expCfg := config.InitExperimentConfig()
-
-	// init the channel for intercommunication
-	simDTMComm := make(chan interface{})
-	simBCComm := make(chan interface{})
-	DTMBCComm := make(chan interface{})
+	//expCfg := config.InitExperimentConfig()
+	//
+	//// init the channel for intercommunication
+	//simDTMComm := make(chan interface{})
+	//simBCComm := make(chan interface{})
+	//DTMBCComm := make(chan interface{})
+	DTMRPCComm := make(chan interface{})
 
 	// init and register the services
-	services.servicesList["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm)
-	services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm)
-	services.servicesList["blockchain"] = blockchain.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
+	//services.servicesList["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm)
+	//services.servicesList["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm)
+	//services.servicesList["blockchain"] = blockchain.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
+	services.servicesList["rpc"] = rpc.PrepareRPCServer(DTMRPCComm)
 
 	logutil.LoggerList["service"].Debugf("[Init] register of services finished")
 	return nil
@@ -60,7 +57,7 @@ func Entry(ctx *cli.Context) error {
 	// init all logger at startup
 	logutil.LoggerList["service"].Debugf("[Entry] main routine starts")
 
-	// fire up each components
+	// fire up each modules via Run function
 	for name, component := range services.servicesList {
 		logutil.LoggerList["service"].Debugf("[Entry] fire up %v service", name)
 		param := []reflect.Value{reflect.ValueOf(ctx.Context)}
@@ -78,7 +75,8 @@ func Done(ctx *cli.Context) error {
 	// call each module's termination functions
 	for name, component := range services.servicesList {
 		logutil.LoggerList["service"].Debugf("[Done] terminate %v service", name)
-		go reflect.ValueOf(&component).MethodByName("Done").Call([]reflect.Value{})
+		param := []reflect.Value{reflect.ValueOf(ctx.Context)}
+		go reflect.ValueOf(&component).MethodByName("Done").Call(param)
 	}
 
 	// wait for upper caller issuing cancel

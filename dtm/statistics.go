@@ -33,7 +33,7 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32)
 
 				// debug
 				logutil.LoggerList["dtm"].Infof("[genStatistics] epoch %v: exp %v, tp %v, tn %v, fp %v, fn %v, recall %v, precision %v, f1 %v, acc %v",
-					epoch, expName, bundle.TP, bundle.TN, bundle.FP, bundle.FN, bundle.Recall, bundle.Precision, bundle.F1ssimulator, bundle.ACC)
+					epoch, expName, bundle.TP, bundle.TN, bundle.FP, bundle.FN, bundle.Recall, bundle.Precision, bundle.F1score, bundle.ACC)
 
 			}(expName)
 		}

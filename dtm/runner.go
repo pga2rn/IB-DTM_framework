@@ -8,7 +8,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
 
-func (session *DTMLogicSession) done() {
+func (session *DTMLogicSession) Done(ctx context.Context) {
 	close(session.ChanBlockchain)
 	close(session.ChanSim)
 }
@@ -38,7 +38,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 
 	// wait for simulator to activate the dtm logic module
 	if err := session.WaitForSimulator(ctx); err != nil {
-		session.done()
+		session.Done(ctx)
 		logutil.LoggerList["dtm"].Fatalf("failed to wait for simulator start")
 	}
 
@@ -46,7 +46,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			session.done()
+			session.Done(ctx)
 			return
 		case v := <-session.ChanSim:
 			// using reflect to detect what is being passed to the dtm runner
@@ -82,7 +82,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 
 				// cancel the context for this epoch's process
 				cancel()
-				logutil.LoggerList["dtm"].Debugf("[Run] epoch %v done", session.Epoch)
+				logutil.LoggerList["dtm"].Debugf("[Run] epoch %v Done", session.Epoch)
 
 				// emit a signal to tell the simulator to go on
 				session.ChanSim <- true

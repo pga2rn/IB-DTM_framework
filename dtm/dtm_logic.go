@@ -101,7 +101,7 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[genBaselineTrustValue] start to process for epoch %v", epoch)
 	defer logutil.LoggerList["dtm"].
-		Debugf("[genBaselineTrustValue] epoch %v done", epoch)
+		Debugf("[genBaselineTrustValue] epoch %v Done", epoch)
 
 	select {
 	case <-ctx.Done():
@@ -192,7 +192,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 							close(c)
 						}
 					} // select
-					wg.Done() // job done,
+					wg.Done() // job Done,
 				}() // go routine
 			} // iterate RSUs inner for loop
 		} // outer for loop
@@ -208,7 +208,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch %v", epoch)
 	defer logutil.LoggerList["dtm"].
-		Debugf("[flagMisbehavingVehicles] epoch %v done", epoch)
+		Debugf("[flagMisbehavingVehicles] epoch %v Done", epoch)
 
 	select {
 	case <-ctx.Done():

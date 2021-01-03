@@ -38,7 +38,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 	sim.ActiveVehiclesNum = sim.Config.VehicleNumMin
 
 	// init activated vehicles
-	for i := 0; i < int(sim.Config.VehicleNumMin); i++ {
+	for i := 0; i < sim.Config.VehicleNumMin; i++ {
 		v := vehicle.InitVehicle(
 			uint32(i),
 			sim.Config.XLen, sim.Config.YLen,
@@ -50,7 +50,6 @@ func (sim *SimulationSession) InitVehicles() bool {
 		sim.Vehicles[i] = v
 		sim.ActiveVehiclesBitMap.Set(i, true)
 
-		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
 		sim.Map.GetCross(v.Pos).AddVehicle(uint32(i), v)
 	}
@@ -95,7 +94,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 		}()
 
 		// randomly pick vehicle, iterating the whole list
-		for _, i := range sim.R.Perm(int(sim.Config.VehicleNumMax)) {
+		for _, i := range sim.R.Perm(sim.Config.VehicleNumMax) {
 			wg.Add(1)
 
 			go func(i int) {
