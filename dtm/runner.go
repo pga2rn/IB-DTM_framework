@@ -46,8 +46,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			session.Done(ctx)
-			return
+			logutil.LoggerList["dtm"].Fatalf("[Run] context canceled")
 		case v := <-session.ChanSim:
 			// using reflect to detect what is being passed to the dtm runner
 			switch v.(type) {

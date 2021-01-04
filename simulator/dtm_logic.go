@@ -9,11 +9,9 @@ import (
 )
 
 func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[executeDTMLogicPerSlot] entering ..")
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Debugf("[executeDTMLogicPerSlot] context canceled")
-		return
+		logutil.LoggerList["simulator"].Fatalf("[executeDTMLogicPerSlot] context canceled")
 	default:
 		// init the data structure for every RSU to store tvos for the slot
 		sim.prepareRSUsForSlot(ctx, slot)
@@ -25,11 +23,9 @@ func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot u
 }
 
 func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[prepareRSUsForSlot] slot %v", slot)
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["simulator"].Fatalf("[prepareRSUsForSlot] context cancel")
-		return
 	default:
 		for x := 0; x < sim.Config.XLen; x++ {
 			for y := 0; y < sim.Config.YLen; y++ {
@@ -130,11 +126,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 // execute compromised RSU logic here
 func (sim *SimulationSession) execRSULogic(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[execRSULogic] slot %v", slot)
-
 	select {
 	case <-ctx.Done():
-		return
+		logutil.LoggerList["simulator"].Fatalf("[execRSULogic] slot %v, context canceled", slot)
 	default:
 		for x := range sim.RSUs {
 			for y := range sim.RSUs[x] {

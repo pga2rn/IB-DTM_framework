@@ -71,12 +71,9 @@ func (sim *SimulationSession) InitVehicles() bool {
 }
 
 func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] entering..")
-
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] context canceled")
-		return
+		logutil.LoggerList["simulator"].Fatalf("[moveVehiclesPerSlot] context canceled")
 	default:
 		// sync
 		wg := sync.WaitGroup{}
@@ -101,6 +98,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 				select {
 				case <-ctx.Done():
 					wg.Done()
+					logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] go routine context canceled detected")
 					return
 				default:
 					v := sim.Vehicles[i]
@@ -178,12 +176,12 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 
 }
 
-func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
+func (sim *SimulationSession) initAssignMisbehaveVehicle(ctx context.Context) {
 	select {
 	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
-		count := 0
 		sim.MisbehaviorVehiclePortion = sim.R.RandFloatRange(
 			sim.Config.MisbehaveVehiclePortionMin,
 			sim.Config.MisbehaveVehiclePortionMax,
@@ -191,11 +189,10 @@ func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
 		// assign roles to vehicles no matter what status it is
 		target := int(float32(sim.Config.VehicleNumMax) * sim.MisbehaviorVehiclePortion)
 
-		for count < target {
+		for i := 0; i < target; i++ {
 			index := sim.R.RandIntRange(0, sim.Config.VehicleNumMax)
 			if !sim.MisbehaviorVehicleBitMap.Get(index) {
 				sim.MisbehaviorVehicleBitMap.Set(index, true)
-				count++
 			}
 		}
 	}

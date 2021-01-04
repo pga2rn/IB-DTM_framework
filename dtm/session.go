@@ -77,7 +77,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		select {
 		case session.ChanRPC <- statisticsBundle:
 		default:
-			logutil.LoggerList["dtm"].Debugf("[informRPCServer] no response from rpc server")
+			logutil.LoggerList["dtm"].Debugf("[informRPCServer] transimition dropped")
 		}
 	}
 }

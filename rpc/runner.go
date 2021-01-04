@@ -26,9 +26,10 @@ var ServerSession *RPCServerSession
 
 func PrepareRPCServer(dtm chan interface{}) *RPCServerSession {
 	session := &RPCServerSession{
-		serverLis:  "localhost:5000",
-		gatewayLis: "0.0.0.0:5001",
-		chanDTM:    dtm,
+		serverLis:       "localhost:5000",
+		gatewayLis:      "0.0.0.0:5001",
+		chanDTM:         dtm,
+		cacheLatestData: &pb.StatisticsBundle{},
 	}
 	ServerSession = session
 	return session
@@ -106,7 +107,8 @@ func (rpcs *RPCServerSession) Run(ctx context.Context) {
 		go rpcs.startRPCServer(ctx)
 		go rpcs.startRPCgw(ctx)
 
-		logutil.LoggerList["rpc"].Debugf("[Run] framework query server now listens at %v", rpcs.gatewayLis)
+		logutil.LoggerList["rpc"].Infof("[Run] framework query server now listens at %v", rpcs.gatewayLis)
+		logutil.LoggerList["rpc"].Infof("[Run] API: http://127.0.0.1:5001/v1/framework/data")
 
 		// start the main routine loop
 		// listen the chandtm channel and waiting for latest available data

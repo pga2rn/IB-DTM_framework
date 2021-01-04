@@ -32,20 +32,19 @@ func (sim *SimulationSession) InitRSUs() bool {
 func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 	select {
 	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
-		count := 0
 		sim.CompromisedRSUPortion = sim.R.RandFloatRange(
 			sim.Config.CompromisedRSUPortionMin,
 			sim.Config.CompromisedRSUPortionMax,
 		)
 		target := int(float32(sim.Config.RSUNum) * sim.CompromisedRSUPortion)
 
-		for count < target {
+		for i := 0; i < target; i++ {
 			index := sim.R.RandIntRange(0, sim.Config.RSUNum)
 			if !sim.CompromisedRSUBitMap.Get(index) {
 				sim.CompromisedRSUBitMap.Set(index, true)
-				count++
 			}
 		}
 	}
@@ -73,8 +72,8 @@ func (sim *SimulationSession) alterTrustValueOffset(ctx context.Context, rsu *rs
 			logutil.LoggerList["simulator"].Fatalf("[alterTrustValueOffset] context canceled, abort")
 		default:
 			// iterate through the slot storage of RSU
-			for pair := range c {
-				_, tvo := pair[0].(uint32), pair[1].(*dtmtype.TrustValueOffset)
+			for value := range c {
+				_, tvo := value[0].(uint32), value[1].(*dtmtype.TrustValueOffset)
 
 				// if the RSU is compromised, decide which type of evil it will do to the tvo
 				rn := sim.R.Float32()
@@ -104,60 +103,63 @@ func (sim *SimulationSession) alterTrustValueOffset(ctx context.Context, rsu *rs
 // RSU will try to make more vehicles being treated as misbehaving,
 // to over thrown the dtm itself
 func (sim *SimulationSession) forgeTrustValueOffset(ctx context.Context, rsu *rsu.RSU, slot uint32) {
-	//logutil.LoggerList["simulator"].Debugf("[forgeTV] rsu managed v %v", rsu.ManagedVehicles)
-
-	rn, target := sim.R.Float32(), 0
-	// if managed vehicles num is too small
-	// the compromised RSU will not do evils to hide themselves
-	if rsu.ManagedVehicles < sim.ActiveVehiclesNum/sim.Config.RSUNum {
-		return
-	} else {
-		target = rsu.ManagedVehicles
-	}
-
-	switch {
-	case rn < 0.8:
-		target = target / 5
-	case rn < 0.3:
-		target = target * 2 / 5
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[forgeTrustValueOffset] rsu managed v %v, context canceled", rsu.ManagedVehicles)
 	default:
-		target = sim.R.RandIntRange(target, target*3/2)
-	}
-
-	for i := 0; i < target; {
-		vid := uint32(sim.R.RandIntRange(0, sim.Config.VehicleNumMax))
-
-		if sim.Map.GetCross(rsu.Pos).VehiclesList.Get(int(vid)) {
-			continue
+		rn, target := sim.R.Float32(), 0
+		// if managed vehicles num is too small
+		// the compromised RSU will not do evils to hide themselves
+		if rsu.ManagedVehicles < sim.ActiveVehiclesNum/sim.Config.RSUNum {
+			return
 		} else {
-			i++
+			target = rsu.ManagedVehicles
 		}
 
-		tvo := &dtmtype.TrustValueOffset{
-			AlterType: dtmtype.Forged,
-			VehicleId: vid,
-		}
-
-		// randomly rate the vehicle
-		rn := sim.R.Float32()
 		switch {
-		case rn < 0.5:
-			tvo.TrustValueOffset = -1
+		case rn < 0.8:
+			target = target / 5
+		case rn < 0.3:
+			target = target * 2 / 5
 		default:
-			tvo.TrustValueOffset = 1
+			target = sim.R.RandIntRange(target, target*3/2)
 		}
 
-		rn = sim.R.Float32()
-		switch {
-		case rn < 0.2:
-			tvo.Weight = dtmtype.Fatal
-		case rn < 0.4:
-			tvo.Weight = dtmtype.Critical
-		default:
-			tvo.Weight = dtmtype.Routine
-		}
+		for i := 0; i < target; {
+			vid := uint32(sim.R.RandIntRange(0, sim.Config.VehicleNumMax))
 
-		// store the forged data into RSU storage area
-		rsu.GetSlotInRing(slot).Store(vid, tvo)
+			if sim.Map.GetCross(rsu.Pos).VehiclesList.Get(int(vid)) {
+				continue
+			} else {
+				i++
+			}
+
+			tvo := &dtmtype.TrustValueOffset{
+				AlterType: dtmtype.Forged,
+				VehicleId: vid,
+			}
+
+			// randomly rate the vehicle
+			rn := sim.R.Float32()
+			switch {
+			case rn < 0.5:
+				tvo.TrustValueOffset = -1
+			default:
+				tvo.TrustValueOffset = 1
+			}
+
+			rn = sim.R.Float32()
+			switch {
+			case rn < 0.2:
+				tvo.Weight = dtmtype.Fatal
+			case rn < 0.4:
+				tvo.Weight = dtmtype.Critical
+			default:
+				tvo.Weight = dtmtype.Routine
+			}
+
+			// store the forged data into RSU storage area
+			rsu.GetSlotInRing(slot).Store(vid, tvo)
+		}
 	}
 }
