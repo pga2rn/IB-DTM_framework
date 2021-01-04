@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"flag"
+	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	gw "github.com/pga2rn/ib-dtm_framework/rpc/pb"
@@ -73,7 +74,13 @@ func (rpcs *RPCServerSession) startRPCgw(ctx context.Context) {
 
 	// Register gRPC server endpoint
 	// Note: Make sure the gRPC server is running properly and accessible
+	// allow cors
 	mux := runtime.NewServeMux()
+	newMux := handlers.CORS(
+		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
+		handlers.AllowedOrigins([]string{"*"}),
+	)(mux)
+
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	err := gw.RegisterFrameworkStatisticsQueryHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
@@ -82,7 +89,7 @@ func (rpcs *RPCServerSession) startRPCgw(ctx context.Context) {
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
 	gws := &http.Server{
-		Handler: mux,
+		Handler: newMux,
 		Addr:    rpcs.gatewayLis,
 	}
 	rpcs.gwInstance = gws
