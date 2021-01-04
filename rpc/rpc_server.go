@@ -1,4 +1,4 @@
-package rpc_server
+package rpc
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func (s *Server) GetLatestData(ctx context.Context, in *emptypb.Empty) (*pb.Stat
 	case <-ctx.Done():
 		return nil, errors.New("context canceled")
 	default:
-		res := new(pb.StatisticsBundle)
+		res := ServerSession.GetLatestData()
 		return res, nil
 	}
 }

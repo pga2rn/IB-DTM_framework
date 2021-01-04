@@ -80,6 +80,9 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 				// generate statistics
 				session.genStatistics(slotCtx, session.Epoch)
 
+				// inform the rpc server the newest results
+				session.informRPCServer(slotCtx, session.Epoch)
+
 				// cancel the context for this epoch's process
 				cancel()
 				logutil.LoggerList["dtm"].Debugf("[Run] epoch %v Done", session.Epoch)

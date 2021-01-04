@@ -1,10 +1,13 @@
 package dtm
 
 import (
+	"context"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
@@ -32,6 +35,7 @@ type DTMLogicSession struct {
 
 	// channel
 	ChanSim        chan interface{}
+	ChanRPC        chan interface{}
 	ChanBlockchain chan interface{}
 
 	// trust value storage and misbehaving flag results for epochs
@@ -45,9 +49,43 @@ type DTMLogicSession struct {
 	R *randutil.RandUtil
 }
 
+func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint32) {
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		expNum := len(*session.ExpConfig)
+		statisticsBundle := &pb.StatisticsBundle{
+			Epoch: epoch, Bundle: make([]*pb.StatisticsPerExperiment, expNum),
+		}
+
+		// query the newest results
+		count := 0
+		for expName, _ := range *session.ExpConfig {
+			head := (*session.TrustValueStorageHead)[expName]
+			if ep, _ := head.GetEpochInformation(); ep != epoch {
+				logutil.LoggerList["dtm"].Debugf("[informRPCServer] epoch async")
+				continue
+			}
+
+			// add results to statistics bundle
+			statisticsBundle.Bundle[count] = head.GetHeadBlock().GetStatistics()
+			count++
+		}
+
+		// pass the bundle to the rpc server
+		select {
+		case session.ChanRPC <- statisticsBundle:
+		default:
+			logutil.LoggerList["dtm"].Debugf("[informRPCServer] no response from rpc server")
+		}
+	}
+}
+
 func PrepareDTMLogicModuleSession(
 	simCfg *config.SimConfig, expCfg *map[string]*config.ExperimentConfig,
-	c chan interface{}) *DTMLogicSession {
+	simdtmChan chan interface{}, dtmrpcChan chan interface{},
+) *DTMLogicSession {
 
 	dtmSession := &DTMLogicSession{}
 
@@ -56,7 +94,8 @@ func PrepareDTMLogicModuleSession(
 	dtmSession.ExpConfig = expCfg
 
 	// inter module communication
-	dtmSession.ChanSim = c
+	dtmSession.ChanSim = simdtmChan
+	dtmSession.ChanRPC = dtmrpcChan
 
 	// random source
 	dtmSession.R = randutil.InitRand(123)
@@ -65,7 +104,7 @@ func PrepareDTMLogicModuleSession(
 	dtmSession.TrustValueStorageHead = dtmtype.InitTrustValueStorageHeadMap()
 	for expName, exp := range *expCfg {
 		(*dtmSession.TrustValueStorageHead)[expName] = dtmtype.InitTrustValueStorage()
-		if exp.Type == config.Proposal {
+		if exp.Type == pb.ExperimentType_PROPOSAL {
 			dtmSession.ProposalStorage = InitIBDTMStorageMap()
 		}
 	}

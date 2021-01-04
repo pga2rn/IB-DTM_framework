@@ -2,8 +2,10 @@ package dtm
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/statistics"
+	"sync"
 )
 
 func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32) {
@@ -14,11 +16,14 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32)
 		logutil.LoggerList["dtm"].Debugf("[genStatistics] context canceled")
 		return
 	default:
+		wg := sync.WaitGroup{}
+
 		// iterate through every experiment's data storage
-		for expName := range *session.ExpConfig {
+		for expName, exp := range *session.ExpConfig {
 			head := (*session.TrustValueStorageHead)[expName]
 
-			go func(expName string) {
+			wg.Add(1)
+			go func(expName string, exp *config.ExperimentConfig) {
 				// get the head of the storage
 				headBlock := head.GetHeadBlock()
 				ep, _, bmap := headBlock.GetTrustValueList()
@@ -28,14 +33,18 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32)
 				}
 
 				// generate statistics
-				bundle := statistics.GenStatisticsForEpoch(epoch, session.MisbehavingVehicleBitMap, bmap)
-				headBlock.SetStatistics(bundle)
+				pack := statistics.GenStatisticsForEpoch(epoch, session.MisbehavingVehicleBitMap, bmap)
+				pack.Epoch, pack.Name, pack.Type = epoch, expName, exp.Type
+				headBlock.SetStatistics(pack)
 
+				wg.Done()
 				// debug
 				logutil.LoggerList["dtm"].Infof("[genStatistics] epoch %v: exp %v, tp %v, tn %v, fp %v, fn %v, recall %v, precision %v, f1 %v, acc %v",
-					epoch, expName, bundle.TP, bundle.TN, bundle.FP, bundle.FN, bundle.Recall, bundle.Precision, bundle.F1score, bundle.ACC)
-
-			}(expName)
+					epoch, expName, pack.Tp, pack.Tp, pack.Fp, pack.Fp, pack.Recall, pack.Precision, pack.F1Score, pack.Acc)
+			}(expName, exp)
 		}
+
+		// wait for all jobs to be done
+		wg.Wait()
 	}
 }

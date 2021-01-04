@@ -2,7 +2,7 @@ package dtm
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
@@ -157,7 +157,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 										// for each pair of trust value offsets, trust value will be calculated for every experiments
 										for expName, exp := range *session.ExpConfig {
 											switch exp.Type {
-											case config.Baseline:
+											case pb.ExperimentType_BASELINE:
 												// get the storage head & storage block
 												tvStorageHead := (*session.TrustValueStorageHead)[expName]
 												tvStorageBlock := tvStorageHead.GetHeadBlock()
@@ -179,7 +179,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 												)
 												// add value to the storage block
 												tvStorageBlock.AddTrustRatingForVehicle(key, res)
-											case config.Proposal:
+											case pb.ExperimentType_PROPOSAL:
 												continue // proposal experiment logic is executed at other place
 											}
 										} // experiment loop
@@ -218,7 +218,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 		// iterate through every experiment's data storage
 		for expName, exp := range *session.ExpConfig {
 			// TODO: finished proposal logic for flagging RSU
-			if exp.Type == config.Proposal {
+			if exp.Type == pb.ExperimentType_PROPOSAL {
 				continue
 			}
 

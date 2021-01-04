@@ -96,7 +96,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) err
 
 			// signal the dtm logic module to init
 			if err := sim.WaitForDTMLogicModule(); err != nil {
-				sim.Done()
+				sim.Done(ctx)
 				logutil.LoggerList["simulator"].Fatal("dtm logic module failed to init", err)
 			}
 		default:

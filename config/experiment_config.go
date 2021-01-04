@@ -1,6 +1,9 @@
 package config
 
-import "github.com/pga2rn/ib-dtm_framework/shared/timefactor"
+import (
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
+	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
+)
 
 type ExperimentType uint32
 
@@ -8,7 +11,7 @@ type ExperimentConfig struct {
 	Name        string
 	Description string
 
-	Type ExperimentType // baseline proposal
+	Type pb.ExperimentType // baseline proposal
 
 	// has compromisedRSU or not
 	CompromisedRSUFlag bool
@@ -19,11 +22,6 @@ type ExperimentConfig struct {
 	TrustValueOffsetsTraceBackEpochs int
 }
 
-const (
-	Baseline = iota
-	Proposal
-)
-
 // return a map of experiment config
 func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m := make(map[string]*ExperimentConfig)
@@ -32,7 +30,7 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m["Baseline0"] = &ExperimentConfig{
 		Name:                             "Baseline0",
 		Description:                      "base line setup 0",
-		Type:                             Baseline,
+		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               false,
 		TimeFactorFlag:                   false,
 		TimeFactorType:                   -1,
@@ -43,7 +41,7 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m["Baseline2"] = &ExperimentConfig{
 		Name:                             "Baseline2",
 		Description:                      "base line setup 2",
-		Type:                             Baseline,
+		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               true,
 		TimeFactorFlag:                   false,
 		TimeFactorType:                   -1,
@@ -54,7 +52,7 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m["Proposal0"] = &ExperimentConfig{
 		Name:                             "Proposal0",
 		Description:                      "proposal 0",
-		Type:                             Proposal,
+		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               false,
 		TimeFactorFlag:                   true,
 		TimeFactorType:                   timefactor.Power,
@@ -65,7 +63,7 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m["Proposal1"] = &ExperimentConfig{
 		Name:                             "Proposal1",
 		Description:                      "proposal 1",
-		Type:                             Proposal,
+		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               true,
 		TimeFactorFlag:                   true,
 		TimeFactorType:                   timefactor.Power,

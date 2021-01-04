@@ -6,7 +6,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	gw "github.com/pga2rn/ib-dtm_framework/rpc/pb"
-	"github.com/pga2rn/ib-dtm_framework/rpc/rpc_server"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"google.golang.org/grpc"
 	"net"
@@ -16,21 +15,27 @@ import (
 type RPCServerSession struct {
 	serverLis  string
 	gatewayLis string
-	dtmChan    chan interface{}
+	chanDTM    chan interface{}
 
 	serverInstance  *grpc.Server
 	gwInstance      *http.Server
-	latestEpoch     uint32
 	cacheLatestData *pb.StatisticsBundle
 }
+
+var ServerSession *RPCServerSession
 
 func PrepareRPCServer(dtm chan interface{}) *RPCServerSession {
 	session := &RPCServerSession{
 		serverLis:  "localhost:5000",
 		gatewayLis: "0.0.0.0:5001",
-		dtmChan:    dtm,
+		chanDTM:    dtm,
 	}
+	ServerSession = session
 	return session
+}
+
+func (rpcs *RPCServerSession) GetLatestData() *pb.StatisticsBundle {
+	return rpcs.cacheLatestData
 }
 
 func (rpcs *RPCServerSession) startRPCServer(ctx context.Context) {
@@ -44,7 +49,7 @@ func (rpcs *RPCServerSession) startRPCServer(ctx context.Context) {
 	s := grpc.NewServer()
 	rpcs.serverInstance = s
 
-	pb.RegisterFrameworkStatisticsQueryServer(s, &rpc_server.Server{})
+	pb.RegisterFrameworkStatisticsQueryServer(s, &Server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			logutil.LoggerList["rpc"].Fatal("[Run] failed to start the server")
@@ -100,9 +105,19 @@ func (rpcs *RPCServerSession) Run(ctx context.Context) {
 	default:
 		go rpcs.startRPCServer(ctx)
 		go rpcs.startRPCgw(ctx)
+
+		logutil.LoggerList["rpc"].Debugf("[Run] framework query server now listens at %v", rpcs.gatewayLis)
+
 		// start the main routine loop
+		// listen the chandtm channel and waiting for latest available data
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case data := <-rpcs.chanDTM:
+				logutil.LoggerList["rpc"].Debugf("[Run] receive data from dtm")
+				rpcs.cacheLatestData = data.(*pb.StatisticsBundle)
+			}
+		}
 	}
-	logutil.LoggerList["rpc"].Debugf("[Run] framework query server now listens at %v", rpcs.gatewayLis)
-	// wait for upper context cancellation
-	<-ctx.Done()
 }

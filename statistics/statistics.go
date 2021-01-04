@@ -3,26 +3,17 @@ package statistics
 import (
 	"context"
 	"github.com/boljen/go-bitmap"
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 )
 
-type Statistics struct {
-	Epoch uint32
-	// total vehicles num
-	VehiclesNum int
-	// 4 basic metrics
-	TP, FP, FN, TN float64
-	// 4 advanced metrics
-	Recall, Precision, F1score, ACC float64
-}
-
 // compare the results and calculate the statistics
-func GenStatisticsForEpoch(epoch uint32, answer, result *bitmap.Threadsafe) *Statistics {
+func GenStatisticsForEpoch(epoch uint32, answer, result *bitmap.Threadsafe) *pb.StatisticsPerExperiment {
 	length := answer.Len()
-	res := &Statistics{Epoch: epoch, VehiclesNum: length}
+	res := &pb.StatisticsPerExperiment{Epoch: epoch}
 
 	// 4 basic metrics
-	tp, fp, fn, tn := 0.0, 0.0, 0.0, 0.0
+	tp, fp, fn, tn := float32(0.0), float32(0.0), float32(0.0), float32(0.0)
 	for i := 0; i < length; i++ {
 		a, r := answer.Get(i), result.Get(i)
 		switch {
@@ -41,14 +32,14 @@ func GenStatisticsForEpoch(epoch uint32, answer, result *bitmap.Threadsafe) *Sta
 			fp++
 		}
 	}
-	res.TP, res.TN, res.FN, res.FP = tp, tn, fn, fp
+	res.Tp, res.Tn, res.Fn, res.Fp = tp, tn, fn, fp
 
 	// advanced metrics
 	recall := tp / (tp + fn)
 	precision := tp / (tp + fp)
 	f1ssimulator := 2 * recall * precision / (recall + precision)
 	acc := (tp + tn) / (tp + tn + fp + fn)
-	res.Recall, res.Precision, res.F1score, res.ACC = recall, precision, f1ssimulator, acc
+	res.Recall, res.Precision, res.F1Score, res.Acc = recall, precision, f1ssimulator, acc
 
 	return res
 }
