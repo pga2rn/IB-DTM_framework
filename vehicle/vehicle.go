@@ -110,10 +110,10 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 		pos.X, pos.Y = 0, r.RandIntRange(0, ylen)
 		direction = XForward
 	case x1y01:
-		pos.X, pos.Y = 1, r.RandIntRange(0, ylen)
+		pos.X, pos.Y = xlen-1, r.RandIntRange(0, ylen)
 		direction = XBackward
 	case y1x01:
-		pos.X, pos.Y = r.RandIntRange(0, xlen), 1
+		pos.X, pos.Y = r.RandIntRange(0, xlen), ylen-1
 		direction = YBackward
 	}
 	v.Pos, v.LastMovementDirection = pos, direction
