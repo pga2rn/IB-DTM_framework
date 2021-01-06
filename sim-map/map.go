@@ -12,8 +12,8 @@ import (
 // which holds a RSU and 0 or more vehicles
 type cross struct {
 	// a list of vehicle that appears
-	Vehicles     *sync.Map // map[uint32]*vehicle.Vehicle
-	VehiclesList *bitmap.Threadsafe
+	vehicles     *sync.Map // map[uint32]*vehicle.Vehicle
+	vehiclesList *bitmap.Threadsafe
 }
 
 type Map struct {
@@ -26,24 +26,24 @@ func (m *Map) GetCross(pos pair.Position) *cross {
 }
 
 func (c *cross) initCross(vnum int) {
-	c.Vehicles = &sync.Map{} // map[uint32]*vehicle.Vehicle)
-	c.VehiclesList = bitmap.NewTS(vnum)
+	c.vehicles = &sync.Map{} // map[uint32]*vehicle.Vehicle)
+	c.vehiclesList = bitmap.NewTS(vnum)
 }
 
 func (c *cross) RemoveVehicle(vid uint32) {
-	c.Vehicles.Delete(vid)
-	c.VehiclesList.Set(int(vid), false)
+	c.vehicles.Delete(vid)
+	c.vehiclesList.Set(int(vid), false)
 }
 
 func (c *cross) AddVehicle(vid uint32, v *vehicle.Vehicle) {
-	c.Vehicles.Store(vid, v)
-	c.VehiclesList.Set(int(vid), true)
+	c.vehicles.Store(vid, v)
+	c.vehiclesList.Set(int(vid), true)
 }
 
 func (c *cross) GetVehicleList() *[]uint32 {
 	res := make([]uint32, 16, 32)
-	for i := 0; i < c.VehiclesList.Len(); i++ {
-		if c.VehiclesList.Get(i) {
+	for i := 0; i < c.vehiclesList.Len(); i++ {
+		if c.vehiclesList.Get(i) {
 			res = append(res, uint32(i))
 		}
 	}
@@ -52,8 +52,8 @@ func (c *cross) GetVehicleList() *[]uint32 {
 
 func (c *cross) GetVehicleNum() int {
 	count := 0
-	for i := 0; i < c.VehiclesList.Len(); i++ {
-		if c.VehiclesList.Get(i) {
+	for i := 0; i < c.vehiclesList.Len(); i++ {
+		if c.vehiclesList.Get(i) {
 			count += 1
 		}
 	}
@@ -61,7 +61,7 @@ func (c *cross) GetVehicleNum() int {
 }
 
 func (c *cross) CheckIfVehicleInManagementZone(vid uint32) bool {
-	return c.VehiclesList.Get(int(vid))
+	return c.vehiclesList.Get(int(vid))
 }
 
 // create a brand new map

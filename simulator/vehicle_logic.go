@@ -19,7 +19,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos pair.P
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 		// add the vehicle into the map
-		sim.Map.GetCross(pos).Vehicles.Store(v.Id, v)
+		sim.Map.GetCross(pos).AddVehicle(v.Id, v)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
@@ -27,7 +27,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos pair.P
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		sim.Map.GetCross(pos).Vehicles.Delete(v.Id)
+		sim.Map.GetCross(pos).RemoveVehicle(v.Id)
 		// reset the vehicle after remove it from the map
 		v.ResetVehicle()
 	}

@@ -21,7 +21,8 @@ type RSU struct {
 
 	// managed zone info is stored at the cross object
 	// the most recent slot's managed vehicles num
-	ManagedVehicles int
+	ManagedVehicles         int
+	ManagedVehiclesPerEpoch int
 
 	// for dtm logic use
 	nextSlotForUpload uint32 // the slot that available for uploading trust value offset

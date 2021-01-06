@@ -69,7 +69,7 @@ func (sim *SimulationSession) alterTrustValueOffset(ctx context.Context, rsu *rs
 		wg.Add(1)
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["simulator"].Fatalf("[alterTrustValueOffset] context canceled, abort")
+			logutil.LoggerList["simulator"].Fatalf("[alterTrustValueOffset] go routine context canceled, abort")
 		default:
 			// iterate through the slot storage of RSU
 			for value := range c {
@@ -128,7 +128,7 @@ func (sim *SimulationSession) forgeTrustValueOffset(ctx context.Context, rsu *rs
 		for i := 0; i < target; {
 			vid := uint32(sim.R.RandIntRange(0, sim.Config.VehicleNumMax))
 
-			if sim.Map.GetCross(rsu.Pos).VehiclesList.Get(int(vid)) {
+			if sim.Map.GetCross(rsu.Pos).CheckIfVehicleInManagementZone(vid) {
 				continue
 			} else {
 				i++
