@@ -104,7 +104,14 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						}
 					} else {
 						// I am a good vehicle!
-						tvo.TrustValueOffset = 1
+						// but there is still possible for me to perform some evil when I am malfunction!
+						flag := sim.R.Float32()
+						switch {
+						case flag < 0.05 && tvo.Weight == dtmtype.Routine:
+							tvo.TrustValueOffset = -1
+						default:
+							tvo.TrustValueOffset = 1
+						}
 					}
 
 					// update the value to RSU
