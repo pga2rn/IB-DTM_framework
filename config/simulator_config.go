@@ -16,11 +16,11 @@ type SimConfig struct {
 	VehicleNumMax              int
 	VehicleNumMin              int
 	MisbehaveVehiclePortionMax float32
-	MisbehaveVehiclePortionMin float32
+	MisbehaveVehiclePortion    float32
 
 	RSUNum                   int
 	CompromisedRSUPortionMax float32 // from 0 ~ 1
-	CompromisedRSUPortionMin float32 // from 0 ~ 1
+	CompromisedRSUPortion    float32 // from 0 ~ 1
 
 	// how many previous epochs' tvos will be used to calculate tv
 	TrustValueOffsetsTraceBackEpoch int
@@ -41,32 +41,28 @@ type SimConfig struct {
 
 func GenYangNetConfig() *SimConfig {
 	cfg := &SimConfig{}
-	cfg.Loglevel = logrus.DebugLevel
+	cfg.Loglevel = logrus.InfoLevel
 
 	// config aligned to yang test eth2 net
-	cfg.SecondsPerSlot = 2
-	cfg.SlotsPerEpoch = 3
-	cfg.RSUNum = 625
+	cfg.SecondsPerSlot = 1
+	cfg.SlotsPerEpoch = 16
+	cfg.RSUNum = 256
 
 	// map config
-	cfg.XLen = 25
-	cfg.YLen = 25
+	cfg.XLen = 16
+	cfg.YLen = 16
 
 	// sim config
-	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
-	cfg.FinalizedDelay = 2    // aligned with eth2.0 setup
 	cfg.TrustValueOffsetsTraceBackEpoch = 3
 
 	// rsu config
-	cfg.CompromisedRSUPortionMax = 0.20
-	cfg.CompromisedRSUPortionMin = 0.15
+	cfg.CompromisedRSUPortion = 0.2
 	cfg.RingLength = cfg.TrustValueOffsetsTraceBackEpoch * int(cfg.SlotsPerEpoch)
 
 	// vehicle
-	cfg.MisbehaveVehiclePortionMax = 0.25
-	cfg.MisbehaveVehiclePortionMin = 0.2
-	cfg.VehicleNumMin = 3750
-	cfg.VehicleNumMax = 4000
+	cfg.MisbehaveVehiclePortion = 0.2
+	cfg.VehicleNumMin = 3467
+	cfg.VehicleNumMax = 4096
 
 	return cfg
 }
