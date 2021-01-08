@@ -12,7 +12,7 @@ var PackageNameList = []string{
 	"service",
 	"statistics",
 	"dtm",
-	"blockchain",
+	"ib-dtm",
 	"rpc",
 }
 

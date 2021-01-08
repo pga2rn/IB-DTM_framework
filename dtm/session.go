@@ -55,7 +55,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		return
 	default:
 		expNum := len(*session.ExpConfig)
-		statisticsBundle := &pb.StatisticsBundle{
+		statisticsBundle := pb.StatisticsBundle{
 			Epoch: epoch, Bundle: make([]*pb.StatisticsPerExperiment, expNum),
 		}
 

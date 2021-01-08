@@ -29,5 +29,10 @@ func (s *Server) GetDataForEpoch(context.Context, *pb.QueryEpoch) (*pb.Statistic
 }
 
 func (s *Server) EchoEpoch(ctx context.Context, in *pb.QueryEpoch) (*pb.QueryEpoch, error) {
-	return &pb.QueryEpoch{Epoch: in.Epoch}, nil
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+		return &pb.QueryEpoch{Epoch: in.Epoch}, nil
+	}
 }

@@ -182,10 +182,8 @@ func (sim *SimulationSession) initAssignMisbehaveVehicle(ctx context.Context) {
 		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
-		sim.MisbehaviorVehiclePortion = sim.R.RandFloatRange(
-			sim.Config.MisbehaveVehiclePortionMin,
-			sim.Config.MisbehaveVehiclePortionMax,
-		)
+		sim.MisbehaviorVehiclePortion = sim.Config.MisbehaveVehiclePortion
+
 		// assign roles to vehicles no matter what status it is
 		target := int(float32(sim.Config.VehicleNumMax) * sim.MisbehaviorVehiclePortion)
 

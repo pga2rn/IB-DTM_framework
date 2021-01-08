@@ -35,10 +35,8 @@ func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
-		sim.CompromisedRSUPortion = sim.R.RandFloatRange(
-			sim.Config.CompromisedRSUPortionMin,
-			sim.Config.CompromisedRSUPortionMax,
-		)
+		sim.CompromisedRSUPortion = sim.Config.CompromisedRSUPortion
+
 		target := int(float32(sim.Config.RSUNum) * sim.CompromisedRSUPortion)
 
 		for i := 0; i < target; i++ {

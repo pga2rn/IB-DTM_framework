@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/blockchain"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
+	ib_dtm "github.com/pga2rn/ib-dtm_framework/ib-dtm"
 	"github.com/pga2rn/ib-dtm_framework/rpc"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator"
@@ -40,7 +40,7 @@ func Init(uCtx *cli.Context) error {
 	// init and register the services
 	services["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm)
 	services["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm, DTMRPCComm)
-	services["blockchain"] = blockchain.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
+	services["ib-dtm"] = ib_dtm.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
 	services["rpc"] = rpc.PrepareRPCServer(DTMRPCComm)
 
 	logutil.LoggerList["service"].Debugf("[Init] finished registering services")
