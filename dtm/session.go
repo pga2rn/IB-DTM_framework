@@ -6,7 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
@@ -24,7 +24,8 @@ type DTMLogicSession struct {
 	CompromisedRSUBitMap     *bitmap.Threadsafe
 
 	// session status
-	Slot, Epoch uint32
+	Slot, Epoch       uint32
+	ActiveVehiclesNum int32
 
 	// pointer to the vehicles and RSU
 	// I don't know if it is a good idea to use mutex via pointer
@@ -40,7 +41,7 @@ type DTMLogicSession struct {
 
 	// trust value storage and misbehaving flag results for epochs
 	// each experiment instance has its own trust value storage
-	TrustValueStorageHead *map[string]*dtmtype.TrustValueStorageHead
+	TrustValueStorageHead *map[string]*fwtype.TrustValueStorageHead
 
 	// storage area for proposal
 	ProposalStorage *map[string]*IBDTMStorage
@@ -56,7 +57,9 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 	default:
 		expNum := len(*session.ExpConfig)
 		statisticsBundle := pb.StatisticsBundle{
-			Epoch: epoch, Bundle: make([]*pb.StatisticsPerExperiment, expNum),
+			Epoch:             epoch,
+			Bundle:            make([]*pb.StatisticsPerExperiment, expNum),
+			ActiveVehicleNums: session.ActiveVehiclesNum,
 		}
 
 		// query the newest results
@@ -101,9 +104,9 @@ func PrepareDTMLogicModuleSession(
 	dtmSession.R = randutil.InitRand(123)
 
 	// prepare experiments
-	dtmSession.TrustValueStorageHead = dtmtype.InitTrustValueStorageHeadMap()
+	dtmSession.TrustValueStorageHead = fwtype.InitTrustValueStorageHeadMap()
 	for expName, exp := range *expCfg {
-		(*dtmSession.TrustValueStorageHead)[expName] = dtmtype.InitTrustValueStorage()
+		(*dtmSession.TrustValueStorageHead)[expName] = fwtype.InitTrustValueStorage()
 		if exp.Type == pb.ExperimentType_PROPOSAL {
 			dtmSession.ProposalStorage = InitIBDTMStorageMap()
 		}

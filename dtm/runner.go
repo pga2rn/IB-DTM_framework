@@ -3,7 +3,7 @@ package dtm
 import (
 	"context"
 	"errors"
-	"github.com/pga2rn/ib-dtm_framework/shared"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
@@ -19,7 +19,7 @@ func (session *DTMLogicSession) WaitForSimulator(ctx context.Context) error {
 		return errors.New("[WaitForSimulator] context canceled")
 	case v := <-session.ChanSim:
 		// unpack
-		pack := v.(shared.SimInitDTMCommunication)
+		pack := v.(fwtype.SimInitDTMCommunication)
 
 		session.Vehicles = pack.Vehicles
 		session.RSUs = pack.RSUs
@@ -50,17 +50,18 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 		case v := <-session.ChanSim:
 			// using reflect to detect what is being passed to the dtm runner
 			switch v.(type) {
-			case shared.SimDTMSlotCommunication: // signal for slot
-				pack := v.(shared.SimDTMSlotCommunication)
+			case fwtype.SimDTMSlotCommunication: // signal for slot
+				pack := v.(fwtype.SimDTMSlotCommunication)
 				// TODO: proposal logic here
 				_, cancel :=
 					context.WithDeadline(ctx, timeutil.SlotDeadline(session.SimConfig.Genesis, pack.Slot))
 				cancel()
-			case shared.SimDTMEpochCommunication: // signal for epoch
+			case fwtype.SimDTMEpochCommunication: // signal for epoch
 				// unpack
-				pack := v.(shared.SimDTMEpochCommunication)
+				pack := v.(fwtype.SimDTMEpochCommunication)
 				session.Epoch = pack.Slot/session.SimConfig.SlotsPerEpoch - 1
 				session.CompromisedRSUBitMap = pack.CompromisedRSUBitMap
+				session.ActiveVehiclesNum = pack.ActiveVehiclesNum
 
 				logutil.LoggerList["dtm"].Debugf("[dtm] epoch %v", session.Epoch)
 				// init context

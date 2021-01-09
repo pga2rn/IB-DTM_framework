@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/boljen/go-bitmap"
-	"github.com/pga2rn/ib-dtm_framework/shared"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 )
 
@@ -67,8 +67,8 @@ func (sim *SimulationSession) dialDTMLogicModulePerEpoch(ctx context.Context, sl
 	case <-ctx.Done():
 		logutil.LoggerList["simulator"].Fatalf("[dialDTMLogicModulePerEpoch] epoch %v, context canceled", slot/sim.Config.SlotsPerEpoch-1)
 	default:
-		pack := shared.SimDTMEpochCommunication{}
-		pack.Slot, pack.CompromisedRSUBitMap = slot, sim.CompromisedRSUBitMap
+		pack := fwtype.SimDTMEpochCommunication{}
+		pack.Slot, pack.ActiveVehiclesNum, pack.CompromisedRSUBitMap = slot, int32(sim.ActiveVehiclesNum), sim.CompromisedRSUBitMap
 		sim.ChanDTM <- pack
 		// wait for dtm logic module to finish
 		<-sim.ChanDTM
