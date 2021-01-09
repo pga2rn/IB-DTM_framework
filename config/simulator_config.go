@@ -41,7 +41,7 @@ type SimConfig struct {
 
 func GenYangNetConfig() *SimConfig {
 	cfg := &SimConfig{}
-	cfg.Loglevel = logrus.InfoLevel
+	cfg.Loglevel = logrus.DebugLevel
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 1
