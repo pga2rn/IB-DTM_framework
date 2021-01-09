@@ -1,9 +1,11 @@
 package simulator
 
 import (
+	"context"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
@@ -20,7 +22,8 @@ type SimulationSession struct {
 	Map *simmap.Map
 
 	// channel for inter-module-communication
-	ChanDTM chan interface{}
+	ChanDTM   chan interface{}
+	ChanIBDTM chan interface{}
 
 	// time
 	Ticker timeutil.Ticker
@@ -54,12 +57,13 @@ type SimulationSession struct {
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *SimulationSession {
+func PrepareSimulationSession(cfg *config.SimConfig, chanDTM chan interface{}, chanIBDTM chan interface{}) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 
 	// inter module
-	sim.ChanDTM = c
+	sim.ChanDTM = chanDTM
+	sim.ChanIBDTM = chanIBDTM
 
 	// init map
 	m := simmap.CreateMap(cfg)
@@ -91,12 +95,19 @@ func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *Simula
 	return sim
 }
 
-// a little helper function to convert index to coord
-func (sim *SimulationSession) IndexToCoord(index int) (int, int) {
-	return index / int(sim.Config.YLen), index % int(sim.Config.YLen)
-}
-
-// coord to index
-func (sim *SimulationSession) CoordToIndex(x, y int) int {
-	return x*int(sim.Config.YLen) + y
+func (sim *SimulationSession) dialIBDTMLogicModulePerSlot(ctx context.Context, slot uint32) {
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["sim"].Fatalf("[dialIBDTMLogicModulePerSlot] context canceled")
+	default:
+		// signal the ib-dtm module with slot
+		sim.ChanIBDTM <- slot
+		// wait for the process finished
+		select {
+		case <-ctx.Done():
+			logutil.LoggerList["sim"].Fatalf("[dialIBDTMLogicModulePerSlot] context canceled for ibdtm slot %v process", slot)
+		case <-sim.ChanIBDTM:
+			logutil.LoggerList["sim"].Debugf("[dialIBDTMLogicModulePerSlot] slot %v done", slot)
+		}
+	}
 }

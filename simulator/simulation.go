@@ -56,7 +56,8 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint32) {
 		// generate trust value offsets
 		sim.executeDTMLogicPerSlot(SlotCtx, slot)
 
-		// TODO: call blockchain module here
+		// signal the ib-dtm module to execute related logic
+		sim.dialIBDTMLogicModulePerSlot(SlotCtx, slot)
 	}
 	cancel()
 }

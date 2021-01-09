@@ -19,9 +19,7 @@ func (sim *SimulationSession) WaitForDTMLogicModule() {
 	initPack := shared.SimInitDTMCommunication{
 		MisbehavingVehicleBitMap: sim.MisbehaviorVehicleBitMap,
 		RSUs:                     &sim.RSUs,
-		Vehicles:                 &sim.Vehicles,
 		Rmu:                      &sim.rmu,
-		Vmu:                      &sim.vmu,
 	}
 
 	// send the init pack to the dtm logic module

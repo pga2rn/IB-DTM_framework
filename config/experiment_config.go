@@ -37,10 +37,10 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
-	// baseline 2
-	m["Baseline2"] = &ExperimentConfig{
-		Name:                             "Baseline2",
-		Description:                      "base line setup 2",
+	// baseline 1
+	m["Baseline1"] = &ExperimentConfig{
+		Name:                             "Baseline1",
+		Description:                      "base line setup 1",
 		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               true,
 		TimeFactorFlag:                   false,
@@ -48,17 +48,17 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
-	// proposal 0
-	m["Proposal0"] = &ExperimentConfig{
-		Name:                             "Proposal0",
-		Description:                      "proposal 0",
-		Type:                             pb.ExperimentType_PROPOSAL,
-		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
-		TrustValueOffsetsTraceBackEpochs: 3,
-	}
-
+	//// proposal 0
+	//m["Proposal0"] = &ExperimentConfig{
+	//	Name:                             "Proposal0",
+	//	Description:                      "proposal 0",
+	//	Type:                             pb.ExperimentType_PROPOSAL,
+	//	CompromisedRSUFlag:               false,
+	//	TimeFactorFlag:                   true,
+	//	TimeFactorType:                   timefactor.Power,
+	//	TrustValueOffsetsTraceBackEpochs: 3,
+	//}
+	//
 	// proposal 1
 	m["Proposal1"] = &ExperimentConfig{
 		Name:                             "Proposal1",

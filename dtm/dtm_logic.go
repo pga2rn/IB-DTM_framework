@@ -3,6 +3,7 @@ package dtm
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
+	"github.com/pga2rn/ib-dtm_framework/shared"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
@@ -95,6 +96,32 @@ func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint32) fl
 
 func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[genProposalTrustValue] start to process for epoch %v", epoch)
+	// dial to the IB-DTM module
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["dtm"].Fatalf("[genProposalTrustValue] context canceled")
+	default:
+		// wait for results from the ib-dtm module
+		for {
+			v := <-session.ChanIBDTM
+			switch v.(type) {
+			case shared.IBDTM2DTMCommunication:
+				pack := v.(shared.IBDTM2DTMCommunication)
+				head := (*session.TrustValueStorageHead)[pack.ExpName]
+
+				// get the head block of the trust value storage chain
+				headBlock := head.GetHeadBlock()
+
+				if err := headBlock.SetTrustValueList(pack.Epoch, pack.TrustValueList); err != nil {
+					logutil.LoggerList["dtm"].Fatalf("[genProposalTrustValue] failed for exp %v, epoch %v", pack.ExpName, epoch)
+				}
+			case bool:
+				// finish transmitting all experiments
+				break
+			}
+		}
+	}
+
 	return
 }
 
@@ -179,8 +206,6 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 												)
 												// add value to the storage block
 												tvStorageBlock.AddTrustRatingForVehicle(key, res)
-											case pb.ExperimentType_PROPOSAL:
-												continue // proposal experiment logic is executed at other place
 											}
 										} // experiment loop
 									} // receiving data from sync map
@@ -216,11 +241,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 		return
 	default:
 		// iterate through every experiment's data storage
-		for expName, exp := range *session.ExpConfig {
-			// TODO: finished proposal logic for flagging RSU
-			if exp.Type == pb.ExperimentType_PROPOSAL {
-				continue
-			}
+		for expName, _ := range *session.ExpConfig {
 
 			// get the head of the storage
 			head := (*session.TrustValueStorageHead)[expName]

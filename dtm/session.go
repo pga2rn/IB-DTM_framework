@@ -9,7 +9,6 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
-	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
 
@@ -29,15 +28,13 @@ type DTMLogicSession struct {
 
 	// pointer to the vehicles and RSU
 	// I don't know if it is a good idea to use mutex via pointer
-	Vehicles *[]*vehicle.Vehicle
-	RSUs     *[][]*rsu.RSU
-	vmu      *sync.Mutex
-	rmu      *sync.Mutex
+	RSUs *[][]*rsu.RSU
+	rmu  *sync.Mutex
 
 	// channel
-	ChanSim        chan interface{}
-	ChanRPC        chan interface{}
-	ChanBlockchain chan interface{}
+	ChanSim   chan interface{}
+	ChanRPC   chan interface{}
+	ChanIBDTM chan interface{}
 
 	// trust value storage and misbehaving flag results for epochs
 	// each experiment instance has its own trust value storage

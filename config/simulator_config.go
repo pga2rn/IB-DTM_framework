@@ -70,3 +70,13 @@ func GenYangNetConfig() *SimConfig {
 func (cfg *SimConfig) SetGenesis(genesis time.Time) {
 	cfg.Genesis = genesis
 }
+
+// a little helper function to convert index to coord
+func (cfg *SimConfig) IndexToCoord(index uint32) (int, int) {
+	return int(index) / cfg.YLen, int(index) % cfg.YLen
+}
+
+// coord to index
+func (cfg *SimConfig) CoordToIndex(x, y int) uint32 {
+	return uint32(x*cfg.YLen + y)
+}
