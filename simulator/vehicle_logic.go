@@ -2,15 +2,15 @@ package simulator
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
 
 ////// simulation //////
 // a helper function to sync the vehicle status between session and vehicle object
-func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos pair.Position, status int) {
+func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos fwtype.Position, status int) {
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
@@ -131,7 +131,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 }
 
 // mark a specific vehicle as inactive, and unregister it from the map
-func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos pair.Position) {
+func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos fwtype.Position) {
 	// filter out invalid vehicle
 	if v == nil || v.Id > uint32(sim.Config.VehicleNumMax) {
 		return
@@ -141,7 +141,7 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos pair.
 
 // move vehicle from one cross to another
 // wrap the operation
-func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos pair.Position) {
+func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos fwtype.Position) {
 	// unregister the vehicle from the old cross
 	sim.Map.GetCross(oldPos).RemoveVehicle(v.Id)
 	// register the vehicle into the new cross

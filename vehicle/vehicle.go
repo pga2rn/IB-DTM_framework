@@ -1,7 +1,7 @@
 package vehicle
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/shared/pair"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 )
 
@@ -12,7 +12,7 @@ type Vehicle struct {
 
 	// current Pos of the vehicle
 	// set to nil for inactive
-	Pos pair.Position
+	Pos fwtype.Position
 	// the Path of vehicle movement, represented by pos
 	// reset when becomes inactive
 	// don't know how to maintain it, so just leave it
@@ -52,7 +52,7 @@ func InitVehicle(
 }
 
 func (v *Vehicle) ResetVehicle() {
-	v.Pos = pair.Position{}
+	v.Pos = fwtype.Position{}
 	v.LastMovementDirection = NotMove
 }
 
@@ -101,7 +101,7 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 		y1x01
 	)
 
-	edge, pos, direction := r.RandIntRange(0, 4), pair.Position{}, NotMove
+	edge, pos, direction := r.RandIntRange(0, 4), fwtype.Position{}, NotMove
 	switch edge {
 	case x01y0:
 		pos.X, pos.Y = r.RandIntRange(0, xlen), 0
@@ -122,7 +122,7 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 // this helper function generate position for vehicle and update the vehicle object
 func (v *Vehicle) InitPosition(r *randutil.RandUtil, xlen, ylen int) {
 	x, y := r.RandIntRange(0, xlen), r.RandIntRange(0, ylen)
-	v.Pos = pair.Position{x, y}
+	v.Pos = fwtype.Position{x, y}
 
 	denominator, lower, upper := 4, 1, 3
 	xLeftBound, xRightBound, yLeftBound, yRightBound :=

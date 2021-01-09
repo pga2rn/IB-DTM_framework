@@ -3,7 +3,7 @@ package dtm
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
@@ -45,7 +45,7 @@ func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
 
 func (session *DTMLogicSession) calculateTrustValueHelper(
 	tfactor float32,
-	tvo *dtmtype.TrustValueOffset,
+	tvo *fwtype.TrustValueOffset,
 	compromisedRSUFlag bool,
 	timeFactorFlag bool,
 ) float32 {
@@ -64,9 +64,9 @@ func (session *DTMLogicSession) calculateTrustValueHelper(
 	// 2. drop trust value offset: 0.3
 	if compromisedRSUFlag {
 		switch tvo.AlterType {
-		case dtmtype.Flipped:
+		case fwtype.Flipped:
 			res = -res
-		case dtmtype.Dropped:
+		case fwtype.Dropped:
 			res = 0
 		}
 	}
@@ -147,7 +147,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 									return
 								default:
 									for pair := range c {
-										key, value := pair[0].(uint32), pair[1].(*dtmtype.TrustValueOffset)
+										key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
 										if key != value.VehicleId {
 											logutil.LoggerList["simulator"].
 												Warnf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
@@ -164,7 +164,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 
 												// if the trust value offset is forged, and cRSU setting is not activated
 												// the tvo will not be counted
-												if !exp.CompromisedRSUFlag && value.AlterType == dtmtype.Forged {
+												if !exp.CompromisedRSUFlag && value.AlterType == fwtype.Forged {
 													continue
 												}
 

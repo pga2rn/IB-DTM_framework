@@ -3,9 +3,8 @@ package simulator
 import (
 	"context"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"sync"
 )
 
@@ -15,7 +14,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 		for y := range sim.RSUs[x] {
 			r := rsu.InitRSU(
 				uint32(sim.CoordToIndex(x, y)),
-				pair.Position{x, y},
+				fwtype.Position{x, y},
 				sim.Config.RingLength,
 			)
 
@@ -71,19 +70,19 @@ func (sim *SimulationSession) alterTrustValueOffset(ctx context.Context, rsu *rs
 		default:
 			// iterate through the slot storage of RSU
 			for value := range c {
-				_, tvo := value[0].(uint32), value[1].(*dtmtype.TrustValueOffset)
+				_, tvo := value[0].(uint32), value[1].(*fwtype.TrustValueOffset)
 
 				// if the RSU is compromised, decide which type of evil it will do to the tvo
 				rn := sim.R.Float32()
 				// assign altered type
 				if tvo.TrustValueOffset < 0 {
 					if rn < 0.8 {
-						tvo.AlterType = dtmtype.Flipped
+						tvo.AlterType = fwtype.Flipped
 					} else {
-						tvo.AlterType = dtmtype.Dropped
+						tvo.AlterType = fwtype.Dropped
 					}
 				} else {
-					tvo.AlterType = dtmtype.Flipped
+					tvo.AlterType = fwtype.Flipped
 				}
 			}
 		}
@@ -132,8 +131,8 @@ func (sim *SimulationSession) forgeTrustValueOffset(ctx context.Context, rsu *rs
 				i++
 			}
 
-			tvo := &dtmtype.TrustValueOffset{
-				AlterType: dtmtype.Forged,
+			tvo := &fwtype.TrustValueOffset{
+				AlterType: fwtype.Forged,
 				VehicleId: vid,
 			}
 
@@ -149,11 +148,11 @@ func (sim *SimulationSession) forgeTrustValueOffset(ctx context.Context, rsu *rs
 			rn = sim.R.Float32()
 			switch {
 			case rn < 0.2:
-				tvo.Weight = dtmtype.Fatal
+				tvo.Weight = fwtype.Fatal
 			case rn < 0.4:
-				tvo.Weight = dtmtype.Critical
+				tvo.Weight = fwtype.Critical
 			default:
-				tvo.Weight = dtmtype.Routine
+				tvo.Weight = fwtype.Routine
 			}
 
 			// store the forged data into RSU storage area

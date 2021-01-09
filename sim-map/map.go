@@ -3,7 +3,7 @@ package simmap
 import (
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/shared/pair"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
 )
@@ -21,7 +21,7 @@ type Map struct {
 	cross [][]*cross
 }
 
-func (m *Map) GetCross(pos pair.Position) *cross {
+func (m *Map) GetCross(pos fwtype.Position) *cross {
 	return m.cross[pos.X][pos.Y]
 }
 

@@ -1,4 +1,4 @@
-package fwtype
+package shared
 
 import (
 	"github.com/boljen/go-bitmap"

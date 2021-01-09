@@ -1,9 +1,8 @@
 package rsu
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/pair"
 	"sync"
 )
 
@@ -13,10 +12,10 @@ type RSU struct {
 	Id uint32
 
 	// pos
-	Pos pair.Position
+	Pos fwtype.Position
 
 	// trust value offsets storage
-	ring    *dtmtype.TrustValueOffsetsPerSlotRing
+	ring    *fwtype.TrustValueOffsetsPerSlotRing
 	ringLen int
 
 	// managed zone info is stored at the cross object
@@ -38,17 +37,17 @@ const (
 )
 
 // RSU constructor
-func InitRSU(id uint32, pos pair.Position, ringLen int) *RSU {
+func InitRSU(id uint32, pos fwtype.Position, ringLen int) *RSU {
 	return &RSU{
 		Id:       id,
 		uploadMu: sync.Mutex{},
 		Pos:      pos,
 		ringLen:  ringLen,
-		ring:     dtmtype.InitRing(ringLen),
+		ring:     fwtype.InitRing(ringLen),
 	}
 }
 
-func (rsu *RSU) InsertSlotsInRing(slot uint32, element *dtmtype.TrustValueOffsetsPerSlot) {
+func (rsu *RSU) InsertSlotsInRing(slot uint32, element *fwtype.TrustValueOffsetsPerSlot) {
 	//logutil.LoggerList["dtm"].Debugf("[InsertSlotsInRing] RSU %v, slot %v", rsu.Id, slot)
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -64,7 +63,7 @@ func (rsu *RSU) InsertSlotsInRing(slot uint32, element *dtmtype.TrustValueOffset
 	rsu.ring.SetElement(element, baseSlot, curSlot)
 }
 
-func (rsu *RSU) GetSlotInRing(slot uint32) *dtmtype.TrustValueOffsetsPerSlot {
+func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
 	rin, rinMu := rsu.ring.GetRing()
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -73,7 +72,7 @@ func (rsu *RSU) GetSlotInRing(slot uint32) *dtmtype.TrustValueOffsetsPerSlot {
 	}
 
 	rinMu.Lock()
-	res := rin.Move(-int(curSlot - slot)).Value.(*dtmtype.TrustValueOffsetsPerSlot)
+	res := rin.Move(-int(curSlot - slot)).Value.(*fwtype.TrustValueOffsetsPerSlot)
 	rinMu.Unlock()
 
 	return res

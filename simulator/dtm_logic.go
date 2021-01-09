@@ -2,7 +2,7 @@ package simulator
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
@@ -32,7 +32,7 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint3
 				sim.rmu.Lock()
 				r := sim.RSUs[x][y]
 				sim.rmu.Unlock()
-				r.InsertSlotsInRing(slot, &dtmtype.TrustValueOffsetsPerSlot{})
+				r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
 			}
 		}
 	}
@@ -70,7 +70,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						return
 					}
 
-					tvo := dtmtype.TrustValueOffset{
+					tvo := fwtype.TrustValueOffset{
 						VehicleId: v.Id,
 						Slot:      slot,
 					}
@@ -79,11 +79,11 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					possibility := sim.R.Float32()
 					switch {
 					case possibility < 0.15:
-						tvo.Weight = dtmtype.Fatal
+						tvo.Weight = fwtype.Fatal
 					case possibility >= 0.15 && possibility < 0.3:
-						tvo.Weight = dtmtype.Critical
+						tvo.Weight = fwtype.Critical
 					default:
-						tvo.Weight = dtmtype.Routine
+						tvo.Weight = fwtype.Routine
 					}
 
 					if sim.MisbehaviorVehicleBitMap.Get(int(v.Id)) {
@@ -95,9 +95,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// or they will behave normally
 						flag := sim.R.Float32()
 						switch {
-						case tvo.Weight == dtmtype.Routine && flag < 0.7:
+						case tvo.Weight == fwtype.Routine && flag < 0.7:
 							tvo.TrustValueOffset = 1
-						case tvo.Weight == dtmtype.Critical && flag < 0.3:
+						case tvo.Weight == fwtype.Critical && flag < 0.3:
 							tvo.TrustValueOffset = -1
 						default:
 							tvo.TrustValueOffset = -1
@@ -107,7 +107,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// but there is still possible for me to perform some evil when I am malfunction!
 						flag := sim.R.Float32()
 						switch {
-						case flag < 0.05 && tvo.Weight == dtmtype.Routine:
+						case flag < 0.05 && tvo.Weight == fwtype.Routine:
 							tvo.TrustValueOffset = -1
 						default:
 							tvo.TrustValueOffset = 1
