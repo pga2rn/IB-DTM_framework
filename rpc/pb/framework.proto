@@ -12,11 +12,23 @@ option go_package = "github.com/pga2rn/ib-dtm_framework/rpc/pb";
 message StatisticsBundle {
     uint32 epoch = 1;
     repeated StatisticsPerExperiment bundle = 2;
+    int32 activeVehicleNums = 3;
 }
 
 enum ExperimentType {
     BASELINE = 0;
     PROPOSAL = 1;
+}
+
+enum MetricsType {
+    TruePositive = 0;
+    TrueNegative = 1;
+    FalsePositive = 2;
+    FalseNegative = 3;
+    Recall = 4;
+    Precision = 5;
+    F1Score = 6;
+    Accuracy = 7;
 }
 
 message StatisticsPerExperiment {
