@@ -1,4 +1,4 @@
-package pair
+package fwtype
 
 type Pair struct {
 	X, Y int

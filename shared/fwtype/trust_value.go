@@ -1,4 +1,4 @@
-package dtmtype
+package fwtype
 
 import (
 	"errors"
