@@ -14,11 +14,14 @@ func (session *StatisticsSession) Init() {
 	dir := fmt.Sprintf(session.Config.RootPath + session.Config.Dir)
 
 	// create the dir to hold log files
-	os.Mkdir(dir, 0777)
-	// create each log file
+	err := os.Mkdir(dir, 0777)
+	if err != nil {
+		logutil.LoggerList["statistics"].Fatalf("[Init] failed")
+	}
 
+	// create each log file
 	for _, mtype := range session.Config.MetricsType {
-		f, err := os.Create(dir + MetricsName[mtype])
+		f, err := os.Create(dir + MetricsNameMapping[mtype])
 		if err != nil {
 			logutil.LoggerList["statistics"].Fatalf("[Init] failed, %v", err)
 		}
@@ -35,7 +38,7 @@ func (session *StatisticsSession) Done() {
 func (session *StatisticsSession) logData(data *pb.StatisticsBundle) {
 
 	for _, mType := range session.Config.MetricsType {
-		mName := MetricsName[mType]
+		mName := MetricsNameMapping[mType]
 		f := session.FileDescriptors[mType]
 
 		// iterate through the statistics bundle
@@ -72,10 +75,10 @@ func (session *StatisticsSession) Run(ctx context.Context) {
 			switch v.(type) {
 			case pb.StatisticsBundle: // signal for epoch
 				// unpack
-				//pack := v.(*pb.StatisticsBundle)
+				pack := v.(*pb.StatisticsBundle)
 
-				// sending raw results' pointer to the statistics module
-				// including the raw trust value list and misbehaving vehicle bitmap
+				session.processRawData(ctx, pack)
+				session.writeToFile(ctx)
 			}
 		}
 	}
