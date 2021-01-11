@@ -6,11 +6,19 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
 
-func (session *IBDTMSession) Done() {
+func (session *IBDTMSession) Done(ctx context.Context) {
 	session.Ticker.Done()
 }
 
 func (session *IBDTMSession) Run(ctx context.Context) {
+	logutil.LoggerList["ib-dtm"].Debugf("[Run] start!")
+
+	// wait for simulator to activate the dtm logic module
+	if err := session.WaitForSimulator(ctx); err != nil {
+		session.Done(ctx)
+		logutil.LoggerList["dtm"].Fatalf("failed to wait for simulator start")
+	}
+
 	logutil.LoggerList["ib-dtm"].Debugf("[Run] genesis kics start!")
 	for {
 		select {
@@ -21,7 +29,7 @@ func (session *IBDTMSession) Run(ctx context.Context) {
 
 			// prepare blockchain head block
 			for _, bc := range session.Blockchain {
-				if _, err := bc.InitBlockchainBlock(slot, session.SimConfig); err != nil {
+				if _, err := bc.InitBlockchainBlock(slot, session.IBDTMConfig); err != nil {
 					logutil.LoggerList["ib-dtm"].Fatal("[Run] failed to init new block, slot %v", slot)
 				}
 			}
@@ -30,7 +38,7 @@ func (session *IBDTMSession) Run(ctx context.Context) {
 			if slot != <-session.ChanSim {
 				logutil.LoggerList["ib-dtm"].Fatalf("[Run] async with simulator")
 			}
-			session.Epoch, session.Slot = slot/session.SimConfig.SlotsPerEpoch, session.Slot
+			session.Epoch, session.Slot = slot/session.SimConfig.SlotsPerEpoch, slot
 
 			// process the logic
 			slotCtx, cancel :=

@@ -8,50 +8,50 @@ import (
 )
 
 // hold blocks
-type BlockchainBlock struct {
+type BeaconBlock struct {
 	slot        uint32
-	shards      []*BlockchainShard
-	ptrNext     *BlockchainBlock
-	ptrPrevious *BlockchainBlock
+	shards      []*ShardBlock
+	ptrNext     *BeaconBlock
+	ptrPrevious *BeaconBlock
 }
 
-type BlockchainShard struct {
+type ShardBlock struct {
 	skipped        bool
 	slot           uint32
-	tvoList        *fwtype.TrustValueOffsetsPerSlot
+	tvoList        map[uint32]*fwtype.TrustValueOffsetsPerSlot // map[slot]sync.map
 	proposer       uint32
-	votes          *map[uint32]bool
+	votes          []bool // [indexInCommittee]isApproved
 	slashing       []uint32
 	whistleblowing []uint32
 }
 
-type BlockchainHead struct {
+type BlockchainRoot struct {
 	mu         sync.Mutex
 	headSlot   uint32 // the epoch of current head
-	headPtr    *BlockchainBlock
+	headPtr    *BeaconBlock
 	blockCount int // total epoch being recorded
-	ptrNext    *BlockchainBlock
+	ptrNext    *BeaconBlock
 }
 
-func InitBlockchain() *BlockchainHead {
-	return &BlockchainHead{
+func InitBlockchain() *BlockchainRoot {
+	return &BlockchainRoot{
 		mu:         sync.Mutex{},
 		headSlot:   0,
 		blockCount: 0,
 	}
 }
 
-// TODO: other parts of blockchain block!
-func (head *BlockchainHead) InitBlockchainBlock(slot uint32, cfg *config.SimConfig) (*BlockchainBlock, error) {
+func (head *BlockchainRoot) InitBlockchainBlock(slot uint32, cfg *config.IBDTMConfig) (*BeaconBlock, error) {
 	if slot != (head.headSlot+1) && slot != 0 {
 		return nil, errors.New("blockchain is out of sync with the simulation")
 	}
 
 	// init the new storage object
-	storage := &BlockchainBlock{
+	storage := &BeaconBlock{
 		slot:        slot,
 		ptrNext:     nil,
 		ptrPrevious: head.headPtr,
+		shards:      make([]*ShardBlock, cfg.ShardNum),
 	}
 
 	head.mu.Lock()
@@ -69,14 +69,16 @@ func (head *BlockchainHead) InitBlockchainBlock(slot uint32, cfg *config.SimConf
 	head.headSlot, head.blockCount = slot, head.blockCount+1
 	head.mu.Unlock()
 
+	// shard block will be initialized at ProccessSlot, no need to init here
+
 	return storage, nil
 }
 
-func (head *BlockchainHead) GetHeadBlock() *BlockchainBlock {
+func (head *BlockchainRoot) GetHeadBlock() *BeaconBlock {
 	return head.headPtr
 }
 
-func (head *BlockchainHead) GetBlockForSlot(slot uint32) *BlockchainBlock {
+func (head *BlockchainRoot) GetBlockForSlot(slot uint32) *BeaconBlock {
 	if slot > head.headSlot {
 		return nil
 	}
