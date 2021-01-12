@@ -49,12 +49,10 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 		SimConfig:   simCfg,
 		IBDTMConfig: ibdtmConfig,
-		Epoch:       uint32(0),
 		Blockchain:  blockhain,
 	}
 
 	// init the data structure
-	res.Epoch = 0
 	res.activeValidators = make(map[uint32]*Validator)
 	res.validators = make([]*Validator, simCfg.RSUNum)
 	res.inactivedValidatorBitMap = bitmap.New(simCfg.RSUNum)

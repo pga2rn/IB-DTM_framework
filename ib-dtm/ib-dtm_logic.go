@@ -11,10 +11,6 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 	logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v", epoch)
 	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v, done", epoch)
 
-	if bs.Epoch != epoch && epoch != 0 {
-		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessBalanceAdjustment] epoch async %v, %v", bs.Epoch, epoch)
-	}
-
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessBalanceAdjustment] context canceled")
@@ -74,10 +70,6 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v", epoch)
 	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v, done", epoch)
-
-	if bs.Epoch != epoch && epoch != 0 {
-		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessLiveCycle] epoch async %v, %v", bs.Epoch, epoch)
-	}
 
 	select {
 	case <-ctx.Done():
