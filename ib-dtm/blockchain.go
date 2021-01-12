@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"sync"
 )
 
@@ -69,7 +70,17 @@ func (head *BlockchainRoot) InitBlockchainBlock(slot uint32, cfg *config.IBDTMCo
 	head.headSlot, head.blockCount = slot, head.blockCount+1
 	head.mu.Unlock()
 
-	// shard block will be initialized at ProccessSlot, no need to init here
+	for shardId := 0; shardId < cfg.ShardNum; shardId++ {
+		shardBlock := &ShardBlock{
+			skipped:        true,
+			slot:           slot,
+			tvoList:        make(map[uint32]*fwtype.TrustValueOffsetsPerSlot),
+			votes:          make([]bool, cfg.CommitteeSize),
+			slashing:       make([]uint32, cfg.SlashingsLimit),
+			whistleblowing: make([]uint32, cfg.WhistleBlowingsLimit),
+		}
+		storage.shards[shardId] = shardBlock
+	}
 
 	return storage, nil
 }
@@ -87,5 +98,11 @@ func (head *BlockchainRoot) GetBlockForSlot(slot uint32) *BeaconBlock {
 	for i := uint32(0); i < slot; i++ {
 		ptr = ptr.ptrNext
 	}
+
+	// debug
+	if ptr == nil {
+		logutil.LoggerList["ib-dtm"].Debugf("[GetBlockForSlot] failed! slot %v", slot)
+	}
+
 	return ptr
 }

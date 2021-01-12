@@ -23,6 +23,7 @@ type BeaconStatus struct {
 
 	SimConfig   *config.SimConfig
 	IBDTMConfig *config.IBDTMConfig
+	ExpConfig   *config.ExperimentConfig
 
 	Epoch      uint32
 	Blockchain *BlockchainRoot
@@ -41,7 +42,7 @@ type BeaconStatus struct {
 	R *randutil.RandUtil
 }
 
-func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig, blockhain *BlockchainRoot) *BeaconStatus {
+func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig, exp *config.ExperimentConfig, blockchain *BlockchainRoot) *BeaconStatus {
 	res := &BeaconStatus{
 		validatorMu:      sync.Mutex{},
 		slashingMu:       sync.Mutex{},
@@ -49,7 +50,8 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 		SimConfig:   simCfg,
 		IBDTMConfig: ibdtmConfig,
-		Blockchain:  blockhain,
+		ExpConfig:   exp,
+		Blockchain:  blockchain,
 	}
 
 	// init the data structure
@@ -62,7 +64,7 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	// init validator instances for every RSU
 	for i := 0; i < simCfg.RSUNum; i++ {
 		// register all RSUs as validator
-		res.validators[i] = InitValidator(uint32(i), ibdtmConfig, simCfg)
+		res.validators[i] = InitValidator(uint32(i), ibdtmConfig.InitialEffectiveStake, exp.TrustValueOffsetsTraceBackEpochs)
 		// all validators are active right now
 		res.activeValidators[uint32(i)] = res.validators[i]
 	}

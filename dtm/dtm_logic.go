@@ -6,10 +6,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
-	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"sync"
-	"time"
 )
 
 // factors for generating trust values
@@ -75,24 +72,24 @@ func (session *DTMLogicSession) calculateTrustValueHelper(
 }
 
 // generate time factor for different experiment setup
-func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint32) float64 {
-	var start, end time.Time
-	cfg, genesis := (*session.ExpConfig)[name], session.SimConfig.Genesis
-
-	slotTime := timeutil.SlotStartTime(genesis, slot)
-	epoch := slot / session.SimConfig.SlotsPerEpoch
-
-	if epoch < uint32(cfg.TrustValueOffsetsTraceBackEpochs) {
-		// not enough previous epochs for trace back
-		start = session.SimConfig.Genesis
-		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
-	} else {
-		start = timeutil.NextEpochTime(
-			session.SimConfig.Genesis, epoch-uint32(cfg.TrustValueOffsetsTraceBackEpochs))
-		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
-	}
-	return timefactor.GetTimeFactor(cfg.TimeFactorType, start, slotTime, end)
-}
+//func (session *DTMLogicSession) genTimeFactorHelper(name string, slot uint32) float64 {
+//	var start, end time.Time
+//	cfg, genesis := (*session.ExpConfig)[name], session.SimConfig.Genesis
+//
+//	slotTime := timeutil.SlotStartTime(genesis, slot)
+//	epoch := slot / session.SimConfig.SlotsPerEpoch
+//
+//	if epoch < uint32(cfg.TrustValueOffsetsTraceBackEpochs) {
+//		// not enough previous epochs for trace back
+//		start = session.SimConfig.Genesis
+//		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
+//	} else {
+//		start = timeutil.NextEpochTime(
+//			session.SimConfig.Genesis, epoch-uint32(cfg.TrustValueOffsetsTraceBackEpochs))
+//		end = timeutil.NextEpochTime(session.SimConfig.Genesis, slot)
+//	}
+//	return timefactor.GetTimeFactor(cfg.TimeFactorType, start, slotTime, end)
+//}
 
 func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[genProposalTrustValue] start to process for epoch %v", epoch)
@@ -200,7 +197,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 												compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(r.Id)) && exp.CompromisedRSUFlag
 
 												// generate!
-												tfactor := session.genTimeFactorHelper(expName, slotIndex)
+												tfactor := 1
 												res := session.calculateTrustValueHelper(
 													float32(tfactor), value,
 													compromisedRSUFlag, exp.TimeFactorFlag,

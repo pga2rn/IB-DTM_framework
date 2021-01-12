@@ -59,13 +59,7 @@ func PrepareBlockchainModule(
 
 	// init data structure
 	session.Blockchain = make(map[string]*BlockchainRoot)
-	for key := range session.Blockchain {
-		session.Blockchain[key] = InitBlockchain()
-	}
 	session.BeaconStatus = make(map[string]*BeaconStatus)
-	for key := range session.BeaconStatus {
-		session.BeaconStatus[key] = InitBeaconStatus(session.SimConfig, session.IBDTMConfig, session.Blockchain[key])
-	}
 
 	// init storage area for each experiment
 	// temporary storage for latest trust value
@@ -75,7 +69,7 @@ func PrepareBlockchainModule(
 
 		// init beaconstatus for each experiment
 		session.BeaconStatus[exp.Name] = InitBeaconStatus(
-			simCfg, ibdtmCfg, session.Blockchain[exp.Name])
+			simCfg, ibdtmCfg, exp, session.Blockchain[exp.Name])
 	}
 
 	// prepare the ticker
@@ -143,15 +137,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 
 			// for each shard block
 			for shardId := 0; shardId < session.IBDTMConfig.ShardNum; shardId++ {
-				shardBlock := &ShardBlock{
-					skipped:        true,
-					slot:           slot,
-					tvoList:        make(map[uint32]*fwtype.TrustValueOffsetsPerSlot),
-					votes:          make([]bool, bs.IBDTMConfig.CommitteeSize),
-					slashing:       make([]uint32, bs.IBDTMConfig.SlashingsLimit),
-					whistleblowing: make([]uint32, bs.IBDTMConfig.WhistleBlowingsLimit),
-				}
-				beaconBlock.shards[shardId] = shardBlock
+				shardBlock := beaconBlock.shards[shardId]
 				// committee is one-to-one mapping to the slot index
 				cid := slot % bs.IBDTMConfig.SlotsPerEpoch
 
@@ -173,7 +159,11 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				// get the trust value offsets list
 				startSlot, endSlot := proposerRSU.GetNextUploadSlot(), slot
 				for i := startSlot; i <= endSlot; i++ {
-					shardBlock.tvoList[i] = proposerRSU.GetSlotInRing(i)
+					tvolist := proposerRSU.GetSlotInRing(i)
+					if tvolist == nil {
+						logutil.LoggerList["ib-dtm"].Warnf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
+					}
+					shardBlock.tvoList[i] = tvolist
 				}
 				// update the next available update slot
 				proposerRSU.SetNextUploadSlot(endSlot + 1)

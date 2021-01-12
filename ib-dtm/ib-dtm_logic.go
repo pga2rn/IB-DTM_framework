@@ -81,7 +81,7 @@ func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 				bs.InactivateValidator(validator.Id)
 			}
 			// debug, show all validator's stake
-			logutil.LoggerList["ib-dtm"].Debugf("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
+			//logutil.LoggerList["ib-dtm"].Debugf("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
 		// check slash
 		for slashedValidator, _ := range bs.slashings {

@@ -1,7 +1,6 @@
 package ib_dtm
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"math"
 	"sync"
@@ -15,12 +14,12 @@ type Validator struct {
 	itsStake *fwtype.ITStake
 }
 
-func InitValidator(vid uint32, ibdtmCfg *config.IBDTMConfig, simCfg *config.SimConfig) *Validator {
+func InitValidator(vid uint32, initEffectiveStake float32, itsStakeCacheLength int) *Validator {
 	res := &Validator{
 		mu:             sync.Mutex{},
 		Id:             vid,
-		effectiveStake: ibdtmCfg.InitialEffectiveStake,
-		itsStake:       fwtype.NewITStack(simCfg.TrustValueOffsetsTraceBackEpoch),
+		effectiveStake: initEffectiveStake,
+		itsStake:       fwtype.NewITStack(itsStakeCacheLength),
 	}
 	return res
 }

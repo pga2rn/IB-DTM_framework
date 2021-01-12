@@ -23,7 +23,7 @@ type SimConfig struct {
 	CompromisedRSUPortion    float32 // from 0 ~ 1
 
 	// how many previous epochs' tvos will be used to calculate tv
-	TrustValueOffsetsTraceBackEpoch int
+	EpochCacheLength int
 
 	// time config
 	Genesis           time.Time
@@ -45,7 +45,7 @@ func GenYangNetConfig() *SimConfig {
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 1
-	cfg.SlotsPerEpoch = 16
+	cfg.SlotsPerEpoch = 8
 	cfg.RSUNum = 256
 
 	// map config
@@ -53,11 +53,11 @@ func GenYangNetConfig() *SimConfig {
 	cfg.YLen = 16
 
 	// sim config
-	cfg.TrustValueOffsetsTraceBackEpoch = 3
+	cfg.EpochCacheLength = 512
 
 	// rsu config
 	cfg.CompromisedRSUPortion = 0.2
-	cfg.RingLength = cfg.TrustValueOffsetsTraceBackEpoch * int(cfg.SlotsPerEpoch)
+	cfg.RingLength = cfg.EpochCacheLength * int(cfg.SlotsPerEpoch)
 
 	// vehicle
 	cfg.MisbehaveVehiclePortion = 0.2

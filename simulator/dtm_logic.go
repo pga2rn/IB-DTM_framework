@@ -29,9 +29,7 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint3
 	default:
 		for x := 0; x < sim.Config.XLen; x++ {
 			for y := 0; y < sim.Config.YLen; y++ {
-				sim.rmu.Lock()
 				r := sim.RSUs[x][y]
-				sim.rmu.Unlock()
 				r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
 			}
 		}

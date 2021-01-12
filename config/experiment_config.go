@@ -18,7 +18,7 @@ type ExperimentConfig struct {
 	// apply time factor or not
 	TimeFactorFlag bool
 	TimeFactorType int
-	// epochs traceback
+	// epochs traceback cache length
 	TrustValueOffsetsTraceBackEpochs int
 }
 
