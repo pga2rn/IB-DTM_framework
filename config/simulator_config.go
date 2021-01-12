@@ -57,7 +57,7 @@ func GenYangNetConfig() *SimConfig {
 
 	// rsu config
 	cfg.CompromisedRSUPortion = 0.2
-	cfg.RingLength = cfg.EpochCacheLength * int(cfg.SlotsPerEpoch)
+	cfg.RingLength = cfg.EpochCacheLength
 
 	// vehicle
 	cfg.MisbehaveVehiclePortion = 0.2
