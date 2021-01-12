@@ -133,6 +133,8 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 // execute compromised RSU logic here
 func (sim *SimulationSession) execRSULogic(ctx context.Context, slot uint32) {
+	defer logutil.LoggerList["simulator"].Debugf("[execRSULogic] slot %v, done", slot)
+
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["simulator"].Fatalf("[execRSULogic] slot %v, context canceled", slot)

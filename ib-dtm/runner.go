@@ -16,7 +16,7 @@ func (session *IBDTMSession) Run(ctx context.Context) {
 	// wait for simulator to activate the dtm logic module
 	if err := session.WaitForSimulator(ctx); err != nil {
 		session.Done(ctx)
-		logutil.LoggerList["dtm"].Fatalf("failed to wait for simulator start")
+		logutil.LoggerList["ib-dtm"].Fatalf("failed to wait for simulator start")
 	}
 
 	logutil.LoggerList["ib-dtm"].Debugf("[Run] genesis kics start!")
@@ -34,26 +34,20 @@ func (session *IBDTMSession) Run(ctx context.Context) {
 				}
 			}
 
-			// wait for the signal from sim
-			if slot != <-session.ChanSim {
-				logutil.LoggerList["ib-dtm"].Fatalf("[Run] async with simulator")
-			}
+			// sync
 			session.Epoch, session.Slot = slot/session.SimConfig.SlotsPerEpoch, slot
 
 			// process the logic
 			slotCtx, cancel :=
 				context.WithDeadline(ctx, timeutil.SlotDeadline(session.SimConfig.Genesis, slot))
 
-			if slot/session.SimConfig.SlotsPerEpoch == 0 {
-				// checkpoint slot is in the new epoch
-				if slot == 0 {
-					session.processEpoch(slotCtx, 0)
-				} else {
-					session.processEpoch(slotCtx, session.Epoch-1)
-				}
+			// if the slot is the checkpoint slot
+			if slot%session.SimConfig.SlotsPerEpoch == 0 {
+				session.processEpoch(slotCtx, slot)
 			}
 
 			session.ProcessSlot(slotCtx, slot)
+
 			cancel()
 		}
 	}

@@ -6,16 +6,8 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
-	"math"
 	"sync"
 )
-
-type Validator struct {
-	mu             sync.Mutex
-	Id             uint32
-	itsStake       float32
-	effectiveStake float32
-}
 
 type ShardStatus struct {
 	Epoch          uint32
@@ -42,27 +34,11 @@ type BeaconStatus struct {
 	whistleBlowings          map[uint32]int
 
 	// committees
-	shardStatus []*ShardStatus
+	shardStatus         []*ShardStatus
+	TotalProposerBitMap *bitmap.Threadsafe
 
 	// random source
 	R *randutil.RandUtil
-}
-
-type ValidatorRole = int
-
-const (
-	ATTESTOR = iota
-	PROPOSER
-)
-
-func (v *Validator) AddITStake(amount float32) {
-	v.mu.Lock()
-	if amount < 0 && math.Abs(float64(amount)) >= float64(v.effectiveStake) {
-		v.effectiveStake = 0
-	} else {
-		v.effectiveStake += amount
-	}
-	v.mu.Unlock()
 }
 
 func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig, blockhain *BlockchainRoot) *BeaconStatus {
@@ -80,21 +56,18 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	// init the data structure
 	res.Epoch = 0
 	res.activeValidators = make(map[uint32]*Validator)
-	// init validator instances for every RSU
-	for i := 0; i < simCfg.RSUNum; i++ {
-		// register all RSUs as validator
-		res.validators[i] = &Validator{
-			mu:             sync.Mutex{},
-			Id:             uint32(i),
-			effectiveStake: ibdtmConfig.InitialEffectiveStake,
-			itsStake:       0,
-		}
-		// all validators are active right now
-		res.activeValidators[uint32(i)] = res.validators[i]
-	}
+	res.validators = make([]*Validator, simCfg.RSUNum)
 	res.inactivedValidatorBitMap = bitmap.New(simCfg.RSUNum)
 	res.slashings = make(map[uint32]bool)
 	res.whistleBlowings = make(map[uint32]int)
+
+	// init validator instances for every RSU
+	for i := 0; i < simCfg.RSUNum; i++ {
+		// register all RSUs as validator
+		res.validators[i] = InitValidator(uint32(i), ibdtmConfig, simCfg)
+		// all validators are active right now
+		res.activeValidators[uint32(i)] = res.validators[i]
+	}
 
 	// init every shard status storage
 	res.shardStatus = make([]*ShardStatus, ibdtmConfig.CommitteeNum)
@@ -104,6 +77,7 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 			Epoch: 0,
 		}
 	}
+	res.TotalProposerBitMap = bitmap.NewTS(res.SimConfig.RSUNum)
 
 	// random source
 	res.R = randutil.InitRand(123)
@@ -117,8 +91,8 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 		logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] context canceled")
 	default:
 		shardStatus := bs.shardStatus[shardId]
-		if shardStatus.Epoch+1 != epoch && epoch != 0 {
-			logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] epoch async")
+		if shardStatus.Epoch != epoch && epoch != 0 {
+			logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] epoch async, status e %v, epoch %v", shardStatus.Epoch)
 		}
 
 		// re-generate shuffled list
@@ -127,9 +101,19 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 		shardStatus.proposer = make([]uint32, bs.IBDTMConfig.CommitteeSize)
 		// elect proposer for each committee
 		for i := 0; i < bs.IBDTMConfig.CommitteeNum; i++ {
-			index := bs.R.Intn(bs.IBDTMConfig.CommitteeSize) // index inside the committee
-			// proposer: [committeeId]proposerId
-			shardStatus.proposer[i] = shardStatus.shuffledIdList[i*bs.IBDTMConfig.CommitteeNum+index]
+			for {
+				index := bs.R.Intn(bs.IBDTMConfig.CommitteeSize) // index inside the committee
+				// proposer: [committeeId]proposerId
+				proposerId := shardStatus.shuffledIdList[i*bs.IBDTMConfig.CommitteeNum+index]
+
+				// prevent the proposer to proposer multiple time in different shard
+				if bs.TotalProposerBitMap.Get(int(proposerId)) {
+					continue
+				} else {
+					shardStatus.proposer[i] = proposerId
+					break
+				}
+			}
 		}
 	}
 }
@@ -157,7 +141,7 @@ func (bs *BeaconStatus) GetCommitteeByCommitteeId(shardId, cid uint32) []uint32 
 
 func (bs *BeaconStatus) IsValidatorActive(vid uint32) bool {
 	bs.validatorMu.Lock()
-	res := bs.inactivedValidatorBitMap.Get(int(vid))
+	res := !bs.inactivedValidatorBitMap.Get(int(vid))
 	bs.validatorMu.Unlock()
 	return res
 }
@@ -183,8 +167,12 @@ func (bs *BeaconStatus) GetRewardFactor(id uint32) float32 {
 }
 
 func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v, done", epoch)
+
+	// reset the bitmap
+	bs.TotalProposerBitMap = bitmap.NewTS(bs.SimConfig.RSUNum)
 	for shardId := range bs.shardStatus {
-		// TODO: data structure initialization
 		bs.shardStatus[shardId] = &ShardStatus{
 			Epoch: epoch,
 			Id:    uint32(shardId),

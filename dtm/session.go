@@ -84,7 +84,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 
 func PrepareDTMLogicModuleSession(
 	simCfg *config.SimConfig, expCfg *map[string]*config.ExperimentConfig,
-	simdtmChan chan interface{}, dtmrpcChan chan interface{},
+	simChan, ibdtmChan, rpcChan chan interface{},
 ) *DTMLogicSession {
 
 	dtmSession := &DTMLogicSession{}
@@ -94,8 +94,9 @@ func PrepareDTMLogicModuleSession(
 	dtmSession.ExpConfig = expCfg
 
 	// inter module communication
-	dtmSession.ChanSim = simdtmChan
-	dtmSession.ChanRPC = dtmrpcChan
+	dtmSession.ChanSim = simChan
+	dtmSession.ChanRPC = rpcChan
+	dtmSession.ChanIBDTM = ibdtmChan
 
 	// random source
 	dtmSession.R = randutil.InitRand(123)

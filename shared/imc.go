@@ -32,7 +32,11 @@ type SimInitDTMCommunication struct {
 	RSUs                     *[][]*rsu.RSU
 	Rmu                      *sync.Mutex
 }
-type SimInitIBDTMCommunication = SimInitDTMCommunication
+type SimInitIBDTMCommunication struct {
+	CompromisedRSUBitMap *bitmap.Threadsafe
+	RSUs                 *[][]*rsu.RSU
+	Rmu                  *sync.Mutex
+}
 
 // structs for rpc server
 type DTMRPCCommunication = pb.StatisticsBundle

@@ -15,20 +15,20 @@ func (sim *SimulationSession) Done(ctx context.Context) {
 	return
 }
 
-func (sim *SimulationSession) WaitForDTMLogicModule() {
-	initPack := shared.SimInitDTMCommunication{
+func (sim *SimulationSession) dialInitDTMLogicModule() {
+	initPack := &shared.SimInitDTMCommunication{
 		MisbehavingVehicleBitMap: sim.MisbehaviorVehicleBitMap,
 		RSUs:                     &sim.RSUs,
 		Rmu:                      &sim.rmu,
 	}
 
 	// send the init pack to the dtm logic module
-	logutil.LoggerList["simulator"].Debugf("[WaitForDTMLogicModule] send init pack to dtm logic module")
+	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] send init pack to dtm logic module")
 	sim.ChanDTM <- initPack
 
 	// wait for the dtm logic module finishing the init
 	<-sim.ChanDTM
-	logutil.LoggerList["simulator"].Debugf("[WaitForDTMLogicModule] dtm logic module init finished")
+	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] dtm logic module init finished")
 }
 
 // start the simulation!

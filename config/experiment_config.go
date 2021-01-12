@@ -22,6 +22,21 @@ type ExperimentConfig struct {
 	TrustValueOffsetsTraceBackEpochs int
 }
 
+func InitProposalExperimentConfigList() []*ExperimentConfig {
+	m := *InitExperimentConfig()
+	res := make([]*ExperimentConfig, len(m))
+
+	count := 0
+	for _, value := range m {
+		if value.Type == pb.ExperimentType_PROPOSAL {
+			res[count] = value
+			count++
+		}
+	}
+
+	return res[:count]
+}
+
 // return a map of experiment config
 func InitExperimentConfig() *map[string]*ExperimentConfig {
 	m := make(map[string]*ExperimentConfig)
@@ -48,18 +63,18 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
-	//// proposal 0
-	//m["Proposal0"] = &ExperimentConfig{
-	//	Name:                             "Proposal0",
-	//	Description:                      "proposal 0",
-	//	Type:                             pb.ExperimentType_PROPOSAL,
-	//	CompromisedRSUFlag:               false,
-	//	TimeFactorFlag:                   true,
-	//	TimeFactorType:                   timefactor.Power,
-	//	TrustValueOffsetsTraceBackEpochs: 3,
-	//}
-	//
-	// proposal 1
+	// proposal 0
+	m["Proposal0"] = &ExperimentConfig{
+		Name:                             "Proposal0",
+		Description:                      "proposal 0",
+		Type:                             pb.ExperimentType_PROPOSAL,
+		CompromisedRSUFlag:               false,
+		TimeFactorFlag:                   true,
+		TimeFactorType:                   timefactor.Power,
+		TrustValueOffsetsTraceBackEpochs: 3,
+	}
+
+	//proposal 1
 	m["Proposal1"] = &ExperimentConfig{
 		Name:                             "Proposal1",
 		Description:                      "proposal 1",

@@ -13,7 +13,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 		// init every RSU data structure
 		for y := range sim.RSUs[x] {
 			r := rsu.InitRSU(
-				uint32(sim.CoordToIndex(x, y)),
+				uint32(sim.Config.CoordToIndex(x, y)),
 				fwtype.Position{x, y},
 				sim.Config.RingLength,
 			)

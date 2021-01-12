@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
-	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
 	"github.com/pga2rn/ib-dtm_framework/shared"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
@@ -45,6 +44,7 @@ type IBDTMSession struct {
 	R *randutil.RandUtil
 }
 
+// should only include proposal experiments
 func PrepareBlockchainModule(
 	simCfg *config.SimConfig, expCfgList []*config.ExperimentConfig, ibdtmCfg *config.IBDTMConfig,
 	sim, dtm chan interface{}) *IBDTMSession {
@@ -57,19 +57,25 @@ func PrepareBlockchainModule(
 		ChanSim:       sim,
 	}
 
+	// init data structure
 	session.Blockchain = make(map[string]*BlockchainRoot)
+	for key := range session.Blockchain {
+		session.Blockchain[key] = InitBlockchain()
+	}
 	session.BeaconStatus = make(map[string]*BeaconStatus)
+	for key := range session.BeaconStatus {
+		session.BeaconStatus[key] = InitBeaconStatus(session.SimConfig, session.IBDTMConfig, session.Blockchain[key])
+	}
 
 	// init storage area for each experiment
-	for _, exp := range expCfgList {
-		if exp.Type == pb.ExperimentType_PROPOSAL {
-			// init blockchain
-			session.Blockchain[exp.Name] = InitBlockchain()
+	// temporary storage for latest trust value
+	session.TrustValueStorage = make(map[string]*fwtype.TrustValuesPerEpoch)
+	for _, exp := range session.ExpConfigList {
+		session.Blockchain[exp.Name] = InitBlockchain()
 
-			// init beaconstatus for each experiment
-			session.BeaconStatus[exp.Name] = InitBeaconStatus(
-				simCfg, ibdtmCfg, session.Blockchain[exp.Name])
-		}
+		// init beaconstatus for each experiment
+		session.BeaconStatus[exp.Name] = InitBeaconStatus(
+			simCfg, ibdtmCfg, session.Blockchain[exp.Name])
 	}
 
 	// prepare the ticker
@@ -81,32 +87,54 @@ func PrepareBlockchainModule(
 	return session
 }
 
-func (session *IBDTMSession) processEpoch(ctx context.Context, epoch uint32) {
+func (session *IBDTMSession) processEpoch(ctx context.Context, slot uint32) {
+	epoch := uint32(0)
+	if slot != 0 {
+		epoch = slot/session.IBDTMConfig.SlotsPerEpoch - 1
+	}
+
+	logutil.LoggerList["ib-dtm"].Debugf("[processEpoch] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[processEpoch] epoch %v, done", epoch)
+
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["ib-dtm"].Fatalf("[processEpoch] context canceled")
 	default:
-		// generate trust value for the previous epoch, for all experiments
-		session.genTrustValue(ctx, epoch)
-		// inform the dtm module with latest trust value
-		go session.dialDTModule(ctx, epoch)
+		switch slot {
+		case uint32(0):
+			for _, bs := range session.BeaconStatus {
+				// generate shuffledIdList for next epoch
+				bs.UpdateShardStatus(ctx, epoch)
+			}
+		default:
+			// generate trust value for the epoch, for all experiments
+			session.genTrustValue(ctx, epoch)
+			// inform the dtm module with latest trust value
+			session.WaitForDTModule(ctx, epoch)
 
-		// for each experiment, execute ib-dtm logics
-		for _, bs := range session.BeaconStatus {
-			// update each rsu's balance
-			bs.ProcessBalanceAdjustment(ctx, epoch)
-			// filter out rsus with insufficient balance
-			bs.ProcessLiveCycle(ctx, epoch)
-			// generate shuffledIdList for next epoch
-			bs.UpdateShardStatus(ctx, epoch)
+			// for each experiment, execute ib-dtm logics
+			for _, bs := range session.BeaconStatus {
+				// update each rsu's balance
+				bs.ProcessBalanceAdjustment(ctx, epoch)
+				// filter out rsus with insufficient balance
+				bs.ProcessLiveCycle(ctx, epoch)
+				// generate shuffledIdList for next epoch
+				bs.UpdateShardStatus(ctx, epoch+1)
+			}
 		}
 	}
 }
 
 func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[processSlot] slot %v", slot)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[processSlot] slot %v, done", slot)
+
+	// wait for sim signal
+	<-session.ChanSim
+
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[processSlo] context canceled")
+		logutil.LoggerList["ib-dtm"].Fatalf("[processSlot] context canceled")
 	default:
 		// for each experiments, each exp has a beaconstatus and a chain
 		for _, exp := range session.ExpConfigList {
@@ -116,8 +144,12 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 			// for each shard block
 			for shardId := 0; shardId < session.IBDTMConfig.ShardNum; shardId++ {
 				shardBlock := &ShardBlock{
-					skipped: true,
-					slot:    slot,
+					skipped:        true,
+					slot:           slot,
+					tvoList:        make(map[uint32]*fwtype.TrustValueOffsetsPerSlot),
+					votes:          make([]bool, bs.IBDTMConfig.CommitteeSize),
+					slashing:       make([]uint32, bs.IBDTMConfig.SlashingsLimit),
+					whistleblowing: make([]uint32, bs.IBDTMConfig.WhistleBlowingsLimit),
 				}
 				beaconBlock.shards[shardId] = shardBlock
 				// committee is one-to-one mapping to the slot index
@@ -143,6 +175,8 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				for i := startSlot; i <= endSlot; i++ {
 					shardBlock.tvoList[i] = proposerRSU.GetSlotInRing(i)
 				}
+				// update the next available update slot
+				proposerRSU.SetNextUploadSlot(endSlot + 1)
 
 				// for each member in the committee,
 				// start to vote for the new block
@@ -167,7 +201,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						default:
 							shardBlock.votes[index] = false
 						}
-					// the good voter will high not let the bad RSU go
+					// the good voter will not let the bad RSU go
 					case proposerIsCompromised && !validatorIsCompromised:
 						switch {
 						case rn < 0.8:
@@ -209,15 +243,20 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 
 			} // shard block
 		} // each experiments
-
+		session.ChanSim <- true
 	}
 }
 
-func (session *IBDTMSession) dialDTModule(ctx context.Context, epoch uint32) {
+func (session *IBDTMSession) WaitForDTModule(ctx context.Context, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[WaitForDTModule] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[WaitForDTModule] epoch %v, done", epoch)
+
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[dialDTModule] context canceled")
+		logutil.LoggerList["ib-dtm"].Fatalf("[WaitForDTModule] context canceled")
 	default:
+		<-session.ChanDTM // wait for signal to transmit the data
+
 		for expName, data := range session.TrustValueStorage {
 			res := shared.IBDTM2DTMCommunication{
 				Epoch:          epoch,
@@ -226,17 +265,18 @@ func (session *IBDTMSession) dialDTModule(ctx context.Context, epoch uint32) {
 			}
 			session.ChanDTM <- &res
 		}
-		session.ChanDTM <- true
+		session.ChanDTM <- true // finish transmission
 	}
 }
 
 func (session *IBDTMSession) WaitForSimulator(ctx context.Context) error {
+	defer logutil.LoggerList["ib-dtm"].Debugf("[WaitForSimulator] init finished!")
 	select {
 	case <-ctx.Done():
 		return errors.New("[WaitForSimulator] context canceled")
 	case v := <-session.ChanSim:
 		// unpack
-		pack := v.(shared.SimInitIBDTMCommunication)
+		pack := v.(*shared.SimInitIBDTMCommunication)
 
 		session.RSUs = pack.RSUs
 		session.CompromisedRSUBitMap = pack.CompromisedRSUBitMap
@@ -244,7 +284,6 @@ func (session *IBDTMSession) WaitForSimulator(ctx context.Context) error {
 
 		// after the init, signal the simulator
 		session.ChanSim <- true
-		logutil.LoggerList["dtm"].Debugf("[WaitForSimulator] init finished!")
 		return nil
 	}
 

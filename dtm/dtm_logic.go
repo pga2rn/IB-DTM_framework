@@ -101,12 +101,15 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 	case <-ctx.Done():
 		logutil.LoggerList["dtm"].Fatalf("[genProposalTrustValue] context canceled")
 	default:
+		// signal the ib-dtm
+		session.ChanIBDTM <- true
+
 		// wait for results from the ib-dtm module
 		for {
 			v := <-session.ChanIBDTM
 			switch v.(type) {
-			case shared.IBDTM2DTMCommunication:
-				pack := v.(shared.IBDTM2DTMCommunication)
+			case *shared.IBDTM2DTMCommunication:
+				pack := v.(*shared.IBDTM2DTMCommunication)
 				head := (*session.TrustValueStorageHead)[pack.ExpName]
 
 				// get the head block of the trust value storage chain
@@ -117,12 +120,10 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 				}
 			case bool:
 				// finish transmitting all experiments
-				break
+				return
 			}
 		}
 	}
-
-	return
 }
 
 func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch uint32) {

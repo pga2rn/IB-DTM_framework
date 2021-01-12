@@ -63,6 +63,7 @@ func (session *StatisticsSession) Run(ctx context.Context) {
 	logutil.LoggerList["statistics"].Debugf("[Run] start!")
 
 	// init the experiment log files
+	session.Init()
 
 	// after initialization is finished, waiting for the communication from the simulator
 	for {

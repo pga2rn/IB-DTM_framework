@@ -99,8 +99,11 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) {
 			sim.CompromisedRSUBitMap = bitmap.NewTS(sim.Config.RSUNum)
 			sim.initAssignCompromisedRSU(ctx)
 
+			// at the start of the simulation, init other module
+			// dial and init the ib-dtm module
+			sim.dialInitIBDTMModule(ctx)
 			// signal the dtm logic module to init
-			sim.WaitForDTMLogicModule()
+			sim.dialInitDTMLogicModule()
 
 			// debug
 			logutil.LoggerList["simulator"].

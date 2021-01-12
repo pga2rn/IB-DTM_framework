@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/dtm"
+	ib_dtm "github.com/pga2rn/ib-dtm_framework/ib-dtm"
 	"github.com/pga2rn/ib-dtm_framework/rpc"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator"
@@ -29,18 +30,26 @@ func Init(uCtx *cli.Context) error {
 
 	// init experiment config
 	expCfg := config.InitExperimentConfig()
+	expCfgList := config.InitProposalExperimentConfigList()
+
+	//statisticsCfg := config.GenStatisticsConfig()
+	ibdtmCfg := config.GenIBDTMConfig(cfg)
+
 	//
 	//// init the channel for intercommunication
 	simDTMComm := make(chan interface{})
-	//simBCComm := make(chan interface{})
-	//DTMBCComm := make(chan interface{})
+	simIBDTMComm := make(chan interface{})
+	DTMIBDTMComm := make(chan interface{})
 	DTMRPCComm := make(chan interface{})
 
+	// TODO: update dtm prepare logics for ib-dtm!
+	// TODO: fix ib-dtm prepare logic!
 	// init and register the services
-	services["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm)
-	services["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm, DTMRPCComm)
-	//services["ib-dtm"] = ib_dtm.PrepareBlockchainModule(cfg, simBCComm, DTMBCComm)
+	services["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm, simIBDTMComm)
+	services["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm, DTMIBDTMComm, DTMRPCComm)
+	services["ib-dtm"] = ib_dtm.PrepareBlockchainModule(cfg, expCfgList, ibdtmCfg, simIBDTMComm, DTMIBDTMComm)
 	services["rpc"] = rpc.PrepareRPCServer(DTMRPCComm)
+	//services["statistics"] = statistics.PrepareStatisticsSession(statisticsCfg, expCfg)
 
 	logutil.LoggerList["service"].Debugf("[Init] finished registering services")
 	return nil

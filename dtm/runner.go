@@ -19,7 +19,7 @@ func (session *DTMLogicSession) WaitForSimulator(ctx context.Context) error {
 		return errors.New("[WaitForSimulator] context canceled")
 	case v := <-session.ChanSim:
 		// unpack
-		pack := v.(shared.SimInitDTMCommunication)
+		pack := v.(*shared.SimInitDTMCommunication)
 
 		session.RSUs = pack.RSUs
 		session.MisbehavingVehicleBitMap = pack.MisbehavingVehicleBitMap

@@ -8,8 +8,11 @@ import (
 )
 
 func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v, done", epoch)
+
 	if bs.Epoch != epoch && epoch != 0 {
-		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessForNewEpoch] epoch async %v, %v", bs.Epoch, epoch)
+		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessBalanceAdjustment] epoch async %v, %v", bs.Epoch, epoch)
 	}
 
 	select {
@@ -18,17 +21,28 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 	default:
 		// iterate through the beaconblocks for each slots in the epoch
 		start, end := epoch*bs.IBDTMConfig.SlotsPerEpoch, (epoch+1)*bs.IBDTMConfig.SlotsPerEpoch
-		for i := start; i < end; i++ {
+		for i := start; i < end; i++ { // for each slots
 			beaconblock := bs.Blockchain.GetBlockForSlot(i)
-			for shardId, block := range beaconblock.shards {
+			for shardId, block := range beaconblock.shards { // for each shard
 				proposer := bs.validators[block.proposer]
 
 				if block.skipped {
-					proposer.AddITStake(-1 * bs.IBDTMConfig.BaseReward * bs.IBDTMConfig.PenaltyFactor)
+					proposer.AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward * bs.IBDTMConfig.PenaltyFactor)
 				} else {
 					factor := bs.GetRewardFactor(proposer.Id)
-					proposer.AddITStake(bs.IBDTMConfig.BaseReward * factor)
+					proposer.AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
+					// add its stake
+					count := 0
+					f := func(key, value interface{}) bool {
+						count++
+						return true
+					}
+					for _, tvolist := range block.tvoList {
+						tvolist.Range(f)
+					}
+					proposer.AddITStake(epoch, float32(count))
 				}
+
 				// scan through the committee, give reward and penalty to each validators accordingly
 				// get the slot committee
 				committee := bs.GetCommitteeByValidatorId(uint32(shardId), proposer.Id)
@@ -43,10 +57,10 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 					switch {
 					// if the block is not valid, but the voter votes for it
 					case block.skipped == true && block.votes[index] == true:
-						bs.validators[vid].AddITStake(-1 * bs.IBDTMConfig.BaseReward)
+						bs.validators[vid].AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward)
 					// if the block is valid, and the voter votes for it
 					case block.skipped == false && block.votes[index] == true:
-						bs.validators[vid].AddITStake(bs.IBDTMConfig.BaseReward * factor)
+						bs.validators[vid].AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
 					}
 				}
 
@@ -58,6 +72,9 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 }
 
 func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v, done", epoch)
+
 	if bs.Epoch != epoch && epoch != 0 {
 		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessLiveCycle] epoch async %v, %v", bs.Epoch, epoch)
 	}
@@ -71,6 +88,8 @@ func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 			if validator.effectiveStake < bs.IBDTMConfig.EffectiveStakeLowerBound {
 				bs.InactivateValidator(validator.Id)
 			}
+			// debug, show all validator's stake
+			logutil.LoggerList["ib-dtm"].Debugf("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
 		// check slash
 		for slashedValidator, _ := range bs.slashings {
@@ -97,6 +116,8 @@ func (session *IBDTMSession) calculateTrustValueHelper(
 }
 
 func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[genTrustValue] epoch %v", epoch)
+
 	// iterate through the blockchain for all experiments
 	for _, exp := range session.ExpConfigList {
 		// init storage area
@@ -104,7 +125,7 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 		blockchain := session.Blockchain[exp.Name]
 		result := session.TrustValueStorage[exp.Name]
 
-		startSlot, endSlot := uint32(0), (epoch+1)*session.SimConfig.SlotsPerEpoch
+		startSlot, endSlot := epoch*session.SimConfig.SlotsPerEpoch, (epoch+1)*session.SimConfig.SlotsPerEpoch
 		if epoch < uint32(exp.TrustValueOffsetsTraceBackEpochs) {
 			startSlot = 0
 		} else {
