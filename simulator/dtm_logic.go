@@ -8,20 +8,6 @@ import (
 	"sync"
 )
 
-func (sim *SimulationSession) executeDTMLogicPerSlot(ctx context.Context, slot uint32) {
-	select {
-	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[executeDTMLogicPerSlot] context canceled")
-	default:
-		// init the data structure for every RSU to store tvos for the slot
-		sim.prepareRSUsForSlot(ctx, slot)
-		// generate and dispatch trust value offsets to every RSUs
-		sim.genTrustValueOffset(ctx, slot)
-		// execute related RSU logic
-		sim.execRSULogic(ctx, slot)
-	}
-}
-
 func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint32) {
 	select {
 	case <-ctx.Done():
@@ -137,19 +123,18 @@ func (sim *SimulationSession) execRSULogic(ctx context.Context, slot uint32) {
 	case <-ctx.Done():
 		logutil.LoggerList["simulator"].Fatalf("[execRSULogic] slot %v, context canceled", slot)
 	default:
-		for x := range sim.RSUs {
-			for y := range sim.RSUs[x] {
-				rsu := sim.RSUs[x][y]
-				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
+		for i := 0; i < sim.Config.RSUNum; i++ {
+			x, y := sim.Config.IndexToCoord(uint32(i))
+			rsu := sim.RSUs[x][y]
+			rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
 
-				// execute compromised RSU evil logics
-				if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
-					// evil type 1
-					sim.alterTrustValueOffset(ctx, rsu, slot)
-					// evil type 2
-					sim.forgeTrustValueOffset(ctx, rsu, slot)
-				} // if is evil RSU
-			}
+			// execute compromised RSU evil logics
+			if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
+				// evil type 1
+				sim.alterTrustValueOffset(ctx, rsu, slot)
+				// evil type 2
+				sim.forgeTrustValueOffset(ctx, rsu, slot)
+			} // if is evil RSU
 		} // iterate RSU for loop
 
 	} // select

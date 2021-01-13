@@ -18,7 +18,6 @@ import (
 // init the storage area
 func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
-	// baseline
 	for expName := range *session.ExpConfig {
 		head := (*session.TrustValueStorageHead)[expName]
 		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
@@ -108,7 +107,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 					return
 				default:
 					var currentSlot, baseSlot uint32
-					currentSlot = epoch * session.SimConfig.SlotsPerEpoch
+					currentSlot = (epoch + 1) * session.SimConfig.SlotsPerEpoch
 					if epoch < 3 {
 						baseSlot = 0
 					} else {
@@ -127,6 +126,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 							c <- []interface{}{key, value}
 							return true
 						}
+
 						// the following routine will capture the key and value from the sync map
 						go func() {
 							select {
