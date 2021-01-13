@@ -35,7 +35,7 @@ func (session *DTMLogicSession) calculateTrustValueHelper(
 	res := tvo.TrustValueOffset * tvo.Weight /
 		float32(session.SimConfig.SlotsPerEpoch)
 
-	// compromised RSU will do the following evils:
+	// compromised RSU will alter the raw trust value offsets:
 	if compromisedRSUFlag {
 		switch tvo.AlterType {
 		case fwtype.Flipped:
@@ -138,7 +138,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 									key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
 									if key != value.VehicleId {
 										logutil.LoggerList["simulator"].
-											Warnf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
+											Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 										continue // ignore invalid trust value offset record
 									}
 

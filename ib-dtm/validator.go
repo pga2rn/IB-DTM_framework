@@ -66,3 +66,22 @@ func (v *Validator) AddITStake(epoch uint32, amount float32) {
 func (v *Validator) GetITStake() float32 {
 	return v.itsStake.GetAmount()
 }
+
+// for sorting the validator with effective stake
+type Validators []*Validator
+type ValidatorPointerList struct {
+	Validators
+}
+
+func (v Validators) Len() int {
+	return len(v)
+}
+
+func (v Validators) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
+}
+
+// descend
+func (vl ValidatorPointerList) Less(i, j int) bool {
+	return vl.Validators[i].effectiveStake > vl.Validators[j].effectiveStake
+}

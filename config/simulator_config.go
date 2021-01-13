@@ -41,11 +41,11 @@ type SimConfig struct {
 
 func GenYangNetConfig() *SimConfig {
 	cfg := &SimConfig{}
-	cfg.Loglevel = logrus.DebugLevel
+	cfg.Loglevel = logrus.InfoLevel
 
 	// config aligned to yang test eth2 net
 	cfg.SecondsPerSlot = 1
-	cfg.SlotsPerEpoch = 8
+	cfg.SlotsPerEpoch = 16
 	cfg.RSUNum = 256
 
 	// map config
@@ -61,8 +61,8 @@ func GenYangNetConfig() *SimConfig {
 
 	// vehicle
 	cfg.MisbehaveVehiclePortion = 0.2
-	cfg.VehicleNumMin = 3467
-	cfg.VehicleNumMax = 4096
+	cfg.VehicleNumMin = 8000
+	cfg.VehicleNumMax = 8192
 
 	return cfg
 }

@@ -20,6 +20,7 @@ type IBDTMConfig struct {
 
 	InitialEffectiveStake    float32
 	EffectiveStakeLowerBound float32
+	EffectiveStakeUpperBound float32
 	BaseReward               float32
 	PenaltyFactor            float32
 
@@ -45,9 +46,10 @@ func GenIBDTMConfig(simCfg *SimConfig) *IBDTMConfig {
 
 	res.InitialEffectiveStake = float32(simCfg.VehicleNumMax) * 1.5 / float32(simCfg.RSUNum)
 	res.EffectiveStakeLowerBound = 0.5 * res.InitialEffectiveStake
+	res.EffectiveStakeUpperBound = 1.5 * res.InitialEffectiveStake
 
 	res.BaseReward =
-		res.InitialEffectiveStake * res.UploaderCoverRatio /
+		res.EffectiveStakeUpperBound * res.UploaderCoverRatio /
 			float32(math.Sqrt(float64(simCfg.VehicleNumMax)))
 	res.PenaltyFactor = 3
 

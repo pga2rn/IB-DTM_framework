@@ -141,7 +141,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				shardBlock := beaconBlock.shards[shardId]
 				cid := slot % bs.IBDTMConfig.SlotsPerEpoch
 				proposerId := bs.shardStatus[shardId].proposer[cid]
-				proposerValidator := bs.validators[proposerId]
+				proposerValidator := bs.validators.Validators[proposerId]
 				shardBlock.proposer = proposerId
 
 				// first we let the proposer to propose the block
@@ -160,7 +160,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				for i := startSlot; i <= endSlot; i++ {
 					tvolist := proposerRSU.GetSlotInRing(i)
 					if tvolist == nil {
-						logutil.LoggerList["ib-dtm"].Warnf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
+						logutil.LoggerList["ib-dtm"].Debugf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
 					}
 
 					// try to save a new copy of tvolist
@@ -174,7 +174,6 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				// start to vote for the new block
 				committee := bs.GetCommitteeByCommitteeId(uint32(shardId), cid)
 
-				// PGA2RN: rewrite from here
 				switch exp.CompromisedRSUFlag {
 				case true:
 					proposerIsCompromised := session.CompromisedRSUBitMap.Get(int(proposerId))
@@ -191,7 +190,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						// the bad voter will let the bad RSU propose
 						case proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.6:
+							case rn < 0.7:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
@@ -210,7 +209,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						// bad validator will camouflage itself by voting for good RSU
 						case !proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.7:
+							case rn < 0.6:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
@@ -235,9 +234,9 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						continue
 					}
 
-					totalStake += bs.validators[int(vid)].effectiveStake
+					totalStake += bs.validators.Validators[int(vid)].effectiveStake
 					if approved {
-						gainedStake += bs.validators[int(vid)].effectiveStake
+						gainedStake += bs.validators.Validators[int(vid)].effectiveStake
 					}
 				}
 				// if the block gained enough stakes

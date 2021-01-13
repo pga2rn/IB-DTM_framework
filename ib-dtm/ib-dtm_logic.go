@@ -20,9 +20,10 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 		for i := start; i < end; i++ { // for each slots
 			beaconblock := bs.Blockchain.GetBlockForSlot(i)
 			for shardId, block := range beaconblock.shards { // for each shard
-				proposer := bs.validators[block.proposer]
+				proposer := bs.validators.Validators[block.proposer]
 
 				if block.skipped {
+					logutil.LoggerList["ib-dtm"].Debugf("block skipped at slot %v, shard %v", block.slot, shardId)
 					proposer.AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward * bs.IBDTMConfig.PenaltyFactor)
 				} else {
 					factor := bs.GetRewardFactor(proposer.Id)
@@ -40,8 +41,8 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 				}
 
 				// scan through the committee, give reward and penalty to each validators accordingly
-				// get the slot committee
-				committee := bs.GetCommitteeByValidatorId(uint32(shardId), proposer.Id)
+				// get the slot committee(committee is one-to-one map to the slots)
+				committee := bs.GetCommitteeByCommitteeId(uint32(shardId), block.slot%bs.SimConfig.SlotsPerEpoch)
 				// iterate throught the committee
 				for index, vid := range committee {
 					// not counting the proposer and inactive validator
@@ -53,15 +54,13 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 					switch {
 					// if the block is not valid, but the voter votes for it
 					case block.skipped == true && block.votes[index] == true:
-						bs.validators[vid].AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward)
+						bs.validators.Validators[vid].AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward)
 					// if the block is valid, and the voter votes for it
 					case block.skipped == false && block.votes[index] == true:
-						bs.validators[vid].AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
+						bs.validators.Validators[vid].AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
 					}
 				}
 
-				// TODO: move whistleblowing here
-				// TODO: move slashing logics here
 			}
 		}
 	}
@@ -76,13 +75,15 @@ func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessLiveCycle] context canceled")
 	default:
 		// check stake
-		for _, validator := range bs.validators {
-			if validator.effectiveStake < bs.IBDTMConfig.EffectiveStakeLowerBound {
+		for _, validator := range bs.validators.Validators {
+			if bs.IsValidatorActive(validator.Id) && validator.effectiveStake < bs.IBDTMConfig.EffectiveStakeLowerBound {
+				//logutil.LoggerList["ib-dtm"].Warnf("[lifecycle] r %v has been inactivated", validator.Id)
 				bs.InactivateValidator(validator.Id)
 			}
 			// debug, show all validator's stake
-			//logutil.LoggerList["ib-dtm"].Debugf("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
+			//logutil.LoggerList["ib-dtm"].Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
+
 		// check slash
 		for slashedValidator, _ := range bs.slashings {
 			bs.InactivateValidator(slashedValidator)
@@ -152,7 +153,7 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 
 							if key != value.VehicleId {
 								logutil.LoggerList["simulator"].
-									Warnf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
+									Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 								continue // ignore invalid trust value offset record
 							}
 
@@ -183,5 +184,5 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 		} // iterate slots for loop
 
 		wg.Wait()
-	}
+	} // experiment
 }

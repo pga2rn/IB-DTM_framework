@@ -6,6 +6,8 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
+	"math"
+	"sort"
 	"sync"
 )
 
@@ -30,7 +32,7 @@ type BeaconStatus struct {
 
 	activeValidators         map[uint32]*Validator
 	inactivedValidatorBitMap bitmap.Bitmap
-	validators               []*Validator
+	validators               ValidatorPointerList
 	slashings                map[uint32]bool
 	whistleBlowings          map[uint32]int
 
@@ -56,7 +58,9 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 	// init the data structure
 	res.activeValidators = make(map[uint32]*Validator)
-	res.validators = make([]*Validator, simCfg.RSUNum)
+	res.validators = ValidatorPointerList{
+		make(Validators, simCfg.RSUNum),
+	}
 	res.inactivedValidatorBitMap = bitmap.New(simCfg.RSUNum)
 	res.slashings = make(map[uint32]bool)
 	res.whistleBlowings = make(map[uint32]int)
@@ -64,9 +68,9 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	// init validator instances for every RSU
 	for i := 0; i < simCfg.RSUNum; i++ {
 		// register all RSUs as validator
-		res.validators[i] = InitValidator(uint32(i), ibdtmConfig.InitialEffectiveStake, exp.TrustValueOffsetsTraceBackEpochs)
+		res.validators.Validators[i] = InitValidator(uint32(i), ibdtmConfig.InitialEffectiveStake, exp.TrustValueOffsetsTraceBackEpochs)
 		// all validators are active right now
-		res.activeValidators[uint32(i)] = res.validators[i]
+		res.activeValidators[uint32(i)] = res.validators.Validators[i]
 	}
 
 	// init every shard status storage
@@ -85,7 +89,11 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	return res
 }
 
+// separate proposer and committee(proposer no need to be the member of committee)
 func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32) {
+	logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v", epoch)
+	defer logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v done", epoch)
+
 	select {
 	case <-ctx.Done():
 		logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] context canceled")
@@ -99,20 +107,23 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 		shardStatus.shuffledIdList = bs.R.PermUint32(bs.IBDTMConfig.ValidatorsNum)
 		// reset proposer list
 		shardStatus.proposer = make([]uint32, bs.IBDTMConfig.CommitteeSize)
-		// elect proposer for each committee
+
+		// take out the first (ValidatorNum * CoverRatio)th validators with most stakes
+		tmpVlist := make(Validators, len(bs.validators.Validators))
+		copy(tmpVlist, bs.validators.Validators)
+		// sort the tmp list based on the amount of stake
+		sort.Sort(ValidatorPointerList{tmpVlist})
+
+		//
 		for i := 0; i < bs.IBDTMConfig.CommitteeNum; i++ {
 			for {
-				index := bs.R.Intn(bs.IBDTMConfig.CommitteeSize) // index inside the committee
-				// proposer: [committeeId]proposerId
-				proposerId := shardStatus.shuffledIdList[i*bs.IBDTMConfig.CommitteeSize+index]
+				// randomly pick a proposer from the first 2/3 validators with most stakes
+				rn := bs.R.Intn(len(tmpVlist) * 2 / 3)
 
-				//logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] p %v", proposerId)
-
-				// prevent the proposer to proposer multiple time in different shard
-				if !bs.IsValidatorActive(proposerId) {
+				if !bs.IsValidatorActive(tmpVlist[rn].Id) {
 					continue
 				} else {
-					shardStatus.proposer[i] = proposerId
+					shardStatus.proposer[i] = tmpVlist[rn].Id
 					break
 				}
 			}
@@ -157,15 +168,15 @@ func (bs *BeaconStatus) InactivateValidator(vid uint32) {
 
 func (bs *BeaconStatus) ActivateValidator(vid uint32) {
 	bs.validatorMu.Lock()
-	bs.activeValidators[vid] = bs.validators[int(vid)]
+	bs.activeValidators[vid] = bs.validators.Validators[int(vid)]
 	bs.inactivedValidatorBitMap.Set(int(vid), false)
 	bs.validatorMu.Unlock()
 }
 
 func (bs *BeaconStatus) GetRewardFactor(id uint32) float32 {
-	//validator := bs.validators[id]
-	//res := validator.itsStake / float32(bs.IBDTMConfig.VehiclesNum)
-	return 0.75 // TODO: change the hard coded reward factor!
+	validator := bs.validators.Validators[id]
+	res := float32(math.Sqrt(float64(validator.itsStake.GetAmount() / float32(bs.IBDTMConfig.VehiclesNum))))
+	return res
 }
 
 func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {

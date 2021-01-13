@@ -62,7 +62,7 @@ func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
 	if slot < baseSlot || slot > curSlot {
-		logutil.LoggerList["dtm"].Warnf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
+		logutil.LoggerList["dtm"].Debugf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
 	}
 
 	rinMu.Lock()

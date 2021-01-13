@@ -40,9 +40,6 @@ type DTMLogicSession struct {
 	// each experiment instance has its own trust value storage
 	TrustValueStorageHead *map[string]*fwtype.TrustValueStorageHead
 
-	// storage area for proposal
-	ProposalStorage *map[string]*IBDTMStorage
-
 	// a random source
 	R *randutil.RandUtil
 }
@@ -103,11 +100,8 @@ func PrepareDTMLogicModuleSession(
 
 	// prepare experiments
 	dtmSession.TrustValueStorageHead = fwtype.InitTrustValueStorageHeadMap()
-	for expName, exp := range *expCfg {
+	for expName, _ := range *expCfg {
 		(*dtmSession.TrustValueStorageHead)[expName] = fwtype.InitTrustValueStorage()
-		if exp.Type == pb.ExperimentType_PROPOSAL {
-			dtmSession.ProposalStorage = InitIBDTMStorageMap()
-		}
 	}
 
 	return dtmSession
