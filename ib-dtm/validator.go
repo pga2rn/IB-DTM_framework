@@ -32,6 +32,10 @@ func InitValidator(vid uint32, initEffectiveStake float32, itsStakeCacheLength i
 func (v *Validator) SetNextSlotForUpload(slot uint32) {
 	v.uploadMu.Lock()
 	defer v.uploadMu.Unlock()
+
+	if slot < v.nextSlotForUpload {
+		return
+	}
 	v.nextSlotForUpload = slot
 }
 

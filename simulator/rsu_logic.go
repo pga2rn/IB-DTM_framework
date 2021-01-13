@@ -18,8 +18,6 @@ func (sim *SimulationSession) InitRSUs() bool {
 				sim.Config.RingLength,
 			)
 
-			// uploading tracker
-			r.SetNextUploadSlot(0)
 			sim.RSUs[x][y] = r
 		}
 	}

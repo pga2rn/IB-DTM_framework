@@ -21,9 +21,9 @@ type TrustValueOffsetAlertedType = uint32
 
 // alter type const
 const (
-	Flipped = iota
-	Dropped
-	Forged
+	Flipped = 233
+	Dropped = 234
+	Forged  = 235
 )
 
 // we use sync.map for thread safe

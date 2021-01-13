@@ -162,7 +162,10 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 								continue
 							}
 
-							tvo := session.calculateTrustValueHelper(value, exp.CompromisedRSUFlag)
+							// whether the proposer is compromised RSU & enable compromised flag
+							compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(shard.proposer)) && exp.CompromisedRSUFlag
+
+							tvo := session.calculateTrustValueHelper(value, compromisedRSUFlag)
 							if op, ok := result.LoadOrStore(value.VehicleId, tvo); ok {
 								result.Store(value.VehicleId, tvo+op.(float32))
 							}
@@ -175,7 +178,7 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 					}
 					close(c)
 				} // iterate shards
-				wg.Done() // job done
+				wg.Done() // job done for shards
 			}(block, result) // go routine for each slot
 		} // iterate slots for loop
 

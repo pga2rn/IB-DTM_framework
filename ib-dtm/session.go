@@ -164,8 +164,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 					}
 
 					// try to save a new copy of tvolist
-					tmp := *tvolist
-					shardBlock.tvoList[i] = &tmp
+					shardBlock.tvoList[i] = tvolist
 					//logutil.LoggerList["ib-dtm"].Infof("[processSlot] s%v, sd %v, pr %v, tvo %v", slot, shardId, proposerId, tmp)
 				}
 				// update the next available update slot
@@ -176,7 +175,6 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				committee := bs.GetCommitteeByCommitteeId(uint32(shardId), cid)
 
 				// PGA2RN: rewrite from here
-
 				switch exp.CompromisedRSUFlag {
 				case true:
 					proposerIsCompromised := session.CompromisedRSUBitMap.Get(int(proposerId))
@@ -206,12 +204,13 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 							default:
 								shardBlock.votes[index] = true
 							}
+						// good validator will vote for good RSU
 						case !proposerIsCompromised && !validatorIsCompromised:
 							shardBlock.votes[index] = true
 						// bad validator will camouflage itself by voting for good RSU
 						case !proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.8:
+							case rn < 0.7:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false

@@ -3,7 +3,6 @@ package rsu
 import (
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"sync"
 )
 
 // RSU will storage N epochs trust value offsets data
@@ -22,10 +21,6 @@ type RSU struct {
 	// the most recent slot's managed vehicles num
 	ManagedVehicles         int
 	ManagedVehiclesPerEpoch int
-
-	// for dtm logic use
-	nextSlotForUpload uint32 // the slot that available for uploading trust value offset
-	uploadMu          sync.Mutex
 }
 
 // type of evil
@@ -39,11 +34,10 @@ const (
 // RSU constructor
 func InitRSU(id uint32, pos fwtype.Position, ringLen int) *RSU {
 	return &RSU{
-		Id:       id,
-		uploadMu: sync.Mutex{},
-		Pos:      pos,
-		ringLen:  ringLen,
-		ring:     fwtype.InitRing(ringLen),
+		Id:      id,
+		Pos:     pos,
+		ringLen: ringLen,
+		ring:    fwtype.InitRing(ringLen),
 	}
 }
 
@@ -77,28 +71,6 @@ func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
 
 	return res
 }
-
-func (rsu *RSU) GetNextUploadSlot() uint32 {
-	rsu.uploadMu.Lock()
-	res := rsu.nextSlotForUpload
-	rsu.uploadMu.Unlock()
-	return res
-}
-
-// input is the latest uploaded slot
-func (rsu *RSU) SetNextUploadSlot(slot uint32) {
-	if slot < rsu.nextSlotForUpload {
-		return
-	}
-	rsu.uploadMu.Lock()
-	if slot == 0 {
-		rsu.nextSlotForUpload = 0
-	} else {
-		rsu.nextSlotForUpload = slot + 1
-	}
-	rsu.uploadMu.Unlock()
-}
-
 func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint32) {
 	return rsu.ring.GetProperties()
 }
