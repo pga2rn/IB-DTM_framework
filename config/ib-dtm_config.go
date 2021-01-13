@@ -38,8 +38,8 @@ func GenIBDTMConfig(simCfg *SimConfig) *IBDTMConfig {
 		UploaderCoverRatio: 0.5, // ratio of validators that can upload within a slot
 	}
 
-	res.CommitteeSize = 16
-	res.CommitteeNum = simCfg.RSUNum / res.CommitteeSize
+	res.CommitteeNum = int(res.SlotsPerEpoch) // one to one map to slots
+	res.CommitteeSize = res.ValidatorsNum / res.CommitteeNum
 	// the number of shards to allow UploaderCoverRatio portion of rsu upload blocks within an epoch
 	res.ShardNum = int(float32(res.ValidatorsNum)*res.UploaderCoverRatio) / int(res.SlotsPerEpoch)
 

@@ -71,7 +71,7 @@ func (head *BlockchainRoot) InitBlockchainBlock(slot uint32, cfg *config.IBDTMCo
 	head.mu.Unlock()
 
 	for shardId := 0; shardId < cfg.ShardNum; shardId++ {
-		shardBlock := &ShardBlock{
+		storage.shards[shardId] = &ShardBlock{
 			skipped:        true,
 			slot:           slot,
 			tvoList:        make(map[uint32]*fwtype.TrustValueOffsetsPerSlot),
@@ -79,7 +79,6 @@ func (head *BlockchainRoot) InitBlockchainBlock(slot uint32, cfg *config.IBDTMCo
 			slashing:       make([]uint32, cfg.SlashingsLimit),
 			whistleblowing: make([]uint32, cfg.WhistleBlowingsLimit),
 		}
-		storage.shards[shardId] = shardBlock
 	}
 
 	return storage, nil

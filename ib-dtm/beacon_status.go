@@ -70,8 +70,8 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	}
 
 	// init every shard status storage
-	res.shardStatus = make([]*ShardStatus, ibdtmConfig.CommitteeNum)
-	for i := 0; i < ibdtmConfig.CommitteeNum; i++ {
+	res.shardStatus = make([]*ShardStatus, ibdtmConfig.ShardNum)
+	for i := 0; i < ibdtmConfig.ShardNum; i++ {
 		res.shardStatus[i] = &ShardStatus{
 			Id:    uint32(i),
 			Epoch: 0,
@@ -104,10 +104,12 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 			for {
 				index := bs.R.Intn(bs.IBDTMConfig.CommitteeSize) // index inside the committee
 				// proposer: [committeeId]proposerId
-				proposerId := shardStatus.shuffledIdList[i*bs.IBDTMConfig.CommitteeNum+index]
+				proposerId := shardStatus.shuffledIdList[i*bs.IBDTMConfig.CommitteeSize+index]
+
+				//logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] p %v", proposerId)
 
 				// prevent the proposer to proposer multiple time in different shard
-				if bs.TotalProposerBitMap.Get(int(proposerId)) {
+				if !bs.IsValidatorActive(proposerId) {
 					continue
 				} else {
 					shardStatus.proposer[i] = proposerId

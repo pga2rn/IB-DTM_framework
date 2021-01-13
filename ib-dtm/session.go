@@ -172,46 +172,58 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				// start to vote for the new block
 				committee := bs.GetCommitteeByCommitteeId(uint32(shardId), cid)
 
-				proposerIsCompromised := session.CompromisedRSUBitMap.Get(int(proposerId))
-				for index, vid := range committee {
-					if !bs.IsValidatorActive(vid) {
-						continue
-					}
-					validatorIsCompromised := session.CompromisedRSUBitMap.Get(int(vid))
+				// PGA2RN: rewrite from here
 
-					// TODO: implement real validation here
-					rn := bs.R.Float32()
+				switch exp.CompromisedRSUFlag {
+				case true:
+					proposerIsCompromised := session.CompromisedRSUBitMap.Get(int(proposerId))
+					for index, vid := range committee {
+						if !bs.IsValidatorActive(vid) {
+							continue
+						}
+						validatorIsCompromised := session.CompromisedRSUBitMap.Get(int(vid))
 
-					switch {
-					// the bad voter will let the bad RSU propose
-					case proposerIsCompromised && validatorIsCompromised:
+						// TODO: implement real validation here
+						rn := bs.R.Float32()
+
 						switch {
-						case rn < 0.7:
+						// the bad voter will let the bad RSU propose
+						case proposerIsCompromised && validatorIsCompromised:
+							switch {
+							case rn < 0.6:
+								shardBlock.votes[index] = true
+							default:
+								shardBlock.votes[index] = false
+							}
+						// the good voter will not let the bad RSU go
+						case proposerIsCompromised && !validatorIsCompromised:
+							switch {
+							case rn < 0.9:
+								shardBlock.votes[index] = false
+							default:
+								shardBlock.votes[index] = true
+							}
+						case !proposerIsCompromised && !validatorIsCompromised:
 							shardBlock.votes[index] = true
-						default:
-							shardBlock.votes[index] = false
+						// bad validator will camouflage itself by voting for good RSU
+						case !proposerIsCompromised && validatorIsCompromised:
+							switch {
+							case rn < 0.8:
+								shardBlock.votes[index] = true
+							default:
+								shardBlock.votes[index] = false
+							}
+
 						}
-					// the good voter will not let the bad RSU go
-					case proposerIsCompromised && !validatorIsCompromised:
-						switch {
-						case rn < 0.8:
-							shardBlock.votes[index] = false
-						default:
-							shardBlock.votes[index] = true
-						}
-					case !proposerIsCompromised && !validatorIsCompromised:
+					} // voting
+				case false:
+					// everyone is honest
+					for index, _ := range committee {
 						shardBlock.votes[index] = true
-					// bad validator will camouflage itself by voting for good RSU
-					case !proposerIsCompromised && validatorIsCompromised:
-						switch {
-						case rn < 0.8:
-							shardBlock.votes[index] = true
-						default:
-							shardBlock.votes[index] = false
-						}
+					} // voting
+				}
 
-					}
-				} // voting
+				// PGA2RN: end of rewrite
 
 				// check the voting stakes to decide whether the block should pass or not
 				totalStake, gainedStake := float32(0), float32(0)

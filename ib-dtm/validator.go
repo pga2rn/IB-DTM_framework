@@ -29,7 +29,11 @@ func (v *Validator) AddEffectiveStake(amount float32) {
 	if amount < 0 && math.Abs(float64(amount)) >= float64(v.effectiveStake) {
 		v.effectiveStake = 0
 	} else {
-		v.effectiveStake += amount
+		if v.effectiveStake+amount > 32 {
+			v.effectiveStake = 32
+		} else {
+			v.effectiveStake += amount
+		}
 	}
 	v.mu.Unlock()
 }
