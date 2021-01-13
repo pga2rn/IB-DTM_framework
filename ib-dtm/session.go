@@ -137,13 +137,11 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 
 			// for each shard block
 			for shardId := 0; shardId < session.IBDTMConfig.ShardNum; shardId++ {
-				shardBlock := beaconBlock.shards[shardId]
 				// committee is one-to-one mapping to the slot index
+				shardBlock := beaconBlock.shards[shardId]
 				cid := slot % bs.IBDTMConfig.SlotsPerEpoch
-
-				// get the committee,
-				// committee id is the slot index in the epoch
 				proposerId := bs.shardStatus[shardId].proposer[cid]
+				proposerValidator := bs.validators[proposerId]
 				shardBlock.proposer = proposerId
 
 				// first we let the proposer to propose the block
@@ -155,18 +153,23 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				// mapping the validator to the RSU
 				x, y := session.SimConfig.IndexToCoord(proposerId)
 				proposerRSU := (*session.RSUs)[x][y]
+				//logutil.LoggerList["ib-dtm"].Infof("[processSlot] slot %v, shard %v, proposer %v", slot, shardId, proposerId)
 
 				// get the trust value offsets list
-				startSlot, endSlot := proposerRSU.GetNextUploadSlot(), slot
+				startSlot, endSlot := proposerValidator.GetNextSlotForUpload(), slot
 				for i := startSlot; i <= endSlot; i++ {
 					tvolist := proposerRSU.GetSlotInRing(i)
 					if tvolist == nil {
 						logutil.LoggerList["ib-dtm"].Warnf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
 					}
-					shardBlock.tvoList[i] = tvolist
+
+					// try to save a new copy of tvolist
+					tmp := *tvolist
+					shardBlock.tvoList[i] = &tmp
+					//logutil.LoggerList["ib-dtm"].Infof("[processSlot] s%v, sd %v, pr %v, tvo %v", slot, shardId, proposerId, tmp)
 				}
 				// update the next available update slot
-				proposerRSU.SetNextUploadSlot(endSlot + 1)
+				proposerValidator.SetNextSlotForUpload(endSlot + 1)
 
 				// for each member in the committee,
 				// start to vote for the new block

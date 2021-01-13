@@ -53,8 +53,13 @@ func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint32) {
 	default:
 		// move the vehicles!
 		sim.moveVehiclesPerSlot(SlotCtx, slot)
+
 		// generate trust value offsets
-		sim.executeDTMLogicPerSlot(SlotCtx, slot)
+		sim.prepareRSUsForSlot(SlotCtx, slot)
+		// generate and dispatch trust value offsets to every RSUs
+		sim.genTrustValueOffset(SlotCtx, slot)
+		// execute related RSU logic
+		sim.execRSULogic(SlotCtx, slot)
 
 		// signal the ib-dtm module to execute related logic
 		sim.dialIBDTMLogicModulePerSlot(SlotCtx, slot)

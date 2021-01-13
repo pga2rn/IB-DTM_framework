@@ -12,16 +12,33 @@ type Validator struct {
 	effectiveStake float32
 
 	itsStake *fwtype.ITStake
+
+	nextSlotForUpload uint32 // the slot that available for uploading trust value offset
+	uploadMu          sync.Mutex
 }
 
 func InitValidator(vid uint32, initEffectiveStake float32, itsStakeCacheLength int) *Validator {
 	res := &Validator{
-		mu:             sync.Mutex{},
-		Id:             vid,
-		effectiveStake: initEffectiveStake,
-		itsStake:       fwtype.NewITStack(itsStakeCacheLength),
+		mu:                sync.Mutex{},
+		uploadMu:          sync.Mutex{},
+		Id:                vid,
+		effectiveStake:    initEffectiveStake,
+		itsStake:          fwtype.NewITStack(itsStakeCacheLength),
+		nextSlotForUpload: 0,
 	}
 	return res
+}
+
+func (v *Validator) SetNextSlotForUpload(slot uint32) {
+	v.uploadMu.Lock()
+	defer v.uploadMu.Unlock()
+	v.nextSlotForUpload = slot
+}
+
+func (v *Validator) GetNextSlotForUpload() uint32 {
+	v.uploadMu.Lock()
+	defer v.uploadMu.Unlock()
+	return v.nextSlotForUpload
 }
 
 func (v *Validator) AddEffectiveStake(amount float32) {
