@@ -115,6 +115,7 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 		// init storage area
 		session.TrustValueStorage[exp.Name] = &fwtype.TrustValuesPerEpoch{}
 		blockchain := session.Blockchain[exp.Name]
+		session.TrustValueStorage[exp.Name] = &fwtype.TrustValuesPerEpoch{}
 		result := session.TrustValueStorage[exp.Name]
 
 		startSlot, endSlot := epoch*session.SimConfig.SlotsPerEpoch, (epoch+1)*session.SimConfig.SlotsPerEpoch
@@ -131,7 +132,8 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 			block := blockchain.GetBlockForSlot(i)
 
 			wg.Add(1)
-			go func() { // spawn go routines for each slots
+			go func(block *BeaconBlock, result *fwtype.TrustValuesPerEpoch) {
+				// spawn go routines for each slots
 				// for each shard
 				for _, shard := range block.shards {
 					// dive into the slot
@@ -146,10 +148,18 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 					go func() {
 						for pair := range c {
 							key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
+							//logutil.LoggerList["ib-dtm"].Infof("[genTrustValue] e %v, sd %v, k %v, v %v", epoch, shardId, key, value.TrustValueOffset)
+
 							if key != value.VehicleId {
 								logutil.LoggerList["simulator"].
 									Warnf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 								continue // ignore invalid trust value offset record
+							}
+
+							// if the trust value offset is forged, and cRSU setting is not activated
+							// the tvo will not be counted
+							if !exp.CompromisedRSUFlag && value.AlterType == fwtype.Forged {
+								continue
 							}
 
 							tvo := session.calculateTrustValueHelper(value, exp.CompromisedRSUFlag)
@@ -165,9 +175,9 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 					}
 					close(c)
 				} // iterate shards
-			}() // iterate slots
-			wg.Done()
-		}
+				wg.Done() // job done
+			}(block, result) // go routine for each slot
+		} // iterate slots for loop
 
 		wg.Wait()
 	}

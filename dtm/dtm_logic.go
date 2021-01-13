@@ -175,8 +175,8 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 					}
 				} // select
 				wg.Done() // job Done,
-			}() // go routine
-		} // iterate RSUs inner for loop
+			}() // go routine for each RSU
+		} // iterate RSUs for loop
 
 		// wait for all work to finish their job
 		wg.Wait()
