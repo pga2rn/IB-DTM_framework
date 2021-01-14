@@ -8,90 +8,73 @@ import (
 )
 
 // main entry of simulator
-
-func Done(session *SimulationSession) {
-	session.done()
-}
-
-func (sim *SimulationSession) done() {
+func (sim *SimulationSession) Done(ctx context.Context) {
 	// terminate the ticker
 	sim.Ticker.Done()
 	close(sim.ChanDTM)
 	return
 }
 
-func (sim *SimulationSession) WaitForDTMLogicModule() error {
-	initPack := shared.SimInitDTMCommunication{}
-	initPack.MisbehavingVehicleBitMap = sim.MisbehaviorVehicleBitMap
-
-	initPack.RSUs, initPack.Vehicles = &sim.RSUs, &sim.Vehicles
-	initPack.Rmu, initPack.Vmu = &sim.rmu, &sim.vmu
+func (sim *SimulationSession) dialInitDTMLogicModule() {
+	initPack := &shared.SimInitDTMCommunication{
+		MisbehavingVehicleBitMap: sim.MisbehaviorVehicleBitMap,
+		RSUs:                     &sim.RSUs,
+		Rmu:                      &sim.rmu,
+	}
 
 	// send the init pack to the dtm logic module
-	logutil.LoggerList["simulator"].Debugf("[WaitForDTMLogicModule] send init pack to dtm logic module")
+	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] send init pack to dtm logic module")
 	sim.ChanDTM <- initPack
+
 	// wait for the dtm logic module finishing the init
 	<-sim.ChanDTM
-	logutil.LoggerList["simulator"].Debugf("[WaitForDTMLogicModule] dtm logic module init finished")
-	return nil
+	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] dtm logic module init finished")
 }
 
 // start the simulation!
 func (sim *SimulationSession) Run(ctx context.Context) {
+	genesisCtx, cancel := context.WithDeadline(ctx, sim.Config.Genesis)
+
 	// init vehicles
-	if err := sim.WaitForVehiclesInit(); err != nil {
-		sim.done()
-		logutil.LoggerList["simulator"].Fatal("Could not init vehicles: %v", err)
+	if err := sim.WaitForVehiclesInit(genesisCtx); err != nil {
+		sim.Done(ctx)
+		logutil.LoggerList["simulator"].Fatal("could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
-	if err := sim.WaitForRSUInit(); err != nil {
-		sim.done()
-		logutil.LoggerList["simulator"].Fatal("External RSU module is not ready: %v", err)
+	if err := sim.WaitForRSUInit(genesisCtx); err != nil {
+		sim.Done(ctx)
+		logutil.LoggerList["simulator"].Fatal("external RSU module is not ready: %v", err)
 	}
+	cancel()
 
 	// start the main loop
-	logutil.LoggerList["simulator"].Debugf("[Run] Genesis kicks start!")
+	logutil.LoggerList["simulator"].Debugf("[Run] genesis kicks start!")
 	for {
-		ctx, cancel := context.WithCancel(ctx)
-
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["simulator"].Debugf("Context canceled, stop the simulation.")
-			cancel()
+			logutil.LoggerList["simulator"].Debugf("context canceled, stop the simulation.")
 			return
-		// the ticker will tick a uint64 slot index very slot
+		// the ticker will tick a uint32 slot index very slot
 		case slot := <-sim.Ticker.C():
-			logutil.LoggerList["simulator"].Debugf("[SlotTicker] Slot %v", slot)
+			logutil.LoggerList["simulator"].Debugf("[simulator] Slot %v", slot)
 
 			// check if the session's epoch and slot record is correct
 			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {
-				// we are slower than the ticker, skipped some slots
 				logutil.LoggerList["simulator"].
-					Debugf("[Run] we are asynced with the ticker, %v, %v", slot, timeutil.SlotsSinceGenesis(sim.Config.Genesis))
-				// catch up with the ticker
-				logutil.LoggerList["simulator"].Debugf("[Run] catch up with the ticker")
+					Fatalf("[Run] we are asynced with the ticker, %v, %v", slot, timeutil.SlotsSinceGenesis(sim.Config.Genesis))
 			}
-			// update the slot and epoch tracing in session before hand
 			sim.Slot = timeutil.SlotsSinceGenesis(sim.Config.Genesis)
 			sim.Epoch = timeutil.EpochsSinceGenesis(sim.Config.Genesis)
 
-			// the following process must be finished within the slot
 			slotCtx, cancel := context.WithDeadline(ctx, timeutil.SlotDeadline(sim.Config.Genesis, slot))
-
 			// if it is the checkpoint, or the start point of epoch
 			if slot%sim.Config.SlotsPerEpoch == 0 {
-				if err := sim.ProcessEpoch(slotCtx, slot); err != nil {
-					cancel()
-					logutil.LoggerList["simulator"].Fatalf("failed to process epoch: %v", err)
-				}
+				sim.ProcessEpoch(slotCtx, slot)
 			}
 
-			if err := sim.ProcessSlot(slotCtx, slot); err != nil {
-				cancel()
-				logutil.LoggerList["simulator"].Fatalf("failed to process slot: %v", err)
-			}
+			sim.ProcessSlot(slotCtx, slot)
 
 			cancel() // terminate ctx for this slot
 		} // slot

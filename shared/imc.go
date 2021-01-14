@@ -2,31 +2,41 @@ package shared
 
 import (
 	"github.com/boljen/go-bitmap"
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
-	"github.com/pga2rn/ib-dtm_framework/vehicle"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"sync"
 )
 
 // struct that used for communication between simulator module and DTM module
 type SimDTMEpochCommunication struct {
-	Slot                 uint64
+	Slot                 uint32
+	ActiveVehiclesNum    int32
 	CompromisedRSUBitMap *bitmap.Threadsafe // only pass the pointer
 }
 
-// for proposal
-type SimDTMSlotCommunication struct {
+// directly use protobuff definition
+//type StatisticsPerExperiment
+//type StatisticsBundle
+
+// dtm ~ ibdtm communication
+type IBDTM2DTMCommunication struct {
+	Epoch          uint32
+	ExpName        string
+	TrustValueList *fwtype.TrustValuesPerEpoch
 }
 
-// struct for initializing the dtm
+// struct for initializing the dtm & ib-dtm module
 type SimInitDTMCommunication struct {
 	MisbehavingVehicleBitMap *bitmap.Threadsafe
-	Vehicles                 *[]*vehicle.Vehicle
 	RSUs                     *[][]*rsu.RSU
-	Vmu                      *sync.Mutex
 	Rmu                      *sync.Mutex
 }
-
-// struct for dtm module and blockchain module
-// TODO: definition for dtm and blockchain module communication
-type DTMBlockchainCommunication struct {
+type SimInitIBDTMCommunication struct {
+	CompromisedRSUBitMap *bitmap.Threadsafe
+	RSUs                 *[][]*rsu.RSU
+	Rmu                  *sync.Mutex
 }
+
+// structs for rpc server
+type DTMRPCCommunication = pb.StatisticsBundle

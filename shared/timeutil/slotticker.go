@@ -8,7 +8,7 @@ import (
 // The Ticker interface defines a type which can expose a
 // receive-only channel firing slot events.
 type Ticker interface {
-	C() <-chan uint64
+	C() <-chan uint32
 	Done()
 }
 
@@ -19,13 +19,13 @@ type Ticker interface {
 // multiple of the slot duration.
 // In addition, the channel returns the new slot number.
 type SlotTicker struct {
-	c    chan uint64
+	c    chan uint32
 	done chan struct{}
 }
 
 // C returns the ticker channel. Call Cancel afterwards to ensure
 // that the goroutine exits cleanly.
-func (s *SlotTicker) C() <-chan uint64 {
+func (s *SlotTicker) C() <-chan uint32 {
 	return s.c
 }
 
@@ -37,12 +37,12 @@ func (s *SlotTicker) Done() {
 }
 
 // GetSlotTicker is the constructor for SlotTicker.
-func GetSlotTicker(genesisTime time.Time, secondsPerSlot uint64) *SlotTicker {
+func GetSlotTicker(genesisTime time.Time, secondsPerSlot uint32) *SlotTicker {
 	if genesisTime.IsZero() {
 		panic("zero genesis time")
 	}
 	ticker := &SlotTicker{
-		c:    make(chan uint64),
+		c:    make(chan uint32),
 		done: make(chan struct{}),
 	}
 	ticker.start(genesisTime, secondsPerSlot, Since, Until, time.After)
@@ -51,7 +51,7 @@ func GetSlotTicker(genesisTime time.Time, secondsPerSlot uint64) *SlotTicker {
 
 // GetSlotTickerWithOffset is a constructor for SlotTicker that allows a offset of time from genesis,
 // entering a offset greater than secondsPerSlot is not allowed.
-func GetSlotTickerWithOffset(genesisTime time.Time, offset time.Duration, secondsPerSlot uint64) *SlotTicker {
+func GetSlotTickerWithOffset(genesisTime time.Time, offset time.Duration, secondsPerSlot uint32) *SlotTicker {
 	if genesisTime.Unix() == 0 {
 		panic("zero genesis time")
 	}
@@ -59,7 +59,7 @@ func GetSlotTickerWithOffset(genesisTime time.Time, offset time.Duration, second
 		panic("invalid ticker offset")
 	}
 	ticker := &SlotTicker{
-		c:    make(chan uint64),
+		c:    make(chan uint32),
 		done: make(chan struct{}),
 	}
 	ticker.start(genesisTime.Add(offset), secondsPerSlot, Since, Until, time.After)
@@ -68,7 +68,7 @@ func GetSlotTickerWithOffset(genesisTime time.Time, offset time.Duration, second
 
 func (s *SlotTicker) start(
 	genesisTime time.Time,
-	secondsPerSlot uint64,
+	secondsPerSlot uint32,
 	since, until func(time.Time) time.Duration,
 	after func(time.Duration) <-chan time.Time) {
 
@@ -78,7 +78,7 @@ func (s *SlotTicker) start(
 		sinceGenesis := since(genesisTime)
 
 		var nextTickTime time.Time
-		var slot uint64
+		var slot uint32
 		if sinceGenesis < d {
 			// Handle when the current time is before the genesis time.
 			nextTickTime = genesisTime
@@ -86,7 +86,7 @@ func (s *SlotTicker) start(
 		} else {
 			nextTick := sinceGenesis.Truncate(d) + d
 			nextTickTime = genesisTime.Add(nextTick)
-			slot = uint64(nextTick / d)
+			slot = uint32(nextTick / d)
 		}
 
 		for {

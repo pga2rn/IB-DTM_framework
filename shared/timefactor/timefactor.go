@@ -25,8 +25,8 @@ func GetTimeFactor(timeFactorType int, startTime time.Time, slotTime time.Time, 
 	x := float64(slotTime.Unix()-startTime.Unix()) / float64(endTime.Unix()-startTime.Unix())
 	res := float64(-1)
 	switch timeFactorType {
-	case Exp: // y = 2^x - 1
-		res = math.Pow(2, x) - 1
+	case Exp: // y = n^x - 1
+		res = math.Pow(3, x) - 1
 	case Linear: // y = x
 		res = x
 	case Power: // y = x^2
@@ -35,6 +35,8 @@ func GetTimeFactor(timeFactorType int, startTime time.Time, slotTime time.Time, 
 		res = math.Sin(0.5 * math.Pi * x)
 	case Log: // y = -0.5log(1/x)+1
 		res = -1*0.5*math.Log(1/x) + 1
+	default:
+		res = 1
 	}
 	return res
 }

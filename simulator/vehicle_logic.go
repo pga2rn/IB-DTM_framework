@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"context"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/vehicle"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 ////// simulation //////
 // a helper function to sync the vehicle status between session and vehicle object
-func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicle.Position, status int) {
+func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos fwtype.Position, status int) {
 	switch {
 	case v.VehicleStatus == vehicle.InActive && status == vehicle.Active:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS!
@@ -18,7 +19,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum += 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), true)
 		// add the vehicle into the map
-		sim.Map.Cross[pos.X][pos.Y].Vehicles.Store(v.Id, v)
+		sim.Map.GetCross(pos).AddVehicle(v.Id, v)
 	case v.VehicleStatus == vehicle.Active && status == vehicle.InActive:
 		// REMEMBER TO UPDATE THE VEHICLE'S STATUS! AGAIN!
 		v.VehicleStatus = status
@@ -26,7 +27,7 @@ func (sim *SimulationSession) UpdateVehicleStatus(v *vehicle.Vehicle, pos vehicl
 		sim.ActiveVehiclesNum -= 1
 		sim.ActiveVehiclesBitMap.Set(int(v.Id), false)
 		// unregister the vehicle from the map
-		sim.Map.Cross[pos.X][pos.Y].Vehicles.Delete(v.Id)
+		sim.Map.GetCross(pos).RemoveVehicle(v.Id)
 		// reset the vehicle after remove it from the map
 		v.ResetVehicle()
 	}
@@ -37,9 +38,9 @@ func (sim *SimulationSession) InitVehicles() bool {
 	sim.ActiveVehiclesNum = sim.Config.VehicleNumMin
 
 	// init activated vehicles
-	for i := 0; i < int(sim.Config.VehicleNumMin); i++ {
+	for i := 0; i < sim.Config.VehicleNumMin; i++ {
 		v := vehicle.InitVehicle(
-			uint64(i),
+			uint32(i),
 			sim.Config.XLen, sim.Config.YLen,
 			vehicle.Active,
 			sim.R,
@@ -49,15 +50,14 @@ func (sim *SimulationSession) InitVehicles() bool {
 		sim.Vehicles[i] = v
 		sim.ActiveVehiclesBitMap.Set(i, true)
 
-		//logutil.LoggerList["simulator"].Debugf("pos %v", v.Pos)
 		// place the vehicle onto the map
-		sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(uint64(i), v)
+		sim.Map.GetCross(v.Pos).AddVehicle(uint32(i), v)
 	}
 
 	// init inactivate vehicles
 	for i := sim.Config.VehicleNumMin; i < sim.Config.VehicleNumMax; i++ {
 		v := vehicle.InitVehicle(
-			uint64(i),
+			uint32(i),
 			sim.Config.XLen, sim.Config.YLen,
 			vehicle.InActive,
 			sim.R,
@@ -70,13 +70,10 @@ func (sim *SimulationSession) InitVehicles() bool {
 	return true
 }
 
-func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint64) {
-	logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] entering..")
-
+func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint32) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] context canceled")
-		return
+		logutil.LoggerList["simulator"].Fatalf("[moveVehiclesPerSlot] context canceled")
 	default:
 		// sync
 		wg := sync.WaitGroup{}
@@ -94,13 +91,14 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 		}()
 
 		// randomly pick vehicle, iterating the whole list
-		for _, i := range sim.R.Perm(int(sim.Config.VehicleNumMax)) {
+		for _, i := range sim.R.Perm(sim.Config.VehicleNumMax) {
 			wg.Add(1)
 
 			go func(i int) {
 				select {
 				case <-ctx.Done():
 					wg.Done()
+					logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] go routine context canceled detected")
 					return
 				default:
 					v := sim.Vehicles[i]
@@ -133,9 +131,9 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 }
 
 // mark a specific vehicle as inactive, and unregister it from the map
-func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehicle.Position) {
+func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos fwtype.Position) {
 	// filter out invalid vehicle
-	if v == nil || v.Id > uint64(sim.Config.VehicleNumMax) {
+	if v == nil || v.Id > uint32(sim.Config.VehicleNumMax) {
 		return
 	}
 	sim.UpdateVehicleStatus(v, oldPos, vehicle.InActive)
@@ -143,11 +141,11 @@ func (sim *SimulationSession) inactivateVehicle(v *vehicle.Vehicle, oldPos vehic
 
 // move vehicle from one cross to another
 // wrap the operation
-func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos vehicle.Position) {
+func (sim *SimulationSession) updateVehiclePos(v *vehicle.Vehicle, oldPos fwtype.Position) {
 	// unregister the vehicle from the old cross
-	sim.Map.Cross[oldPos.X][oldPos.Y].RemoveVehicle(v.Id)
+	sim.Map.GetCross(oldPos).RemoveVehicle(v.Id)
 	// register the vehicle into the new cross
-	sim.Map.Cross[v.Pos.X][v.Pos.Y].AddVehicle(v.Id, v)
+	sim.Map.GetCross(v.Pos).AddVehicle(v.Id, v)
 }
 
 // move a single vehicle
@@ -178,24 +176,21 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 
 }
 
-func (sim *SimulationSession) InitAssignMisbehaveVehicle(ctx context.Context) {
+func (sim *SimulationSession) initAssignMisbehaveVehicle(ctx context.Context) {
 	select {
 	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
-		count := 0
-		sim.MisbehaviorVehiclePortion = sim.R.RandFloatRange(
-			sim.Config.MisbehaveVehiclePortionMin,
-			sim.Config.MisbehaveVehiclePortionMax,
-		)
+		sim.MisbehaviorVehiclePortion = sim.Config.MisbehaveVehiclePortion
+
 		// assign roles to vehicles no matter what status it is
 		target := int(float32(sim.Config.VehicleNumMax) * sim.MisbehaviorVehiclePortion)
 
-		for count < target {
+		for i := 0; i < target; i++ {
 			index := sim.R.RandIntRange(0, sim.Config.VehicleNumMax)
 			if !sim.MisbehaviorVehicleBitMap.Get(index) {
 				sim.MisbehaviorVehicleBitMap.Set(index, true)
-				count++
 			}
 		}
 	}

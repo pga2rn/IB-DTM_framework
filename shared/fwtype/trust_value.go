@@ -1,25 +1,20 @@
-package dtmtype
+package fwtype
 
 import (
 	"errors"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
+	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
 	"sync"
 )
 
-type TrustValue struct {
-	VehicleId  uint64
-	Epoch      uint64
-	TrustValue float32
-}
-
 // thread safe map
-type TrustValuesPerEpoch = sync.Map // map[<vehicleId>uint64]float32
+type TrustValuesPerEpoch = sync.Map // map[<vehicleId>uint32]float32
 
 // link list head of trust value storage list
 type TrustValueStorageHead struct {
 	mu         sync.Mutex
-	headEpoch  uint64 `the epoch of current head`
+	headEpoch  uint32 `the epoch of current head`
 	headPtr    *TrustValueStorage
 	epochCount int `total epoch being recorded`
 	ptrNext    *TrustValueStorage
@@ -27,11 +22,17 @@ type TrustValueStorageHead struct {
 
 // data structure to hold every vehicle's trust value of specific epoch
 type TrustValueStorage struct {
-	epoch                    uint64
+	epoch                    uint32
 	trustValueList           *TrustValuesPerEpoch
 	misbehavingVehicleBitMap *bitmap.Threadsafe
+	statisticsPack           *pb.StatisticsPerExperiment
 	ptrNext                  *TrustValueStorage
 	ptrPrevious              *TrustValueStorage
+}
+
+func InitTrustValueStorageHeadMap() *map[string]*TrustValueStorageHead {
+	tmp := make(map[string]*TrustValueStorageHead)
+	return &tmp
 }
 
 // constructor of trust value storage
@@ -45,7 +46,7 @@ func InitTrustValueStorage() *TrustValueStorageHead {
 
 // init a storage for specific epoch, the way to add a new block into the linked list
 // and then we can attach the trust value list to the returned new block via SetTrustValueList
-func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64, cfg *config.SimConfig) (*TrustValueStorage, error) {
+func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint32, cfg *config.SimConfig) (*TrustValueStorage, error) {
 	if epoch != (head.headEpoch+1) && epoch != 0 {
 		return nil, errors.New("storage is out of sync with the simulation")
 	}
@@ -77,7 +78,7 @@ func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint64, cfg
 	return storage, nil
 }
 
-func (head *TrustValueStorageHead) GetEpochInformation() (uint64, int) {
+func (head *TrustValueStorageHead) GetEpochInformation() (uint32, int) {
 	return head.headEpoch, head.epochCount
 }
 
@@ -85,25 +86,25 @@ func (head *TrustValueStorageHead) GetHeadBlock() *TrustValueStorage {
 	return head.headPtr
 }
 
-func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint64) *TrustValueStorage {
+func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint32) *TrustValueStorage {
 	if epoch > head.headEpoch {
 		return nil
 	}
 
 	ptr := head.ptrNext
-	for i := uint64(0); i < epoch; i++ {
+	for i := uint32(0); i < epoch; i++ {
 		ptr = ptr.ptrNext
 	}
 	return ptr
 }
 
-func (storage *TrustValueStorage) AddValue(vid uint64, v float32) {
+func (storage *TrustValueStorage) AddTrustRatingForVehicle(vid uint32, v float32) {
 	list := storage.trustValueList
 	if op, ok := list.LoadOrStore(vid, v); ok {
 		list.Store(vid, v+op.(float32))
 	}
 }
-func (storage *TrustValueStorage) GetValue(vid uint64) (float32, bool) {
+func (storage *TrustValueStorage) GetTrustRatingForVehicle(vid uint32) (float32, bool) {
 	list := storage.trustValueList
 	if res, ok := list.Load(vid); ok {
 		return res.(float32), true
@@ -112,7 +113,7 @@ func (storage *TrustValueStorage) GetValue(vid uint64) (float32, bool) {
 }
 
 // assign trust value list to a storage object
-func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustValuesPerEpoch) error {
+func (storage *TrustValueStorage) SetTrustValueList(epoch uint32, list *TrustValuesPerEpoch) error {
 	if storage.epoch != epoch {
 		return errors.New("mismatch input epoch and storage epoch")
 	}
@@ -120,6 +121,14 @@ func (storage *TrustValueStorage) SetTrustValueList(epoch uint64, list *TrustVal
 	return nil
 }
 
-func (storage *TrustValueStorage) GetTrustValueList() (uint64, *TrustValuesPerEpoch, *bitmap.Threadsafe) {
+func (storage *TrustValueStorage) GetTrustValueList() (uint32, *TrustValuesPerEpoch, *bitmap.Threadsafe) {
 	return storage.epoch, storage.trustValueList, storage.misbehavingVehicleBitMap
+}
+
+func (storage *TrustValueStorage) SetStatistics(bundle *pb.StatisticsPerExperiment) {
+	storage.statisticsPack = bundle
+}
+
+func (storage *TrustValueStorage) GetStatistics() *pb.StatisticsPerExperiment {
+	return storage.statisticsPack
 }

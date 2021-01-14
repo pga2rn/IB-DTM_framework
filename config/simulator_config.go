@@ -2,6 +2,7 @@
 package config
 
 import (
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -15,59 +16,67 @@ type SimConfig struct {
 	VehicleNumMax              int
 	VehicleNumMin              int
 	MisbehaveVehiclePortionMax float32
-	MisbehaveVehiclePortionMin float32
+	MisbehaveVehiclePortion    float32
 
 	RSUNum                   int
 	CompromisedRSUPortionMax float32 // from 0 ~ 1
-	CompromisedRSUPortionMin float32 // from 0 ~ 1
+	CompromisedRSUPortion    float32 // from 0 ~ 1
 
 	// how many previous epochs' tvos will be used to calculate tv
-	TrustValueOffsetsTraceBackEpoch int
+	EpochCacheLength int
 
 	// time config
 	Genesis           time.Time
-	SlotsPerEpoch     uint64
-	SecondsPerSlot    uint64 // in seconds
-	OutOfSyncTolerant uint64 // in slots
-	FinalizedDelay    uint64 // in epoch
+	SlotsPerEpoch     uint32
+	SecondsPerSlot    uint32 // in seconds
+	OutOfSyncTolerant uint32 // in slots
+	FinalizedDelay    uint32 // in epoch
 
 	// rsu config
 	RingLength int
+	Loglevel   logrus.Level
 
 	// vehicle config
 }
 
 func GenYangNetConfig() *SimConfig {
 	cfg := &SimConfig{}
+	cfg.Loglevel = logrus.InfoLevel
 
 	// config aligned to yang test eth2 net
-	cfg.SecondsPerSlot = 6
-	cfg.SlotsPerEpoch = 2
-	cfg.RSUNum = 25
+	cfg.SecondsPerSlot = 1
+	cfg.SlotsPerEpoch = 16
+	cfg.RSUNum = 256
 
 	// map config
-	cfg.XLen = 5
-	cfg.YLen = 5
+	cfg.XLen = 16
+	cfg.YLen = 16
 
 	// sim config
-	cfg.OutOfSyncTolerant = 1 // only allow 1 slot out-of-sync
-	cfg.FinalizedDelay = 2    // aligned with eth2.0 setup
-	cfg.TrustValueOffsetsTraceBackEpoch = 3
+	cfg.EpochCacheLength = 512
 
 	// rsu config
-	cfg.CompromisedRSUPortionMax = 0.25
-	cfg.CompromisedRSUPortionMin = 0.05
-	cfg.RingLength = cfg.TrustValueOffsetsTraceBackEpoch * int(cfg.SlotsPerEpoch)
+	cfg.CompromisedRSUPortion = 0.2
+	cfg.RingLength = cfg.EpochCacheLength
 
 	// vehicle
-	cfg.MisbehaveVehiclePortionMax = 0.3
-	cfg.MisbehaveVehiclePortionMin = 0.05
-	cfg.VehicleNumMin = 600
-	cfg.VehicleNumMax = 1000
+	cfg.MisbehaveVehiclePortion = 0.2
+	cfg.VehicleNumMin = 8000
+	cfg.VehicleNumMax = 8192
 
 	return cfg
 }
 
 func (cfg *SimConfig) SetGenesis(genesis time.Time) {
 	cfg.Genesis = genesis
+}
+
+// a little helper function to convert index to coord
+func (cfg *SimConfig) IndexToCoord(index uint32) (int, int) {
+	return int(index) / cfg.YLen, int(index) % cfg.YLen
+}
+
+// coord to index
+func (cfg *SimConfig) CoordToIndex(x, y int) uint32 {
+	return uint32(x*cfg.YLen + y)
 }

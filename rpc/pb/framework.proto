@@ -1,0 +1,67 @@
+// vanet simulator interfaces
+// this module serve as simulator as well as a central authority
+syntax = "proto3";
+
+package rpc.pb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/pga2rn/ib-dtm_framework/rpc/pb";
+
+message StatisticsBundle {
+    uint32 epoch = 1;
+    repeated StatisticsPerExperiment bundle = 2;
+    int32 activeVehicleNums = 3;
+}
+
+enum ExperimentType {
+    BASELINE = 0;
+    PROPOSAL = 1;
+}
+
+enum MetricsType {
+    TruePositive = 0;
+    TrueNegative = 1;
+    FalsePositive = 2;
+    FalseNegative = 3;
+    Recall = 4;
+    Precision = 5;
+    F1Score = 6;
+    Accuracy = 7;
+}
+
+message StatisticsPerExperiment {
+    // experiment name & type
+    string name = 1;
+    ExperimentType type = 2; // 0: baseline, 1: proposal
+
+    // concrete experiment results
+    uint32 epoch = 3;
+    float tp = 10;
+    float fp = 11;
+    float tn = 12;
+    float fn = 13;
+    float recall = 14;
+    float precision = 15;
+    float f1score = 16;
+    float acc = 17;
+}
+
+message QueryEpoch{
+    uint32 epoch = 1;
+}
+
+service FrameworkStatisticsQuery {
+    rpc GetLatestData(google.protobuf.Empty) returns (StatisticsBundle){
+        option (google.api.http) = { get: "/v1/framework/data"};
+    }
+
+    rpc GetDataForEpoch(QueryEpoch) returns (StatisticsBundle){
+        option (google.api.http) = { get: "/v1/framework/data/{epoch}"};
+    }
+
+    rpc EchoEpoch(QueryEpoch) returns (QueryEpoch){
+        option (google.api.http) = { get: "/v1/framework/echo/{epoch}"};
+    }
+}

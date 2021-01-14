@@ -1,54 +1,47 @@
 package rsu
 
 import (
-	"github.com/pga2rn/ib-dtm_framework/shared/dtmtype"
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
-	"sync"
 )
-
-type position struct {
-	X int
-	Y int
-}
 
 // RSU will storage N epochs trust value offsets data
 type RSU struct {
 	// unique id of an RSU, index in the sim-session object
-	Id uint64
+	Id uint32
 
 	// pos
-	Pos position
+	Pos fwtype.Position
 
 	// trust value offsets storage
-	ring    *dtmtype.TrustValueOffsetsPerSlotRing
+	ring    *fwtype.TrustValueOffsetsPerSlotRing
 	ringLen int
 
-	// for dtm logic use
-	nextSlotForUpload uint64 // the slot that available for uploading trust value offset
-	uploadMu          sync.Mutex
+	// managed zone info is stored at the cross object
+	// the most recent slot's managed vehicles num
+	ManagedVehicles         int
+	ManagedVehiclesPerEpoch int
 }
 
 // type of evil
+// only for reference, see dtmtype/trust_value_offset.go
 const (
 	FlipTrustValueOffset = iota
 	DropPositiveTrustValueOffset
 	ForgeTrustValueOffset
 )
 
-var RSUEvilsType = []int{FlipTrustValueOffset, DropPositiveTrustValueOffset}
-
 // RSU constructor
-func InitRSU(id uint64, x, y int, ringLen int) *RSU {
+func InitRSU(id uint32, pos fwtype.Position, ringLen int) *RSU {
 	return &RSU{
-		Id:       id,
-		uploadMu: sync.Mutex{},
-		Pos:      position{x, y},
-		ringLen:  ringLen,
-		ring:     dtmtype.InitRing(ringLen),
+		Id:      id,
+		Pos:     pos,
+		ringLen: ringLen,
+		ring:    fwtype.InitRing(ringLen),
 	}
 }
 
-func (rsu *RSU) InsertSlotsInRing(slot uint64, element *dtmtype.TrustValueOffsetsPerSlot) {
+func (rsu *RSU) InsertSlotsInRing(slot uint32, element *fwtype.TrustValueOffsetsPerSlot) {
 	//logutil.LoggerList["dtm"].Debugf("[InsertSlotsInRing] RSU %v, slot %v", rsu.Id, slot)
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
@@ -57,49 +50,27 @@ func (rsu *RSU) InsertSlotsInRing(slot uint64, element *dtmtype.TrustValueOffset
 		return
 	}
 
-	if curSlot >= uint64(rsu.ringLen) { // ring is full
+	if curSlot >= uint32(rsu.ringLen) { // ring is full
 		baseSlot += 1
 	}
 	curSlot = slot
 	rsu.ring.SetElement(element, baseSlot, curSlot)
 }
 
-func (rsu *RSU) GetSlotInRing(slot uint64) *dtmtype.TrustValueOffsetsPerSlot {
+func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
 	rin, rinMu := rsu.ring.GetRing()
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
 	if slot < baseSlot || slot > curSlot {
-		return nil
+		logutil.LoggerList["dtm"].Debugf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
 	}
 
 	rinMu.Lock()
-	res := rin.Move(-int(curSlot - slot)).Value.(*dtmtype.TrustValueOffsetsPerSlot)
+	res := rin.Move(-int(curSlot - slot)).Value.(*fwtype.TrustValueOffsetsPerSlot)
 	rinMu.Unlock()
 
 	return res
 }
-
-func (rsu *RSU) GetNextUploadSlot() uint64 {
-	rsu.uploadMu.Lock()
-	res := rsu.nextSlotForUpload
-	rsu.uploadMu.Unlock()
-	return res
-}
-
-// input is the latest uploaded slot
-func (rsu *RSU) SetNextUploadSlot(slot uint64) {
-	if slot < rsu.nextSlotForUpload {
-		return
-	}
-	rsu.uploadMu.Lock()
-	if slot == 0 {
-		rsu.nextSlotForUpload = 0
-	} else {
-		rsu.nextSlotForUpload = slot + 1
-	}
-	rsu.uploadMu.Unlock()
-}
-
-func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint64) {
+func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint32) {
 	return rsu.ring.GetProperties()
 }

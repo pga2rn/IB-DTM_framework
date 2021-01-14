@@ -12,16 +12,18 @@ var PackageNameList = []string{
 	"service",
 	"statistics",
 	"dtm",
+	"ib-dtm",
+	"rpc",
 }
 
-func InitLogger() {
+func InitLogger(level log.Level) {
+	log.SetLevel(level)
 	for _, v := range PackageNameList {
 		RegisterLogger(v)
 	}
 }
 
 func RegisterLogger(prefix string) {
-	log.SetLevel(log.DebugLevel)
 	fields := log.Fields{
 		"package": prefix,
 	}

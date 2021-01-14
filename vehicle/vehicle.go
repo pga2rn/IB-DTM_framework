@@ -1,32 +1,31 @@
 package vehicle
 
 import (
+	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 )
-
-type Position struct {
-	X int
-	Y int
-}
 
 // defined the data structure in a life cycle
 type Vehicle struct {
 	// unique id of each vehicle
-	Id uint64
+	Id uint32
 
 	// current Pos of the vehicle
 	// set to nil for inactive
-	Pos Position
+	Pos fwtype.Position
 	// the Path of vehicle movement, represented by pos
 	// reset when becomes inactive
 	// don't know how to maintain it, so just leave it
 	// Path []simmap.Position
 
 	// vehicle status
-	VehicleStatus int
+	VehicleStatus VehicleStatus
 	// last 6 movement of the vehicle
-	LastMovementDirection int
+	LastMovementDirection Direction
 }
+
+type Direction = int
+type VehicleStatus = int
 
 // vehiclestatus
 const (
@@ -38,9 +37,9 @@ const (
 // IMPORTANT! the vehicle is not being placed into the map yet!
 // IMPORTANT! the syncing with active vehicle bitmap relies on the caller!
 func InitVehicle(
-	id uint64, // id of the vehicle
+	id uint32, // id of the vehicle
 	xlen, ylen int, // the size of the map
-	active int,
+	active VehicleStatus,
 	r *randutil.RandUtil, // random generator provided by the caller
 ) *Vehicle {
 
@@ -53,14 +52,14 @@ func InitVehicle(
 }
 
 func (v *Vehicle) ResetVehicle() {
-	v.Pos = Position{}
+	v.Pos = fwtype.Position{}
 	v.LastMovementDirection = NotMove
 }
 
 // exceed boundary test is executed by the caller function
 // Move helper helps move the vehicle Pos,
 // unregister the vehicle from the
-func (v *Vehicle) VehicleMove(direction int) {
+func (v *Vehicle) VehicleMove(direction Direction) {
 	// update pos
 	switch direction {
 	case XForward:
@@ -102,7 +101,7 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 		y1x01
 	)
 
-	edge, pos, direction := r.RandIntRange(0, 4), Position{}, NotMove
+	edge, pos, direction := r.RandIntRange(0, 4), fwtype.Position{}, NotMove
 	switch edge {
 	case x01y0:
 		pos.X, pos.Y = r.RandIntRange(0, xlen), 0
@@ -111,10 +110,10 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 		pos.X, pos.Y = 0, r.RandIntRange(0, ylen)
 		direction = XForward
 	case x1y01:
-		pos.X, pos.Y = 1, r.RandIntRange(0, ylen)
+		pos.X, pos.Y = xlen-1, r.RandIntRange(0, ylen)
 		direction = XBackward
 	case y1x01:
-		pos.X, pos.Y = r.RandIntRange(0, xlen), 1
+		pos.X, pos.Y = r.RandIntRange(0, xlen), ylen-1
 		direction = YBackward
 	}
 	v.Pos, v.LastMovementDirection = pos, direction
@@ -123,7 +122,7 @@ func (v *Vehicle) EnterMap(r *randutil.RandUtil, xlen, ylen int) {
 // this helper function generate position for vehicle and update the vehicle object
 func (v *Vehicle) InitPosition(r *randutil.RandUtil, xlen, ylen int) {
 	x, y := r.RandIntRange(0, xlen), r.RandIntRange(0, ylen)
-	v.Pos = Position{x, y}
+	v.Pos = fwtype.Position{x, y}
 
 	denominator, lower, upper := 4, 1, 3
 	xLeftBound, xRightBound, yLeftBound, yRightBound :=

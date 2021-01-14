@@ -1,9 +1,12 @@
 package simulator
 
 import (
+	"context"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
+	"github.com/pga2rn/ib-dtm_framework/shared"
+	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
@@ -20,13 +23,14 @@ type SimulationSession struct {
 	Map *simmap.Map
 
 	// channel for inter-module-communication
-	ChanDTM chan interface{}
+	ChanDTM   chan interface{}
+	ChanIBDTM chan interface{}
 
 	// time
 	Ticker timeutil.Ticker
 	// epoch and slot stored in session should only be used when gathering reports
-	Epoch uint64
-	Slot  uint64
+	Epoch uint32
+	Slot  uint32
 
 	// current status
 	// vehicle
@@ -54,12 +58,13 @@ type SimulationSession struct {
 }
 
 // construct a simulationsession object
-func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *SimulationSession {
+func PrepareSimulationSession(cfg *config.SimConfig, chanDTM chan interface{}, chanIBDTM chan interface{}) *SimulationSession {
 	sim := &SimulationSession{}
 	sim.Config = cfg
 
 	// inter module
-	sim.ChanDTM = c
+	sim.ChanDTM = chanDTM
+	sim.ChanIBDTM = chanIBDTM
 
 	// init map
 	m := simmap.CreateMap(cfg)
@@ -91,12 +96,31 @@ func PrepareSimulationSession(cfg *config.SimConfig, c chan interface{}) *Simula
 	return sim
 }
 
-// a little helper function to convert index to coord
-func (sim *SimulationSession) IndexToCoord(index int) (int, int) {
-	return index / int(sim.Config.YLen), index % int(sim.Config.YLen)
+func (sim *SimulationSession) dialIBDTMLogicModulePerSlot(ctx context.Context, slot uint32) {
+	logutil.LoggerList["simulator"].Debugf("[dialIBDTMLogicModulePerSlot] slot %v", slot)
+
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[dialIBDTMLogicModulePerSlot] context canceled")
+	default:
+		// signal the ib-dtm module with slot
+		sim.ChanIBDTM <- slot
+		<-sim.ChanIBDTM
+	}
 }
 
-// coord to index
-func (sim *SimulationSession) CoordToIndex(x, y int) int {
-	return x*int(sim.Config.YLen) + y
+func (sim *SimulationSession) dialInitIBDTMModule(ctx context.Context) {
+	defer logutil.LoggerList["simulator"].Debugf("[dialInitIBDTMModule] done!")
+	select {
+	case <-ctx.Done():
+		logutil.LoggerList["simulator"].Fatalf("[dialInitIBDTMModule] failed to init the IBDTM module")
+	default:
+		pack := shared.SimInitIBDTMCommunication{
+			RSUs:                 &sim.RSUs,
+			Rmu:                  &sim.rmu,
+			CompromisedRSUBitMap: sim.CompromisedRSUBitMap,
+		}
+		sim.ChanIBDTM <- &pack
+		<-sim.ChanIBDTM
+	}
 }
