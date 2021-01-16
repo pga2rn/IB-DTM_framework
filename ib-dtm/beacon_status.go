@@ -115,8 +115,8 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 		//
 		for i := 0; i < bs.IBDTMConfig.CommitteeNum; i++ {
 			for {
-				// randomly pick a proposer from the first 2/3 validators with most stakes
-				rn := bs.R.Intn(len(tmpVlist) * 2 / 3)
+				// randomly pick a proposer from the first 3/4 validators with most stakes
+				rn := bs.R.Intn(len(tmpVlist) * 3 / 4)
 
 				if !bs.IsValidatorActive(tmpVlist[rn].Id) {
 					continue
