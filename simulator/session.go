@@ -11,6 +11,8 @@ import (
 	"sync"
 )
 
+var PackageName = "simulator"
+
 // struct that store the status of a simulation session
 type SimulationSession struct {
 	// config of the current simulation session

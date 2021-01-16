@@ -12,6 +12,8 @@ import (
 	"sync"
 )
 
+var PackageName = "dtm"
+
 // communicating with simulator: RSU compromised bitmap, slot
 
 type DTMLogicSession struct {
@@ -60,7 +62,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		for expName, _ := range session.ExpConfig {
 			head := session.TrustValueStorageHead[expName]
 			if ep, _ := head.GetEpochInformation(); ep != epoch {
-				logutil.LoggerList["dtm"].Debugf("[informRPCServer] epoch async")
+				logutil.GetLogger(PackageName).Debugf("[informRPCServer] epoch async")
 				continue
 			}
 
@@ -73,7 +75,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		select {
 		case session.ChanRPC <- statisticsBundle:
 		default:
-			logutil.LoggerList["dtm"].Debugf("[informRPCServer] transimition dropped")
+			logutil.GetLogger(PackageName).Debugf("[informRPCServer] transimition dropped")
 		}
 	}
 }

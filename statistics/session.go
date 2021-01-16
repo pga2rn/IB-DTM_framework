@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+var PackageName = "statistics"
+
 type StatisticsSession struct {
 	Config *config.StatisticsConfig
 
@@ -55,7 +57,7 @@ func PrepareStatisticsSession(cfg *config.StatisticsConfig, expList *map[string]
 
 	// register experiment
 	count := 0
-	for expName, _ := range *expList {
+	for expName := range *expList {
 		session.ExperimentMapping[expName] = count
 		count++
 	}
@@ -73,7 +75,7 @@ func (session *StatisticsSession) processRawData(ctx context.Context, pack *pb.S
 	if session.Epoch < pack.Epoch {
 		session.Epoch = pack.Epoch
 	} else {
-		logutil.LoggerList["statistics"].Debugf("[processRawdata] received older data")
+		logutil.GetLogger(PackageName).Debugf("[processRawdata] received older data")
 		return
 	}
 
@@ -101,7 +103,7 @@ func (session *StatisticsSession) writeToFile(ctx context.Context) {
 
 		_, err := f.WriteString(result)
 		if err != nil {
-			logutil.LoggerList["statistics"].Debugf("[writeToFile] %v", err)
+			logutil.GetLogger(PackageName).Debugf("[writeToFile] %v", err)
 		}
 	}
 }

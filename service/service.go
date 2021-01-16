@@ -7,6 +7,7 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/rpc"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/simulator"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"reflect"
 	"time"
@@ -14,19 +15,20 @@ import (
 
 type Services map[string]interface{}
 
+var PackageName = "service"
+
 var services = make(Services)
 
 // logger init, simconfig init
 func Init(uCtx *cli.Context) error {
 
 	// init the logger
-	//logutil.SetLevel(logrus.InfoLevel)
-	logutil.InitLogger()
-	logutil.LoggerList["service"].Debugf("[Init] init logger")
+	logutil.SetLevel(logrus.DebugLevel)
+	logutil.GetLogger(PackageName).Debugf("[Init] init logger")
 
 	// init the simulation config
 	config.SetGenesis(time.Now().Add(3 * time.Second))
-	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after %v seconds", 6)
+	logutil.GetLogger(PackageName).Debugf("[Init] genesis will kick after %v seconds", 6)
 
 	//// init the channel for intercommunication
 	sim2DTM := make(chan interface{})
@@ -50,7 +52,8 @@ func Init(uCtx *cli.Context) error {
 	services["rpc"] = rpc.PrepareRPCServer(DTM2RPC)
 	//services["statistics"] = statistics.PrepareStatisticsSession(statisticsCfg, expCfg)
 
-	logutil.LoggerList["service"].Debugf("[Init] finished registering services")
+	logutil.GetLogger(PackageName).Debugf("[Init] finished registering services")
+	logutil.SetServiceList(services)
 	return nil
 }
 
@@ -59,11 +62,11 @@ func Init(uCtx *cli.Context) error {
 func Entry(ctx *cli.Context) error {
 	// derive context from urfave's cli.Contexts
 	// init all logger at startup
-	logutil.LoggerList["service"].Debugf("[Entry] main routine starts")
+	logutil.GetLogger(PackageName).Debugf("[Entry] main routine starts")
 
 	// fire up each modules via Run function
 	for name, component := range services {
-		logutil.LoggerList["service"].Debugf("[Entry] fire up %v service", name)
+		logutil.GetLogger(PackageName).Debugf("[Entry] fire up %v service", name)
 		param := []reflect.Value{reflect.ValueOf(ctx.Context)}
 		go reflect.ValueOf(component).MethodByName("Run").Call(param)
 	}
@@ -74,11 +77,11 @@ func Entry(ctx *cli.Context) error {
 }
 
 func Done(ctx *cli.Context) error {
-	logutil.LoggerList["service"].Debugf("application terminated")
+	logutil.GetLogger(PackageName).Debugf("application terminated")
 
 	// call each module's termination functions
 	for name, component := range services {
-		logutil.LoggerList["service"].Debugf("[Done] terminate %v service", name)
+		logutil.GetLogger(PackageName).Debugf("[Done] terminate %v service", name)
 		param := []reflect.Value{reflect.ValueOf(ctx.Context)}
 		go reflect.ValueOf(&component).MethodByName("Done").Call(param)
 	}

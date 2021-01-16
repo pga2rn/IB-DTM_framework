@@ -21,31 +21,31 @@ func (sim *SimulationSession) Run(ctx context.Context) {
 	// init vehicles
 	if err := sim.WaitForVehiclesInit(genesisCtx); err != nil {
 		sim.Done(ctx)
-		logutil.LoggerList["simulator"].Fatal("could not init vehicles: %v", err)
+		logutil.GetLogger(PackageName).Fatal("could not init vehicles: %v", err)
 	}
 
 	// init RSU
 	// wait for every RSU to comes online
 	if err := sim.WaitForRSUInit(genesisCtx); err != nil {
 		sim.Done(ctx)
-		logutil.LoggerList["simulator"].Fatal("external RSU module is not ready: %v", err)
+		logutil.GetLogger(PackageName).Fatal("external RSU module is not ready: %v", err)
 	}
 	cancel()
 
 	// start the main loop
-	logutil.LoggerList["simulator"].Debugf("[Run] genesis kicks start!")
+	logutil.GetLogger(PackageName).Debugf("[Run] genesis kicks start!")
 	for {
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["simulator"].Debugf("context canceled, stop the simulation.")
+			logutil.GetLogger(PackageName).Debugf("context canceled, stop the simulation.")
 			return
 		// the ticker will tick a uint32 slot index very slot
 		case slot := <-sim.Ticker.C():
-			logutil.LoggerList["simulator"].Debugf("[simulator] Slot %v", slot)
+			logutil.GetLogger(PackageName).Debugf("[simulator] Slot %v", slot)
 
 			// check if the session's epoch and slot record is correct
 			if slot != timeutil.SlotsSinceGenesis(sim.Config.Genesis) {
-				logutil.LoggerList["simulator"].
+				logutil.GetLogger(PackageName).
 					Fatalf("[Run] we are asynced with the ticker, %v, %v", slot, timeutil.SlotsSinceGenesis(sim.Config.Genesis))
 			}
 			sim.Slot = timeutil.SlotsSinceGenesis(sim.Config.Genesis)

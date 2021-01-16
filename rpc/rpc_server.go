@@ -13,7 +13,7 @@ type Server struct {
 }
 
 func (s *Server) GetLatestData(ctx context.Context, in *emptypb.Empty) (*pb.StatisticsBundle, error) {
-	logutil.LoggerList["rpc"].Debugf("[GetLatestData] received request")
+	logutil.GetLogger(PackageName).Debugf("[GetLatestData] received request")
 	select {
 	case <-ctx.Done():
 		return nil, errors.New("context canceled")

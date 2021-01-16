@@ -1,34 +1,25 @@
 package logutil
 
-import log "github.com/sirupsen/logrus"
+import (
+	log "github.com/sirupsen/logrus"
+	"sync"
+)
 
 var LoggerList = make(map[string]*log.Entry)
-var LogLevel = log.DebugLevel
-var PackageNameList = []string{
-	"simulator",
-	"main",
-	"simmap",
-	"vehicle",
-	"rsu",
-	"service",
-	"statistics",
-	"dtm",
-	"ib-dtm",
-	"rpc",
-}
+var ServiceList interface{}
+var mu = sync.RWMutex{}
 
 func SetLevel(level log.Level) {
-	LogLevel = level
+	log.SetLevel(level)
 }
 
-func InitLogger() {
-	log.SetLevel(LogLevel)
-	for _, v := range PackageNameList {
-		RegisterLogger(v)
-	}
+func SetServiceList(serviceList interface{}) {
+	ServiceList = serviceList
 }
 
 func RegisterLogger(prefix string) {
+	mu.Lock()
+	defer mu.Unlock()
 	fields := log.Fields{
 		"package": prefix,
 	}
@@ -36,5 +27,11 @@ func RegisterLogger(prefix string) {
 }
 
 func GetLogger(prefix string) *log.Entry {
+	if _, ok := LoggerList[prefix]; !ok {
+		RegisterLogger(prefix)
+	}
+
+	mu.RLock()
+	defer mu.RUnlock()
 	return LoggerList[prefix]
 }

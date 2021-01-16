@@ -17,11 +17,11 @@ import (
 
 // init the storage area
 func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
-	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
+	logutil.GetLogger(PackageName).Debugf("[initDataStructureForEpoch] epoch %v", epoch)
 	for expName := range session.ExpConfig {
 		head := session.TrustValueStorageHead[expName]
 		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
-			logutil.LoggerList["dtm"].
+			logutil.GetLogger(PackageName).
 				Fatalf("[initDataStructureForEpoch] failed to allocate storage, expName %v", expName)
 		}
 	}
@@ -48,11 +48,11 @@ func (session *DTMLogicSession) calculateTrustValueHelper(
 }
 
 func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["dtm"].Debugf("[genProposalTrustValue] start to process for epoch %v", epoch)
+	logutil.GetLogger(PackageName).Debugf("[genProposalTrustValue] start to process for epoch %v", epoch)
 	// dial to the IB-DTM module
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["dtm"].Fatalf("[genProposalTrustValue] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[genProposalTrustValue] context canceled")
 	default:
 		// signal the ib-dtm
 		session.ChanIBDTM <- true
@@ -62,15 +62,15 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 		for {
 			v := <-session.ChanIBDTM
 			switch v.(type) {
-			case *shared.IBDTM2DTMCommunication:
-				pack := v.(*shared.IBDTM2DTMCommunication)
+			case shared.IBDTM2DTMCommunication:
+				pack := v.(shared.IBDTM2DTMCommunication)
 				head := session.TrustValueStorageHead[pack.ExpName]
 
 				// get the head block of the trust value storage chain
 				headBlock := head.GetHeadBlock()
 
 				if err := headBlock.SetTrustValueList(pack.Epoch, pack.TrustValueList); err != nil {
-					logutil.LoggerList["dtm"].Fatalf("[genProposalTrustValue] failed for exp %v, epoch %v", pack.ExpName, epoch)
+					logutil.GetLogger(PackageName).Fatalf("[genProposalTrustValue] failed for exp %v, epoch %v", pack.ExpName, epoch)
 				}
 			case bool:
 				// finish transmitting all experiments
@@ -81,13 +81,13 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 }
 
 func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["dtm"].Debugf("[genBaselineTrustValue] start to process for epoch %v", epoch)
-	defer logutil.LoggerList["dtm"].
+	logutil.GetLogger(PackageName).Debugf("[genBaselineTrustValue] start to process for epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).
 		Debugf("[genBaselineTrustValue] epoch %v Done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["dtm"].Fatalf("[genBaselineTrustValue] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[genBaselineTrustValue] context canceled")
 		return
 	default:
 		// for go routine
@@ -104,7 +104,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 			go func() {
 				select {
 				case <-ctx.Done():
-					logutil.LoggerList["simulator"].Fatalf("[genBaselineTrustValue] times up for collecting RSU data at the end of epoch, abort")
+					logutil.GetLogger(PackageName).Fatalf("[genBaselineTrustValue] times up for collecting RSU data at the end of epoch, abort")
 					return
 				default:
 					var currentSlot, baseSlot uint32
@@ -132,13 +132,13 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 						go func() {
 							select {
 							case <-ctx.Done():
-								logutil.LoggerList["simulator"].Fatalf("[genBaselineTrustValue] times up for collecting RSU data at the end of epoch, abort")
+								logutil.GetLogger(PackageName).Fatalf("[genBaselineTrustValue] times up for collecting RSU data at the end of epoch, abort")
 								return
 							default:
 								for pair := range c {
 									key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
 									if key != value.VehicleId {
-										logutil.LoggerList["simulator"].
+										logutil.GetLogger(PackageName).
 											Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 										continue // ignore invalid trust value offset record
 									}
@@ -188,13 +188,13 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 // flag out the misbehaving vehicles accordingly
 // trust value below 0 will be treated as misbehaving
 func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch %v", epoch)
-	defer logutil.LoggerList["dtm"].
+	logutil.GetLogger(PackageName).Debugf("[flagMisbehavingVehicles] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).
 		Debugf("[flagMisbehavingVehicles] epoch %v Done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] context canceled")
+		logutil.GetLogger(PackageName).Debugf("[flagMisbehavingVehicles] context canceled")
 		return
 	default:
 		// iterate through every experiment's data storage
@@ -205,7 +205,7 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 			headBlock := head.GetHeadBlock()
 			ep, list, bmap := headBlock.GetTrustValueList()
 			if ep != epoch {
-				logutil.LoggerList["dtm"].Debugf("[flagMisbehavingVehicles] epoch mismatch! ep %v, epoch %v", ep, epoch)
+				logutil.GetLogger(PackageName).Debugf("[flagMisbehavingVehicles] epoch mismatch! ep %v, epoch %v", ep, epoch)
 				return
 			}
 

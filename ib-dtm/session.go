@@ -10,6 +10,8 @@ import (
 	"sync"
 )
 
+var PackageName = "ib_dtm"
+
 type IBDTMSession struct {
 	IBDTMConfig   *config.IBDTMConfig
 	SimConfig     *config.SimConfig

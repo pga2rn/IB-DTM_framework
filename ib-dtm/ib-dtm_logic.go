@@ -15,12 +15,12 @@ func (session *IBDTMSession) processEpoch(ctx context.Context, slot uint32) {
 		epoch = slot/session.IBDTMConfig.SlotsPerEpoch - 1
 	}
 
-	logutil.LoggerList["ib-dtm"].Debugf("[processEpoch] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[processEpoch] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[processEpoch] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[processEpoch] epoch %v, done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[processEpoch] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[processEpoch] context canceled")
 	default:
 		switch slot {
 		case uint32(0):
@@ -48,15 +48,15 @@ func (session *IBDTMSession) processEpoch(ctx context.Context, slot uint32) {
 }
 
 func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[processSlot] slot %v", slot)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[processSlot] slot %v, done", slot)
+	logutil.GetLogger(PackageName).Debugf("[processSlot] slot %v", slot)
+	defer logutil.GetLogger(PackageName).Debugf("[processSlot] slot %v, done", slot)
 
 	// wait for sim signal
 	<-session.ChanSim
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[processSlot] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[processSlot] context canceled")
 	default:
 		// for each experiments, each exp has a beaconstatus and a chain
 		for _, exp := range session.ExpConfigList {
@@ -81,19 +81,19 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 				// mapping the validator to the RSU
 				x, y := session.SimConfig.IndexToCoord(proposerId)
 				proposerRSU := session.RSUs[x][y]
-				//logutil.LoggerList["ib-dtm"].Infof("[processSlot] slot %v, shard %v, proposer %v", slot, shardId, proposerId)
+				//logutil.GetLogger(PackageName).Infof("[processSlot] slot %v, shard %v, proposer %v", slot, shardId, proposerId)
 
 				// get the trust value offsets list
 				startSlot, endSlot := proposerValidator.GetNextSlotForUpload(), slot
 				for i := startSlot; i <= endSlot; i++ {
 					tvolist := proposerRSU.GetSlotInRing(i)
 					if tvolist == nil {
-						logutil.LoggerList["ib-dtm"].Debugf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
+						logutil.GetLogger(PackageName).Debugf("[processSlot] nil tvolist, slot %v, rsu %v", slot, proposerId)
 					}
 
 					// try to save a new copy of tvolist
 					shardBlock.tvoList[i] = tvolist
-					//logutil.LoggerList["ib-dtm"].Infof("[processSlot] s%v, sd %v, pr %v, tvo %v", slot, shardId, proposerId, tmp)
+					//logutil.GetLogger(PackageName).Infof("[processSlot] s%v, sd %v, pr %v, tvo %v", slot, shardId, proposerId, tmp)
 				}
 				// update the next available update slot
 				proposerValidator.SetNextSlotForUpload(endSlot + 1)
@@ -179,12 +179,12 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 }
 
 func (session *IBDTMSession) WaitForDTModule(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[WaitForDTModule] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[WaitForDTModule] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[WaitForDTModule] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[WaitForDTModule] epoch %v, done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[WaitForDTModule] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[WaitForDTModule] context canceled")
 	default:
 		<-session.ChanDTM // wait for signal to transmit the data
 
@@ -194,20 +194,20 @@ func (session *IBDTMSession) WaitForDTModule(ctx context.Context, epoch uint32) 
 				ExpName:        expName,
 				TrustValueList: data,
 			}
-			session.ChanDTM <- &res
+			session.ChanDTM <- res
 		}
 		session.ChanDTM <- true // finish transmission
 	}
 }
 
 func (session *IBDTMSession) WaitForSimulator(ctx context.Context) error {
-	defer logutil.LoggerList["ib-dtm"].Debugf("[WaitForSimulator] init finished!")
+	defer logutil.GetLogger(PackageName).Debugf("[WaitForSimulator] init finished!")
 	select {
 	case <-ctx.Done():
 		return errors.New("[WaitForSimulator] context canceled")
 	case v := <-session.ChanSim:
 		// unpack
-		pack := v.(*shared.SimInitIBDTMCommunication)
+		pack := v.(shared.SimInitIBDTMCommunication)
 
 		session.RSUs = pack.RSUs
 		session.CompromisedRSUBitMap = pack.CompromisedRSUBitMap
@@ -221,12 +221,12 @@ func (session *IBDTMSession) WaitForSimulator(ctx context.Context) error {
 }
 
 func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessBalanceAdjustment] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[ProcessBalanceAdjustment] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[ProcessBalanceAdjustment] epoch %v, done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessBalanceAdjustment] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[ProcessBalanceAdjustment] context canceled")
 	default:
 		// iterate through the beaconblocks for each slots in the epoch
 		start, end := epoch*bs.IBDTMConfig.SlotsPerEpoch, (epoch+1)*bs.IBDTMConfig.SlotsPerEpoch
@@ -236,7 +236,7 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 				proposer := bs.validators.Validators[block.proposer]
 
 				if block.skipped {
-					logutil.LoggerList["ib-dtm"].Debugf("block skipped at slot %v, shard %v", block.slot, shardId)
+					logutil.GetLogger(PackageName).Debugf("block skipped at slot %v, shard %v", block.slot, shardId)
 					proposer.AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward * bs.IBDTMConfig.PenaltyFactor)
 				} else {
 					factor := bs.GetRewardFactor(proposer.Id)
@@ -280,21 +280,21 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 }
 
 func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[ProcessLiveCycle] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[ProcessLiveCycle] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[ProcessLiveCycle] epoch %v, done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[ProcessLiveCycle] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[ProcessLiveCycle] context canceled")
 	default:
 		// check stake
 		for _, validator := range bs.validators.Validators {
 			if bs.IsValidatorActive(validator.Id) && validator.effectiveStake < bs.IBDTMConfig.EffectiveStakeLowerBound {
-				//logutil.LoggerList["ib-dtm"].Warnf("[lifecycle] r %v has been inactivated", validator.Id)
+				//logutil.GetLogger(PackageName).Warnf("[lifecycle] r %v has been inactivated", validator.Id)
 				bs.InactivateValidator(validator.Id)
 			}
 			// debug, show all validator's stake
-			//logutil.LoggerList["ib-dtm"].Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
+			//logutil.GetLogger(PackageName).Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
 
 		// check slash
@@ -322,7 +322,7 @@ func (session *IBDTMSession) calculateTrustValueHelper(
 }
 
 func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[genTrustValue] epoch %v", epoch)
+	logutil.GetLogger(PackageName).Debugf("[genTrustValue] epoch %v", epoch)
 
 	// iterate through the blockchain for all experiments
 	for _, exp := range session.ExpConfigList {
@@ -362,10 +362,10 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 					go func() {
 						for pair := range c {
 							key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
-							//logutil.LoggerList["ib-dtm"].Infof("[genTrustValue] e %v, sd %v, k %v, v %v", epoch, shardId, key, value.TrustValueOffset)
+							//logutil.GetLogger(PackageName).Infof("[genTrustValue] e %v, sd %v, k %v, v %v", epoch, shardId, key, value.TrustValueOffset)
 
 							if key != value.VehicleId {
-								logutil.LoggerList["simulator"].
+								logutil.GetLogger(PackageName).
 									Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
 								continue // ignore invalid trust value offset record
 							}

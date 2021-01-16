@@ -28,7 +28,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
 		sim.CompromisedRSUPortion = sim.Config.CompromisedRSUPortion

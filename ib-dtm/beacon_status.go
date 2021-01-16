@@ -89,16 +89,16 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 // separate proposer and committee(proposer no need to be the member of committee)
 func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[genAssignment] context canceled")
 	default:
 		shardStatus := bs.shardStatus[shardId]
 		if shardStatus.Epoch != epoch && epoch != 0 {
-			logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] epoch async, status e %v, epoch %v", shardStatus.Epoch)
+			logutil.GetLogger(PackageName).Fatalf("[genAssignment] epoch async, status e %v, epoch %v", shardStatus.Epoch)
 		}
 
 		// re-generate shuffled list
@@ -178,8 +178,8 @@ func (bs *BeaconStatus) GetRewardFactor(id uint32) float32 {
 }
 
 func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v, done", epoch)
 
 	// reset the bitmap
 	for shardId := range bs.shardStatus {

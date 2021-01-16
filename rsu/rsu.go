@@ -5,6 +5,8 @@ import (
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 )
 
+var PackageName = "rsu"
+
 // RSU will storage N epochs trust value offsets data
 type RSU struct {
 	// unique id of an RSU, index in the sim-session object
@@ -42,11 +44,11 @@ func InitRSU(id uint32, pos fwtype.Position, ringLen int) *RSU {
 }
 
 func (rsu *RSU) InsertSlotsInRing(slot uint32, element *fwtype.TrustValueOffsetsPerSlot) {
-	//logutil.LoggerList["dtm"].Debugf("[InsertSlotsInRing] RSU %v, slot %v", rsu.Id, slot)
+	//logutil.GetLogger(PackageName).Debugf("[InsertSlotsInRing] RSU %v, slot %v", rsu.Id, slot)
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
 	if curSlot+1 != slot && slot != 0 {
-		logutil.LoggerList["dtm"].Fatalf("[InserSlotsInRing] rsu %v, curSlot %v, slot %v", rsu.Id, curSlot, slot)
+		logutil.GetLogger(PackageName).Fatalf("[InserSlotsInRing] rsu %v, curSlot %v, slot %v", rsu.Id, curSlot, slot)
 		return
 	}
 
@@ -62,7 +64,7 @@ func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
 	baseSlot, curSlot := rsu.ring.GetProperties()
 
 	if slot < baseSlot || slot > curSlot {
-		logutil.LoggerList["dtm"].Debugf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
+		logutil.GetLogger(PackageName).Debugf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
 	}
 
 	rinMu.Lock()

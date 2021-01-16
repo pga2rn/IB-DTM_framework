@@ -11,7 +11,7 @@ import (
 
 // wait for rsu data structure ready
 func (sim *SimulationSession) WaitForRSUInit(ctx context.Context) error {
-	logutil.LoggerList["simulator"].Debugf("[WaitForRSUInit] ..")
+	logutil.GetLogger(PackageName).Debugf("[WaitForRSUInit] ..")
 	select {
 	case <-ctx.Done():
 		return errors.New("context canceled")
@@ -25,7 +25,7 @@ func (sim *SimulationSession) WaitForRSUInit(ctx context.Context) error {
 
 // initializing vehicles, place VehicleNumMin vehicles into the network
 func (sim *SimulationSession) WaitForVehiclesInit(ctx context.Context) error {
-	logutil.LoggerList["simulator"].Debugf("[WaitForVehiclesInit] ..")
+	logutil.GetLogger(PackageName).Debugf("[WaitForVehiclesInit] ..")
 	select {
 	case <-ctx.Done():
 		return errors.New("context canceled")
@@ -43,12 +43,12 @@ func (sim *SimulationSession) WaitForVehiclesInit(ctx context.Context) error {
 // 1. move vehicles!
 // 2. generate trust value offset!
 func (sim *SimulationSession) ProcessSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[ProcessSlot] slot %v", slot)
+	logutil.GetLogger(PackageName).Debugf("[ProcessSlot] slot %v", slot)
 	SlotCtx, cancel := context.WithCancel(ctx)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[ProcessSlot] context canceled.")
+		logutil.GetLogger(PackageName).Fatalf("[ProcessSlot] context canceled.")
 	default:
 		// move the vehicles!
 		sim.moveVehiclesPerSlot(SlotCtx, slot)
@@ -72,11 +72,11 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) {
 	if epoch != 0 {
 		epoch -= 1
 	}
-	logutil.LoggerList["simulator"].Debugf("[ProcessEpoch] processing epoch %v", epoch)
+	logutil.GetLogger(PackageName).Debugf("[ProcessEpoch] processing epoch %v", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[ProcessEpoch] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[ProcessEpoch] context canceled")
 	default:
 		switch slot {
 		case uint32(0):
@@ -94,7 +94,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) {
 			sim.dialInitDTMLogicModule()
 
 			// debug
-			logutil.LoggerList["simulator"].
+			logutil.GetLogger(PackageName).
 				Infof("[ProcessEpoch] mdvp: %v, crsup: %v",
 					sim.MisbehaviorVehiclePortion,
 					sim.CompromisedRSUPortion,
@@ -104,7 +104,7 @@ func (sim *SimulationSession) ProcessEpoch(ctx context.Context, slot uint32) {
 			sim.dialDTMLogicModulePerEpoch(ctx, slot)
 
 			// debug
-			logutil.LoggerList["simulator"].
+			logutil.GetLogger(PackageName).
 				Infof("[ProcessEpoch] done! active vehicles %v", sim.ActiveVehiclesNum)
 		}
 	}

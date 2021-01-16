@@ -11,7 +11,7 @@ import (
 func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint32) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[prepareRSUsForSlot] context cancel")
+		logutil.GetLogger(PackageName).Fatalf("[prepareRSUsForSlot] context cancel")
 	default:
 		for x := 0; x < sim.Config.XLen; x++ {
 			for y := 0; y < sim.Config.YLen; y++ {
@@ -24,12 +24,12 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint3
 
 // trust value offsets are stored on each RSU components
 func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
-	defer logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] done")
+	logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
+	defer logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] done")
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] context canceled")
+		logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] context canceled")
 		return
 	default:
 		wg := sync.WaitGroup{}
@@ -45,7 +45,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					return
 				default:
 					if v.Id != uint32(id) {
-						logutil.LoggerList["simulator"].
+						logutil.GetLogger(PackageName).
 							Fatalf("[genTrustValueOffset] index and vehicle id mismatches, %v, %v", id, v.Id)
 					}
 
@@ -128,12 +128,12 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 // execute compromised RSU logic here
 func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[forgeTrustValueOffsets] slot %v", slot)
-	defer logutil.LoggerList["simulator"].Debugf("[forgeTrustValueOffsets] slot %v, done", slot)
+	logutil.GetLogger(PackageName).Debugf("[forgeTrustValueOffsets] slot %v", slot)
+	defer logutil.GetLogger(PackageName).Debugf("[forgeTrustValueOffsets] slot %v, done", slot)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[forgeTrustValueOffsets] slot %v, context canceled", slot)
+		logutil.GetLogger(PackageName).Fatalf("[forgeTrustValueOffsets] slot %v, context canceled", slot)
 	default:
 		wg := sync.WaitGroup{}
 

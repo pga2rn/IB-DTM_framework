@@ -73,7 +73,7 @@ func (sim *SimulationSession) InitVehicles() bool {
 func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint32) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[moveVehiclesPerSlot] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[moveVehiclesPerSlot] context canceled")
 	default:
 		// sync
 		wg := sync.WaitGroup{}
@@ -98,7 +98,7 @@ func (sim *SimulationSession) moveVehiclesPerSlot(ctx context.Context, slot uint
 				select {
 				case <-ctx.Done():
 					wg.Done()
-					logutil.LoggerList["simulator"].Debugf("[moveVehiclesPerSlot] go routine context canceled detected")
+					logutil.GetLogger(PackageName).Debugf("[moveVehiclesPerSlot] go routine context canceled detected")
 					return
 				default:
 					v := sim.Vehicles[i]
@@ -179,7 +179,7 @@ func (sim *SimulationSession) moveVehicle(v *vehicle.Vehicle) {
 func (sim *SimulationSession) initAssignMisbehaveVehicle(ctx context.Context) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
 		sim.MisbehaviorVehiclePortion = sim.Config.MisbehaveVehiclePortion
