@@ -61,7 +61,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		count := 0
 		for expName, _ := range session.ExpConfig {
 			head := session.TrustValueStorageHead[expName]
-			if ep, _ := head.GetEpochInformation(); ep != epoch {
+			if ep := head.GetEpochInformation(); ep != epoch {
 				logutil.GetLogger(PackageName).Debugf("[informRPCServer] epoch async")
 				continue
 			}
