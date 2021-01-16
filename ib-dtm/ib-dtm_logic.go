@@ -112,14 +112,13 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						}
 						validatorIsCompromised := session.CompromisedRSUBitMap.Get(int(vid))
 
-						// TODO: implement real validation here
 						rn := bs.R.Float32()
 
 						switch {
 						// the bad voter will let the bad RSU propose
 						case proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.7:
+							case rn < 0.95:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
@@ -127,23 +126,27 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						// the good voter will not let the bad RSU go
 						case proposerIsCompromised && !validatorIsCompromised:
 							switch {
-							case rn < 0.9:
+							case rn < 0.7: // good vote may not always detect the compromised proposers
 								shardBlock.votes[index] = false
 							default:
 								shardBlock.votes[index] = true
 							}
 						// good validator will vote for good RSU
 						case !proposerIsCompromised && !validatorIsCompromised:
-							shardBlock.votes[index] = true
-						// bad validator will camouflage itself by voting for good RSU
-						case !proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.6:
+							case rn < 0.8:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
 							}
-
+						// bad validator will camouflage itself by voting for good RSU
+						case !proposerIsCompromised && validatorIsCompromised:
+							switch {
+							case rn < 0.95:
+								shardBlock.votes[index] = true
+							default:
+								shardBlock.votes[index] = false
+							}
 						}
 					} // voting
 				case false:
@@ -295,7 +298,7 @@ func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 				bs.InactivateValidator(validator.Id)
 			}
 			// debug, show all validator's stake
-			//logutil.GetLogger(PackageName).Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
+			logutil.GetLogger(PackageName).Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
 
 		// check slash

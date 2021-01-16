@@ -78,9 +78,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// or they will behave normally
 						flag := sim.R.Float32()
 						switch {
-						case tvo.Weight == fwtype.Critical && flag < 0.7:
+						case tvo.Weight == fwtype.Critical && flag < 0.6:
 							tvo.TrustValueOffset = -1
-						case tvo.Weight == fwtype.Routine && flag < 0.5:
+						case tvo.Weight == fwtype.Routine && flag < 0.9:
 							tvo.TrustValueOffset = 1
 						default:
 							tvo.TrustValueOffset = -1
@@ -90,7 +90,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// but there is still possible for me to perform some evil when I am malfunction!
 						flag := sim.R.Float32()
 						switch {
-						case flag < 0.10 && tvo.Weight == fwtype.Routine:
+						case flag < 0.20 && tvo.Weight == fwtype.Routine:
+							tvo.TrustValueOffset = -1
+						case flag < 0.10 && tvo.Weight == fwtype.Critical:
 							tvo.TrustValueOffset = -1
 						default:
 							tvo.TrustValueOffset = 1
@@ -105,10 +107,18 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
 						rn := sim.R.Float32()
 						// assign altered type
-						if rn < 0.8 {
-							tvo.AlterType = fwtype.Flipped
+						if sim.MisbehaviorVehicleBitMap.Get(int(v.Id)) {
+							if rn < 0.8 {
+								tvo.AlterType = fwtype.Flipped
+							} else {
+								tvo.AlterType = fwtype.Dropped
+							}
 						} else {
-							tvo.AlterType = fwtype.Dropped
+							if rn < 0.6 {
+								tvo.AlterType = fwtype.Dropped
+							} else {
+								tvo.AlterType = fwtype.Flipped
+							}
 						}
 					}
 					rsu.GetSlotInRing(slot).Store(v.Id, &tvo)
