@@ -3,6 +3,7 @@ package ib_dtm
 import (
 	"context"
 	"errors"
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
@@ -325,6 +326,7 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 	logutil.GetLogger(PackageName).Debugf("[genTrustValue] epoch %v", epoch)
 
 	// iterate through the blockchain for all experiments
+	upperWg := sync.WaitGroup{}
 	for _, exp := range session.ExpConfigList {
 		// init storage area
 		session.TrustValueStorage[exp.Name] = &fwtype.TrustValuesPerEpoch{}
@@ -332,70 +334,74 @@ func (session *IBDTMSession) genTrustValue(ctx context.Context, epoch uint32) {
 		session.TrustValueStorage[exp.Name] = &fwtype.TrustValuesPerEpoch{}
 		result := session.TrustValueStorage[exp.Name]
 
-		startSlot, endSlot := epoch*session.SimConfig.SlotsPerEpoch, (epoch+1)*session.SimConfig.SlotsPerEpoch
-		if epoch < uint32(exp.TrustValueOffsetsTraceBackEpochs) {
-			startSlot = 0
-		} else {
-			startSlot = endSlot - uint32(exp.TrustValueOffsetsTraceBackEpochs)*session.SimConfig.SlotsPerEpoch
-		}
+		upperWg.Add(1)
+		go func(exp *config.ExperimentConfig) {
+			startSlot, endSlot := epoch*session.SimConfig.SlotsPerEpoch, (epoch+1)*session.SimConfig.SlotsPerEpoch
+			if epoch < uint32(exp.TrustValueOffsetsTraceBackEpochs) {
+				startSlot = 0
+			} else {
+				startSlot = endSlot - uint32(exp.TrustValueOffsetsTraceBackEpochs)*session.SimConfig.SlotsPerEpoch
+			}
 
-		// iterate through each slots
-		wg := sync.WaitGroup{}
-		// for each shard
-		for i := startSlot; i < endSlot; i++ {
-			block := blockchain.GetBlockForSlot(i)
+			// iterate through each slots
+			wg := sync.WaitGroup{}
+			// for each shard
+			for i := startSlot; i < endSlot; i++ {
+				block := blockchain.GetBlockForSlot(i)
 
-			wg.Add(1)
-			go func(block *BeaconBlock, result *fwtype.TrustValuesPerEpoch) {
-				// spawn go routines for each slots
-				// for each shard
-				for _, shard := range block.shards {
-					// dive into the slot
-					c := make(chan []interface{})
-					// define a call back function to take the value out of sync.map
-					f := func(key, value interface{}) bool {
-						c <- []interface{}{key, value}
-						return true
-					}
-
-					// capture all values in the slot
-					go func() {
-						for pair := range c {
-							key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
-							//logutil.GetLogger(PackageName).Infof("[genTrustValue] e %v, sd %v, k %v, v %v", epoch, shardId, key, value.TrustValueOffset)
-
-							if key != value.VehicleId {
-								logutil.GetLogger(PackageName).
-									Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
-								continue // ignore invalid trust value offset record
-							}
-
-							// if the trust value offset is forged, and cRSU setting is not activated
-							// the tvo will not be counted
-							if !exp.CompromisedRSUFlag && value.AlterType == fwtype.Forged {
-								continue
-							}
-
-							// whether the proposer is compromised RSU & enable compromised flag
-							compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(shard.proposer)) && exp.CompromisedRSUFlag
-
-							tvo := session.calculateTrustValueHelper(value, compromisedRSUFlag)
-							if op, ok := result.LoadOrStore(value.VehicleId, tvo); ok {
-								result.Store(value.VehicleId, tvo+op.(float32))
-							}
+				for _, shard := range block.shards { // spawn go routines for each shard in each slots
+					wg.Add(1)
+					go func(shard *ShardBlock) {
+						// dive into the slot
+						c := make(chan []interface{})
+						// define a call back function to take the value out of sync.map
+						f := func(key, value interface{}) bool {
+							c <- []interface{}{key, value}
+							return true
 						}
-					}()
 
-					// a block main contain many slots' trust value offsets
-					for _, tvoList := range shard.tvoList {
-						tvoList.Range(f)
-					}
-					close(c)
+						// capture all values in the slot
+						go func() {
+							for pair := range c {
+								key, value := pair[0].(uint32), pair[1].(*fwtype.TrustValueOffset)
+								//logutil.GetLogger(PackageName).Infof("[genTrustValue] e %v, sd %v, k %v, v %v", epoch, shardId, key, value.TrustValueOffset)
+
+								if key != value.VehicleId {
+									logutil.GetLogger(PackageName).
+										Debugf("[genBaselineTrustValue] mismatch vid! %v in vehicle and %v in tvo", key, value.VehicleId)
+									continue // ignore invalid trust value offset record
+								}
+
+								// if the trust value offset is forged, and cRSU setting is not activated
+								// the tvo will not be counted
+								if !exp.CompromisedRSUFlag && value.AlterType == fwtype.Forged {
+									continue
+								}
+
+								// whether the proposer is compromised RSU & enable compromised flag
+								compromisedRSUFlag := session.CompromisedRSUBitMap.Get(int(shard.proposer)) && exp.CompromisedRSUFlag
+
+								tvo := session.calculateTrustValueHelper(value, compromisedRSUFlag)
+								if op, ok := result.LoadOrStore(value.VehicleId, tvo); ok {
+									result.Store(value.VehicleId, tvo+op.(float32))
+								}
+							}
+						}()
+
+						// a block main contain many slots' trust value offsets
+						for _, tvoList := range shard.tvoList {
+							tvoList.Range(f)
+						}
+						close(c)
+						wg.Done() // job done for shards
+					}(shard)
 				} // iterate shards
-				wg.Done() // job done for shards
-			}(block, result) // go routine for each slot
-		} // iterate slots for loop
+			} // iterate slots for loop
 
-		wg.Wait()
+			wg.Wait()
+			upperWg.Done()
+		}(exp) // go routine for each experiment
+
+		upperWg.Wait()
 	} // experiment
 }

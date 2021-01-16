@@ -13,11 +13,10 @@ func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint3
 	case <-ctx.Done():
 		logutil.GetLogger(PackageName).Fatalf("[prepareRSUsForSlot] context cancel")
 	default:
-		for x := 0; x < sim.Config.XLen; x++ {
-			for y := 0; y < sim.Config.YLen; y++ {
-				r := sim.RSUs[x][y]
-				r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
-			}
+		for i := 0; i < sim.Config.RSUNum; i++ {
+			x, y := sim.Config.IndexToCoord(uint32(i))
+			r := sim.RSUs[x][y]
+			r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
 		}
 	}
 }

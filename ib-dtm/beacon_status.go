@@ -89,8 +89,8 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 // separate proposer and committee(proposer no need to be the member of committee)
 func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32) {
-	logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v", epoch)
-	defer logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v done", epoch)
+	//logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v", epoch)
+	//defer logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
@@ -181,12 +181,18 @@ func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {
 	logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v", epoch)
 	defer logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v, done", epoch)
 
-	// reset the bitmap
+	wg := sync.WaitGroup{}
 	for shardId := range bs.shardStatus {
 		bs.shardStatus[shardId] = &ShardStatus{
 			Epoch: epoch,
 			Id:    uint32(shardId),
 		}
-		bs.genAssignment(ctx, uint32(shardId), epoch)
+
+		wg.Add(1)
+		go func(shardId uint32) { // spawn go routines for assignment generation
+			bs.genAssignment(ctx, shardId, epoch)
+			wg.Done()
+		}(uint32(shardId))
 	}
+	wg.Wait()
 }
