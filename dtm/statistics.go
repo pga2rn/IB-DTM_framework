@@ -19,8 +19,8 @@ func (session *DTMLogicSession) genStatistics(ctx context.Context, epoch uint32)
 		wg := sync.WaitGroup{}
 
 		// iterate through every experiment's data storage
-		for expName, exp := range *session.ExpConfig {
-			head := (*session.TrustValueStorageHead)[expName]
+		for expName, exp := range session.ExpConfig {
+			head := session.TrustValueStorageHead[expName]
 
 			wg.Add(1)
 			go func(expName string, exp *config.ExperimentConfig) {

@@ -37,8 +37,7 @@ type BeaconStatus struct {
 	whistleBlowings          map[uint32]int
 
 	// committees
-	shardStatus         []*ShardStatus
-	TotalProposerBitMap *bitmap.Threadsafe
+	shardStatus []*ShardStatus
 
 	// random source
 	R *randutil.RandUtil
@@ -81,7 +80,6 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 			Epoch: 0,
 		}
 	}
-	res.TotalProposerBitMap = bitmap.NewTS(res.SimConfig.RSUNum)
 
 	// random source
 	res.R = randutil.InitRand(123)
@@ -184,7 +182,6 @@ func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {
 	defer logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v, done", epoch)
 
 	// reset the bitmap
-	bs.TotalProposerBitMap = bitmap.NewTS(bs.SimConfig.RSUNum)
 	for shardId := range bs.shardStatus {
 		bs.shardStatus[shardId] = &ShardStatus{
 			Epoch: epoch,

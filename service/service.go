@@ -18,37 +18,36 @@ var services = make(Services)
 
 // logger init, simconfig init
 func Init(uCtx *cli.Context) error {
-	cfg := config.GenYangNetConfig()
 
 	// init the logger
-	logutil.InitLogger(cfg.Loglevel)
+	//logutil.SetLevel(logrus.InfoLevel)
+	logutil.InitLogger()
 	logutil.LoggerList["service"].Debugf("[Init] init logger")
 
 	// init the simulation config
-	cfg.SetGenesis(time.Now().Add(time.Duration(cfg.SecondsPerSlot) * time.Second))
-	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after %v seconds", cfg.SecondsPerSlot)
+	config.SetGenesis(time.Now().Add(3 * time.Second))
+	logutil.LoggerList["service"].Debugf("[Init] genesis will kick after %v seconds", 6)
 
-	// init experiment config
-	expCfg := config.InitExperimentConfig()
-	expCfgList := config.InitProposalExperimentConfigList()
-
-	//statisticsCfg := config.GenStatisticsConfig()
-	ibdtmCfg := config.GenIBDTMConfig(cfg)
-
-	//
 	//// init the channel for intercommunication
-	simDTMComm := make(chan interface{})
-	simIBDTMComm := make(chan interface{})
-	DTMIBDTMComm := make(chan interface{})
-	DTMRPCComm := make(chan interface{})
+	sim2DTM := make(chan interface{})
+	sim2IBDTM := make(chan interface{})
+	DTM2IBDTM := make(chan interface{})
+	DTM2RPC := make(chan interface{})
 
-	// TODO: update dtm prepare logics for ib-dtm!
-	// TODO: fix ib-dtm prepare logic!
 	// init and register the services
-	services["simulator"] = simulator.PrepareSimulationSession(cfg, simDTMComm, simIBDTMComm)
-	services["dtm"] = dtm.PrepareDTMLogicModuleSession(cfg, expCfg, simDTMComm, DTMIBDTMComm, DTMRPCComm)
-	services["ib-dtm"] = ib_dtm.PrepareBlockchainModule(cfg, expCfgList, ibdtmCfg, simIBDTMComm, DTMIBDTMComm)
-	services["rpc"] = rpc.PrepareRPCServer(DTMRPCComm)
+	services["simulator"] = simulator.PrepareSimulationSession(
+		config.GenYangNetConfig(),
+		sim2DTM, sim2IBDTM)
+	services["dtm"] = dtm.PrepareDTMLogicModuleSession(
+		config.GenYangNetConfig(),
+		config.InitExperimentConfig(),
+		sim2DTM, DTM2IBDTM, DTM2RPC)
+	services["ib-dtm"] = ib_dtm.PrepareBlockchainModule(
+		config.GenYangNetConfig(),
+		config.InitProposalExperimentConfigList(),
+		config.GenIBDTMConfig(config.GenYangNetConfig()),
+		sim2IBDTM, DTM2IBDTM)
+	services["rpc"] = rpc.PrepareRPCServer(DTM2RPC)
 	//services["statistics"] = statistics.PrepareStatisticsSession(statisticsCfg, expCfg)
 
 	logutil.LoggerList["service"].Debugf("[Init] finished registering services")

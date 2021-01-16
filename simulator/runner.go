@@ -2,7 +2,6 @@ package simulator
 
 import (
 	"context"
-	"github.com/pga2rn/ib-dtm_framework/shared"
 	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 )
@@ -13,22 +12,6 @@ func (sim *SimulationSession) Done(ctx context.Context) {
 	sim.Ticker.Done()
 	close(sim.ChanDTM)
 	return
-}
-
-func (sim *SimulationSession) dialInitDTMLogicModule() {
-	initPack := &shared.SimInitDTMCommunication{
-		MisbehavingVehicleBitMap: sim.MisbehaviorVehicleBitMap,
-		RSUs:                     &sim.RSUs,
-		Rmu:                      &sim.rmu,
-	}
-
-	// send the init pack to the dtm logic module
-	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] send init pack to dtm logic module")
-	sim.ChanDTM <- initPack
-
-	// wait for the dtm logic module finishing the init
-	<-sim.ChanDTM
-	logutil.LoggerList["simulator"].Debugf("[dialInitDTMLogicModule] dtm logic module init finished")
 }
 
 // start the simulation!

@@ -1,12 +1,9 @@
 package simulator
 
 import (
-	"context"
 	"github.com/boljen/go-bitmap"
 	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/rsu"
-	"github.com/pga2rn/ib-dtm_framework/shared"
-	"github.com/pga2rn/ib-dtm_framework/shared/logutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/randutil"
 	"github.com/pga2rn/ib-dtm_framework/shared/timeutil"
 	"github.com/pga2rn/ib-dtm_framework/sim-map"
@@ -20,7 +17,7 @@ type SimulationSession struct {
 	Config *config.SimConfig
 
 	// pointer to the map
-	Map *simmap.Map
+	Map simmap.SimMap
 
 	// channel for inter-module-communication
 	ChanDTM   chan interface{}
@@ -94,33 +91,4 @@ func PrepareSimulationSession(cfg *config.SimConfig, chanDTM chan interface{}, c
 	sim.R = randutil.InitRand(123)
 
 	return sim
-}
-
-func (sim *SimulationSession) dialIBDTMLogicModulePerSlot(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[dialIBDTMLogicModulePerSlot] slot %v", slot)
-
-	select {
-	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[dialIBDTMLogicModulePerSlot] context canceled")
-	default:
-		// signal the ib-dtm module with slot
-		sim.ChanIBDTM <- slot
-		<-sim.ChanIBDTM
-	}
-}
-
-func (sim *SimulationSession) dialInitIBDTMModule(ctx context.Context) {
-	defer logutil.LoggerList["simulator"].Debugf("[dialInitIBDTMModule] done!")
-	select {
-	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[dialInitIBDTMModule] failed to init the IBDTM module")
-	default:
-		pack := shared.SimInitIBDTMCommunication{
-			RSUs:                 &sim.RSUs,
-			Rmu:                  &sim.rmu,
-			CompromisedRSUBitMap: sim.CompromisedRSUBitMap,
-		}
-		sim.ChanIBDTM <- &pack
-		<-sim.ChanIBDTM
-	}
 }

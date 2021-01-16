@@ -18,8 +18,8 @@ import (
 // init the storage area
 func (session *DTMLogicSession) initDataStructureForEpoch(epoch uint32) {
 	logutil.LoggerList["dtm"].Debugf("[initDataStructureForEpoch] epoch %v", epoch)
-	for expName := range *session.ExpConfig {
-		head := (*session.TrustValueStorageHead)[expName]
+	for expName := range session.ExpConfig {
+		head := session.TrustValueStorageHead[expName]
 		if _, err := head.InitTrustValueStorageObject(epoch, session.SimConfig); err != nil {
 			logutil.LoggerList["dtm"].
 				Fatalf("[initDataStructureForEpoch] failed to allocate storage, expName %v", expName)
@@ -57,13 +57,14 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 		// signal the ib-dtm
 		session.ChanIBDTM <- true
 
+		// TODO: inter module connection transmit instance instead of pointer
 		// wait for results from the ib-dtm module
 		for {
 			v := <-session.ChanIBDTM
 			switch v.(type) {
 			case *shared.IBDTM2DTMCommunication:
 				pack := v.(*shared.IBDTM2DTMCommunication)
-				head := (*session.TrustValueStorageHead)[pack.ExpName]
+				head := session.TrustValueStorageHead[pack.ExpName]
 
 				// get the head block of the trust value storage chain
 				headBlock := head.GetHeadBlock()
@@ -95,7 +96,7 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 		// iterate all RSU
 		for i := 0; i < session.SimConfig.RSUNum; i++ {
 			x, y := session.SimConfig.IndexToCoord(uint32(i))
-			r := (*session.RSUs)[x][y]
+			r := session.RSUs[x][y]
 
 			// use go routines to collect every RSU's data
 			// add one worker to wait group
@@ -143,11 +144,11 @@ func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch
 									}
 
 									// for each pair of trust value offsets, trust value will be calculated for every experiments
-									for expName, exp := range *session.ExpConfig {
+									for expName, exp := range session.ExpConfig {
 										switch exp.Type {
 										case pb.ExperimentType_BASELINE:
 											// get the storage head & storage block
-											tvStorageHead := (*session.TrustValueStorageHead)[expName]
+											tvStorageHead := session.TrustValueStorageHead[expName]
 											tvStorageBlock := tvStorageHead.GetHeadBlock()
 
 											// if the trust value offset is forged, and cRSU setting is not activated
@@ -197,10 +198,10 @@ func (session *DTMLogicSession) flagMisbehavingVehicles(ctx context.Context, epo
 		return
 	default:
 		// iterate through every experiment's data storage
-		for expName, _ := range *session.ExpConfig {
+		for expName, _ := range session.ExpConfig {
 
 			// get the head of the storage
-			head := (*session.TrustValueStorageHead)[expName]
+			head := session.TrustValueStorageHead[expName]
 			headBlock := head.GetHeadBlock()
 			ep, list, bmap := headBlock.GetTrustValueList()
 			if ep != epoch {

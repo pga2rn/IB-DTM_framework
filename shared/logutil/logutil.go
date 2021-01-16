@@ -3,6 +3,7 @@ package logutil
 import log "github.com/sirupsen/logrus"
 
 var LoggerList = make(map[string]*log.Entry)
+var LogLevel = log.DebugLevel
 var PackageNameList = []string{
 	"simulator",
 	"main",
@@ -16,8 +17,12 @@ var PackageNameList = []string{
 	"rpc",
 }
 
-func InitLogger(level log.Level) {
-	log.SetLevel(level)
+func SetLevel(level log.Level) {
+	LogLevel = level
+}
+
+func InitLogger() {
+	log.SetLevel(LogLevel)
 	for _, v := range PackageNameList {
 		RegisterLogger(v)
 	}

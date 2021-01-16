@@ -23,7 +23,7 @@ type ExperimentConfig struct {
 }
 
 func InitProposalExperimentConfigList() []*ExperimentConfig {
-	m := *InitExperimentConfig()
+	m := InitExperimentConfig()
 	res := make([]*ExperimentConfig, len(m))
 
 	count := 0
@@ -38,7 +38,7 @@ func InitProposalExperimentConfigList() []*ExperimentConfig {
 }
 
 // return a map of experiment config
-func InitExperimentConfig() *map[string]*ExperimentConfig {
+func InitExperimentConfig() map[string]*ExperimentConfig {
 	m := make(map[string]*ExperimentConfig)
 
 	// baseline 0
@@ -85,5 +85,5 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
-	return &m
+	return m
 }

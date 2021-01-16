@@ -14,7 +14,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 			r := rsu.InitRSU(
 				uint32(sim.Config.CoordToIndex(x, y)),
 				fwtype.Position{x, y},
-				sim.Config.RingLength,
+				sim.Config.EpochCacheLength,
 			)
 
 			sim.RSUs[x][y] = r

@@ -9,74 +9,81 @@ import (
 )
 
 // each cross represents a CROSS within the map,
-// which holds a RSU and 0 or more vehicles
+// which holds a RSU and 0 or more vehiclesMap
 type cross struct {
 	// a list of vehicle that appears
-	vehicles     *sync.Map // map[uint32]*vehicle.Vehicle
-	vehiclesList *bitmap.Threadsafe
+	mu           sync.RWMutex
+	vehiclesMap  map[uint32]*vehicle.Vehicle // map[uint32]*vehicle.Vehicle
+	vehiclesList bitmap.Bitmap
 }
 
-type Map struct {
-	// a 2d array represents the map
-	cross [][]*cross
+// a 2d array represents the map
+type SimMap [][]*cross
+
+func (m SimMap) GetCross(pos fwtype.Position) *cross {
+	return m[pos.X][pos.Y]
 }
 
-func (m *Map) GetCross(pos fwtype.Position) *cross {
-	return m.cross[pos.X][pos.Y]
-}
-
-func (c *cross) initCross(vnum int) {
-	c.vehicles = &sync.Map{} // map[uint32]*vehicle.Vehicle)
-	c.vehiclesList = bitmap.NewTS(vnum)
+func createCross(vnum int) *cross {
+	return &cross{
+		mu:           sync.RWMutex{},
+		vehiclesMap:  make(map[uint32]*vehicle.Vehicle), // map[uint32]*vehicle.Vehicle)
+		vehiclesList: bitmap.New(vnum),
+	}
 }
 
 func (c *cross) RemoveVehicle(vid uint32) {
-	c.vehicles.Delete(vid)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.vehiclesMap, vid)
 	c.vehiclesList.Set(int(vid), false)
 }
 
 func (c *cross) AddVehicle(vid uint32, v *vehicle.Vehicle) {
-	c.vehicles.Store(vid, v)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.vehiclesMap[vid] = v
 	c.vehiclesList.Set(int(vid), true)
 }
 
+// get list of vehiclesMap at current slot
 func (c *cross) GetVehicleList() *[]uint32 {
-	res := make([]uint32, 16, 32)
-	for i := 0; i < c.vehiclesList.Len(); i++ {
-		if c.vehiclesList.Get(i) {
-			res = append(res, uint32(i))
-		}
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	res := make([]uint32, len(c.vehiclesMap))
+	for i := range c.vehiclesMap {
+		res = append(res, i)
 	}
 	return &res
 }
 
 func (c *cross) GetVehicleNum() int {
-	count := 0
-	for i := 0; i < c.vehiclesList.Len(); i++ {
-		if c.vehiclesList.Get(i) {
-			count += 1
-		}
-	}
-	return count
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return len(c.vehiclesMap)
 }
 
 func (c *cross) CheckIfVehicleInManagementZone(vid uint32) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	return c.vehiclesList.Get(int(vid))
 }
 
 // create a brand new map
-func CreateMap(cfg *config.SimConfig) *Map {
-	m := &Map{}
+func CreateMap(cfg *config.SimConfig) SimMap {
+	m := make(SimMap, cfg.YLen)
 
 	// prepare the map
-	m.cross = make([][]*cross, cfg.YLen)
-	for i := range m.cross {
-		m.cross[i] = make([]*cross, cfg.XLen)
+	for i := range m {
+		m[i] = make([]*cross, cfg.XLen)
 		// init cross
-		for j := 0; j < int(cfg.XLen); j++ {
-			c := cross{}
-			c.initCross(cfg.VehicleNumMax)
-			m.cross[i][j] = &c
+		for j := 0; j < cfg.XLen; j++ {
+			m[i][j] = createCross(cfg.VehicleNumMax)
 		}
 	}
 
