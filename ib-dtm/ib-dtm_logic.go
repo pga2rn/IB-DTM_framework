@@ -86,6 +86,11 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 
 				// get the trust value offsets list
 				startSlot, endSlot := proposerValidator.GetNextSlotForUpload(), slot
+				// if the data is too old, only acquire data within TrustValueOffsetsTraceBackEpochs
+				if int(startSlot) < int(endSlot)-2*(exp.TrustValueOffsetsTraceBackEpochs*int(bs.IBDTMConfig.SlotsPerEpoch)) {
+					startSlot = endSlot - 2*(uint32(exp.TrustValueOffsetsTraceBackEpochs)*bs.IBDTMConfig.SlotsPerEpoch)
+				}
+
 				for i := startSlot; i <= endSlot; i++ {
 					tvolist := proposerRSU.GetSlotInRing(i)
 					if tvolist == nil {
@@ -118,7 +123,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						// the bad voter will let the bad RSU propose
 						case proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.95:
+							case rn < 0.7:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
@@ -142,7 +147,7 @@ func (session *IBDTMSession) ProcessSlot(ctx context.Context, slot uint32) {
 						// bad validator will camouflage itself by voting for good RSU
 						case !proposerIsCompromised && validatorIsCompromised:
 							switch {
-							case rn < 0.95:
+							case rn < 0.8:
 								shardBlock.votes[index] = true
 							default:
 								shardBlock.votes[index] = false
@@ -298,7 +303,7 @@ func (bs *BeaconStatus) ProcessLiveCycle(ctx context.Context, epoch uint32) {
 				bs.InactivateValidator(validator.Id)
 			}
 			// debug, show all validator's stake
-			logutil.GetLogger(PackageName).Infof("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
+			logutil.GetLogger(PackageName).Debugf("[lifecycle]r %v, es %v, its %v", validator.Id, validator.effectiveStake, validator.itsStake.GetAmount())
 		}
 
 		// check slash

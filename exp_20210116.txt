@@ -1,0 +1,158 @@
+time="2021-01-17T02:23:57+09:00" level=info msg="[Run] framework query server now listens at 0.0.0.0:5001" package=rpc
+time="2021-01-17T02:23:57+09:00" level=info msg="[Run] API: http://127.0.0.1:5001/v1/framework/data" package=rpc
+time="2021-01-17T02:24:00+09:00" level=info msg="[ProcessEpoch] mdvp: 0.2, crsup: 0.2" package=simulator
+time="2021-01-17T02:24:16+09:00" level=info msg="epoch 0, exp Proposal1, tp 674, tn 5777, fp 923, fn 818, recall 0.45174262, precision 0.42204133, f1 0.43638718, acc 0.7874756" package=dtm
+time="2021-01-17T02:24:16+09:00" level=info msg="epoch 0, exp Baseline0, tp 1274, tn 6680, fp 20, fn 218, recall 0.8538874, precision 0.98454404, f1 0.9145729, acc 0.97094727" package=dtm
+time="2021-01-17T02:24:16+09:00" level=info msg="epoch 0, exp Baseline1, tp 1050, tn 6461, fp 239, fn 442, recall 0.70375335, precision 0.814585, f1 0.7551241, acc 0.9168701" package=dtm
+time="2021-01-17T02:24:16+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6182" package=simulator
+time="2021-01-17T02:24:16+09:00" level=info msg="epoch 0, exp Proposal0, tp 827, tn 6389, fp 311, fn 665, recall 0.5542895, precision 0.72671354, f1 0.62889737, acc 0.8808594" package=dtm
+time="2021-01-17T02:24:32+09:00" level=info msg="epoch 1, exp Baseline0, tp 1408, tn 6699, fp 1, fn 84, recall 0.9436997, precision 0.9992903, f1 0.9706997, acc 0.989624" package=dtm
+time="2021-01-17T02:24:32+09:00" level=info msg="epoch 1, exp Baseline1, tp 1112, tn 6629, fp 71, fn 380, recall 0.74530834, precision 0.93998307, f1 0.8314018, acc 0.9449463" package=dtm
+time="2021-01-17T02:24:32+09:00" level=info msg="epoch 1, exp Proposal0, tp 1145, tn 6598, fp 102, fn 347, recall 0.76742625, precision 0.9182037, f1 0.83607155, acc 0.9451904" package=dtm
+time="2021-01-17T02:24:32+09:00" level=info msg="epoch 1, exp Proposal1, tp 989, tn 6352, fp 348, fn 503, recall 0.6628686, precision 0.73971575, f1 0.699187, acc 0.89611816" package=dtm
+time="2021-01-17T02:24:32+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6118" package=simulator
+time="2021-01-17T02:24:48+09:00" level=info msg="epoch 2, exp Proposal1, tp 1169, tn 6636, fp 64, fn 323, recall 0.78351206, precision 0.94809407, f1 0.8579817, acc 0.9527588" package=dtm
+time="2021-01-17T02:24:48+09:00" level=info msg="epoch 2, exp Baseline1, tp 1097, tn 6677, fp 23, fn 395, recall 0.7352547, precision 0.9794643, f1 0.83996934, acc 0.9489746" package=dtm
+time="2021-01-17T02:24:48+09:00" level=info msg="epoch 2, exp Baseline0, tp 1454, tn 6700, fp 0, fn 38, recall 0.9745308, precision 1, f1 0.98710114, acc 0.9953613" package=dtm
+time="2021-01-17T02:24:48+09:00" level=info msg="epoch 2, exp Proposal0, tp 1312, tn 6683, fp 17, fn 180, recall 0.87935656, precision 0.9872084, f1 0.9301666, acc 0.97595215" package=dtm
+time="2021-01-17T02:24:48+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6024" package=simulator
+time="2021-01-17T02:25:04+09:00" level=info msg="epoch 3, exp Proposal1, tp 1239, tn 6677, fp 23, fn 253, recall 0.83042896, precision 0.981775, f1 0.8997822, acc 0.9663086" package=dtm
+time="2021-01-17T02:25:04+09:00" level=info msg="epoch 3, exp Baseline0, tp 1453, tn 6700, fp 0, fn 39, recall 0.97386056, precision 1, f1 0.9867572, acc 0.99523926" package=dtm
+time="2021-01-17T02:25:04+09:00" level=info msg="epoch 3, exp Proposal0, tp 1371, tn 6695, fp 5, fn 121, recall 0.9189008, precision 0.99636626, f1 0.95606697, acc 0.98461914" package=dtm
+time="2021-01-17T02:25:04+09:00" level=info msg="epoch 3, exp Baseline1, tp 956, tn 6667, fp 33, fn 536, recall 0.64075065, precision 0.96663296, f1 0.770657, acc 0.930542" package=dtm
+time="2021-01-17T02:25:04+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6444" package=simulator
+time="2021-01-17T02:25:20+09:00" level=info msg="epoch 4, exp Proposal0, tp 1396, tn 6697, fp 3, fn 96, recall 0.93565685, precision 0.9978556, f1 0.9657558, acc 0.98791504" package=dtm
+time="2021-01-17T02:25:20+09:00" level=info msg="epoch 4, exp Baseline0, tp 1449, tn 6700, fp 0, fn 43, recall 0.9711796, precision 1, f1 0.9853791, acc 0.994751" package=dtm
+time="2021-01-17T02:25:20+09:00" level=info msg="epoch 4, exp Baseline1, tp 900, tn 6664, fp 36, fn 592, recall 0.6032172, precision 0.96153843, f1 0.7413509, acc 0.92333984" package=dtm
+time="2021-01-17T02:25:20+09:00" level=info msg="epoch 4, exp Proposal1, tp 1300, tn 6696, fp 4, fn 192, recall 0.8713137, precision 0.9969325, f1 0.9298999, acc 0.9760742" package=dtm
+time="2021-01-17T02:25:20+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6276" package=simulator
+time="2021-01-17T02:25:36+09:00" level=info msg="epoch 5, exp Baseline1, tp 790, tn 6648, fp 52, fn 702, recall 0.5294906, precision 0.93824226, f1 0.6769494, acc 0.907959" package=dtm
+time="2021-01-17T02:25:36+09:00" level=info msg="epoch 5, exp Baseline0, tp 1452, tn 6700, fp 0, fn 40, recall 0.97319037, precision 1, f1 0.98641306, acc 0.9951172" package=dtm
+time="2021-01-17T02:25:36+09:00" level=info msg="epoch 5, exp Proposal0, tp 1404, tn 6698, fp 2, fn 88, recall 0.94101876, precision 0.99857754, f1 0.96894413, acc 0.9890137" package=dtm
+time="2021-01-17T02:25:36+09:00" level=info msg="epoch 5, exp Proposal1, tp 1350, tn 6697, fp 3, fn 142, recall 0.90482575, precision 0.9977827, f1 0.9490334, acc 0.9822998" package=dtm
+time="2021-01-17T02:25:36+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5500" package=simulator
+time="2021-01-17T02:25:52+09:00" level=info msg="epoch 6, exp Proposal1, tp 1403, tn 6700, fp 0, fn 89, recall 0.9403485, precision 1, f1 0.96925735, acc 0.98913574" package=dtm
+time="2021-01-17T02:25:52+09:00" level=info msg="epoch 6, exp Baseline0, tp 1458, tn 6700, fp 0, fn 34, recall 0.9772118, precision 1, f1 0.9884746, acc 0.9958496" package=dtm
+time="2021-01-17T02:25:52+09:00" level=info msg="epoch 6, exp Proposal0, tp 1396, tn 6699, fp 1, fn 96, recall 0.93565685, precision 0.9992842, f1 0.9664244, acc 0.9881592" package=dtm
+time="2021-01-17T02:25:52+09:00" level=info msg="epoch 6, exp Baseline1, tp 688, tn 6615, fp 85, fn 804, recall 0.461126, precision 0.8900388, f1 0.6075055, acc 0.8914795" package=dtm
+time="2021-01-17T02:25:52+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5601" package=simulator
+time="2021-01-17T02:26:08+09:00" level=info msg="epoch 7, exp Proposal1, tp 1361, tn 6697, fp 3, fn 131, recall 0.91219836, precision 0.9978006, f1 0.95308125, acc 0.9836426" package=dtm
+time="2021-01-17T02:26:08+09:00" level=info msg="epoch 7, exp Baseline1, tp 581, tn 6613, fp 87, fn 911, recall 0.3894102, precision 0.86976045, f1 0.537963, acc 0.8781738" package=dtm
+time="2021-01-17T02:26:08+09:00" level=info msg="epoch 7, exp Baseline0, tp 1446, tn 6699, fp 1, fn 46, recall 0.9691689, precision 0.99930894, f1 0.98400813, acc 0.9942627" package=dtm
+time="2021-01-17T02:26:08+09:00" level=info msg="epoch 7, exp Proposal0, tp 1387, tn 6697, fp 3, fn 105, recall 0.9296247, precision 0.9978417, f1 0.962526, acc 0.9868164" package=dtm
+time="2021-01-17T02:26:08+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6190" package=simulator
+time="2021-01-17T02:26:24+09:00" level=info msg="epoch 8, exp Proposal1, tp 1360, tn 6695, fp 5, fn 132, recall 0.91152817, precision 0.996337, f1 0.9520476, acc 0.98327637" package=dtm
+time="2021-01-17T02:26:24+09:00" level=info msg="epoch 8, exp Baseline0, tp 1461, tn 6700, fp 0, fn 31, recall 0.97922254, precision 1, f1 0.9895022, acc 0.9962158" package=dtm
+time="2021-01-17T02:26:24+09:00" level=info msg="epoch 8, exp Baseline1, tp 514, tn 6614, fp 86, fn 978, recall 0.34450403, precision 0.8566667, f1 0.49139583, acc 0.8701172" package=dtm
+time="2021-01-17T02:26:24+09:00" level=info msg="epoch 8, exp Proposal0, tp 1427, tn 6699, fp 1, fn 65, recall 0.9564343, precision 0.9992997, f1 0.97739726, acc 0.99194336" package=dtm
+time="2021-01-17T02:26:24+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6506" package=simulator
+time="2021-01-17T02:26:40+09:00" level=info msg="epoch 9, exp Baseline0, tp 1459, tn 6700, fp 0, fn 33, recall 0.977882, precision 1, f1 0.98881733, acc 0.9959717" package=dtm
+time="2021-01-17T02:26:40+09:00" level=info msg="epoch 9, exp Proposal1, tp 1322, tn 6694, fp 6, fn 170, recall 0.886059, precision 0.9954819, f1 0.93758863, acc 0.9785156" package=dtm
+time="2021-01-17T02:26:40+09:00" level=info msg="epoch 9, exp Baseline1, tp 462, tn 6621, fp 79, fn 1030, recall 0.30965146, precision 0.8539741, f1 0.45450073, acc 0.864624" package=dtm
+time="2021-01-17T02:26:40+09:00" level=info msg="epoch 9, exp Proposal0, tp 1415, tn 6699, fp 1, fn 77, recall 0.94839144, precision 0.9992938, f1 0.97317743, acc 0.9904785" package=dtm
+time="2021-01-17T02:26:40+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5962" package=simulator
+time="2021-01-17T02:26:56+09:00" level=info msg="epoch 10, exp Proposal0, tp 1411, tn 6700, fp 0, fn 81, recall 0.9457105, precision 1, f1 0.9720979, acc 0.9901123" package=dtm
+time="2021-01-17T02:26:56+09:00" level=info msg="epoch 10, exp Proposal1, tp 1379, tn 6698, fp 2, fn 113, recall 0.92426276, precision 0.9985518, f1 0.95997214, acc 0.9859619" package=dtm
+time="2021-01-17T02:26:56+09:00" level=info msg="epoch 10, exp Baseline0, tp 1443, tn 6700, fp 0, fn 49, recall 0.9671582, precision 1, f1 0.983305, acc 0.99401855" package=dtm
+time="2021-01-17T02:26:56+09:00" level=info msg="epoch 10, exp Baseline1, tp 391, tn 6584, fp 116, fn 1101, recall 0.26206434, precision 0.77120316, f1 0.3911956, acc 0.8514404" package=dtm
+time="2021-01-17T02:26:56+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6103" package=simulator
+time="2021-01-17T02:27:12+09:00" level=info msg="epoch 11, exp Baseline0, tp 1449, tn 6700, fp 0, fn 43, recall 0.9711796, precision 1, f1 0.9853791, acc 0.994751" package=dtm
+time="2021-01-17T02:27:12+09:00" level=info msg="epoch 11, exp Baseline1, tp 362, tn 6588, fp 112, fn 1130, recall 0.24262735, precision 0.76371306, f1 0.36826044, acc 0.8483887" package=dtm
+time="2021-01-17T02:27:12+09:00" level=info msg="epoch 11, exp Proposal1, tp 1306, tn 6695, fp 5, fn 186, recall 0.8753351, precision 0.99618614, f1 0.9318587, acc 0.9766846" package=dtm
+time="2021-01-17T02:27:12+09:00" level=info msg="epoch 11, exp Proposal0, tp 1395, tn 6698, fp 2, fn 97, recall 0.9349866, precision 0.99856836, f1 0.96573216, acc 0.98791504" package=dtm
+time="2021-01-17T02:27:12+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6095" package=simulator
+time="2021-01-17T02:27:28+09:00" level=info msg="epoch 12, exp Baseline0, tp 1444, tn 6700, fp 0, fn 48, recall 0.9678284, precision 1, f1 0.9836512, acc 0.9941406" package=dtm
+time="2021-01-17T02:27:28+09:00" level=info msg="epoch 12, exp Proposal1, tp 1378, tn 6698, fp 2, fn 114, recall 0.9235925, precision 0.9985507, f1 0.95961004, acc 0.98583984" package=dtm
+time="2021-01-17T02:27:28+09:00" level=info msg="epoch 12, exp Baseline1, tp 287, tn 6543, fp 157, fn 1205, recall 0.19235925, precision 0.6463964, f1 0.2964876, acc 0.83374023" package=dtm
+time="2021-01-17T02:27:28+09:00" level=info msg="epoch 12, exp Proposal0, tp 1399, tn 6700, fp 0, fn 93, recall 0.93766755, precision 1, f1 0.96783113, acc 0.98864746" package=dtm
+time="2021-01-17T02:27:28+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6178" package=simulator
+time="2021-01-17T02:27:44+09:00" level=info msg="epoch 13, exp Baseline0, tp 1459, tn 6700, fp 0, fn 33, recall 0.977882, precision 1, f1 0.98881733, acc 0.9959717" package=dtm
+time="2021-01-17T02:27:44+09:00" level=info msg="epoch 13, exp Proposal1, tp 1378, tn 6698, fp 2, fn 114, recall 0.9235925, precision 0.9985507, f1 0.95961004, acc 0.98583984" package=dtm
+time="2021-01-17T02:27:44+09:00" level=info msg="epoch 13, exp Baseline1, tp 265, tn 6558, fp 142, fn 1227, recall 0.17761394, precision 0.65110564, f1 0.27909425, acc 0.83288574" package=dtm
+time="2021-01-17T02:27:44+09:00" level=info msg="epoch 13, exp Proposal0, tp 1397, tn 6700, fp 0, fn 95, recall 0.9363271, precision 1, f1 0.96711665, acc 0.9884033" package=dtm
+time="2021-01-17T02:27:44+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6014" package=simulator
+time="2021-01-17T02:28:00+09:00" level=info msg="epoch 14, exp Proposal1, tp 1425, tn 6699, fp 1, fn 67, recall 0.95509386, precision 0.99929875, f1 0.9766963, acc 0.9916992" package=dtm
+time="2021-01-17T02:28:00+09:00" level=info msg="epoch 14, exp Baseline1, tp 213, tn 6514, fp 186, fn 1279, recall 0.1427614, precision 0.5338346, f1 0.22527762, acc 0.821167" package=dtm
+time="2021-01-17T02:28:00+09:00" level=info msg="epoch 14, exp Baseline0, tp 1439, tn 6700, fp 0, fn 53, recall 0.96447724, precision 1, f1 0.98191744, acc 0.9935303" package=dtm
+time="2021-01-17T02:28:00+09:00" level=info msg="epoch 14, exp Proposal0, tp 1406, tn 6699, fp 1, fn 86, recall 0.94235927, precision 0.9992893, f1 0.96998966, acc 0.9893799" package=dtm
+time="2021-01-17T02:28:00+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5587" package=simulator
+time="2021-01-17T02:28:16+09:00" level=info msg="epoch 15, exp Proposal1, tp 1408, tn 6700, fp 0, fn 84, recall 0.9436997, precision 1, f1 0.97103447, acc 0.9897461" package=dtm
+time="2021-01-17T02:28:16+09:00" level=info msg="epoch 15, exp Baseline0, tp 1449, tn 6700, fp 0, fn 43, recall 0.9711796, precision 1, f1 0.9853791, acc 0.994751" package=dtm
+time="2021-01-17T02:28:16+09:00" level=info msg="epoch 15, exp Proposal0, tp 1389, tn 6697, fp 3, fn 103, recall 0.9309651, precision 0.9978448, f1 0.9632455, acc 0.98706055" package=dtm
+time="2021-01-17T02:28:16+09:00" level=info msg="epoch 15, exp Baseline1, tp 223, tn 6520, fp 180, fn 1269, recall 0.1494638, precision 0.55334985, f1 0.2353562, acc 0.8231201" package=dtm
+time="2021-01-17T02:28:16+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6083" package=simulator
+time="2021-01-17T02:28:32+09:00" level=info msg="epoch 16, exp Proposal0, tp 1386, tn 6696, fp 4, fn 106, recall 0.9289544, precision 0.9971223, f1 0.9618321, acc 0.98657227" package=dtm
+time="2021-01-17T02:28:32+09:00" level=info msg="epoch 16, exp Proposal1, tp 1412, tn 6699, fp 1, fn 80, recall 0.9463807, precision 0.9992923, f1 0.97211707, acc 0.9901123" package=dtm
+time="2021-01-17T02:28:32+09:00" level=info msg="epoch 16, exp Baseline0, tp 1450, tn 6700, fp 0, fn 42, recall 0.97184986, precision 1, f1 0.985724, acc 0.99487305" package=dtm
+time="2021-01-17T02:28:32+09:00" level=info msg="epoch 16, exp Baseline1, tp 183, tn 6523, fp 177, fn 1309, recall 0.122654155, precision 0.5083333, f1 0.19762419, acc 0.8186035" package=dtm
+time="2021-01-17T02:28:32+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6306" package=simulator
+time="2021-01-17T02:28:48+09:00" level=info msg="epoch 17, exp Proposal1, tp 1432, tn 6700, fp 0, fn 60, recall 0.9597855, precision 1, f1 0.9794802, acc 0.9926758" package=dtm
+time="2021-01-17T02:28:48+09:00" level=info msg="epoch 17, exp Baseline1, tp 157, tn 6506, fp 194, fn 1335, recall 0.10522788, precision 0.44729346, f1 0.1703744, acc 0.8133545" package=dtm
+time="2021-01-17T02:28:48+09:00" level=info msg="epoch 17, exp Baseline0, tp 1456, tn 6700, fp 0, fn 36, recall 0.9758713, precision 1, f1 0.9877883, acc 0.99560547" package=dtm
+time="2021-01-17T02:28:48+09:00" level=info msg="epoch 17, exp Proposal0, tp 1397, tn 6696, fp 4, fn 95, recall 0.9363271, precision 0.9971449, f1 0.9657795, acc 0.98791504" package=dtm
+time="2021-01-17T02:28:48+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6297" package=simulator
+time="2021-01-17T02:29:04+09:00" level=info msg="epoch 18, exp Baseline0, tp 1456, tn 6700, fp 0, fn 36, recall 0.9758713, precision 1, f1 0.9877883, acc 0.99560547" package=dtm
+time="2021-01-17T02:29:04+09:00" level=info msg="epoch 18, exp Proposal1, tp 1433, tn 6700, fp 0, fn 59, recall 0.9604558, precision 1, f1 0.9798291, acc 0.99279785" package=dtm
+time="2021-01-17T02:29:04+09:00" level=info msg="epoch 18, exp Proposal0, tp 1405, tn 6700, fp 0, fn 87, recall 0.941689, precision 1, f1 0.9699689, acc 0.9893799" package=dtm
+time="2021-01-17T02:29:04+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6118" package=simulator
+time="2021-01-17T02:29:04+09:00" level=info msg="epoch 18, exp Baseline1, tp 145, tn 6529, fp 171, fn 1347, recall 0.097184986, precision 0.45886075, f1 0.16039823, acc 0.81469727" package=dtm
+time="2021-01-17T02:29:20+09:00" level=info msg="epoch 19, exp Baseline0, tp 1455, tn 6700, fp 0, fn 37, recall 0.9752011, precision 1, f1 0.9874448, acc 0.9954834" package=dtm
+time="2021-01-17T02:29:20+09:00" level=info msg="epoch 19, exp Proposal0, tp 1416, tn 6697, fp 3, fn 76, recall 0.9490617, precision 0.9978858, f1 0.9728615, acc 0.99035645" package=dtm
+time="2021-01-17T02:29:20+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6016" package=simulator
+time="2021-01-17T02:29:20+09:00" level=info msg="epoch 19, exp Proposal1, tp 1433, tn 6700, fp 0, fn 59, recall 0.9604558, precision 1, f1 0.9798291, acc 0.99279785" package=dtm
+time="2021-01-17T02:29:20+09:00" level=info msg="epoch 19, exp Baseline1, tp 156, tn 6518, fp 182, fn 1336, recall 0.10455764, precision 0.46153846, f1 0.1704918, acc 0.81469727" package=dtm
+time="2021-01-17T02:29:36+09:00" level=info msg="epoch 20, exp Baseline0, tp 1456, tn 6700, fp 0, fn 36, recall 0.9758713, precision 1, f1 0.9877883, acc 0.99560547" package=dtm
+time="2021-01-17T02:29:36+09:00" level=info msg="epoch 20, exp Proposal1, tp 1420, tn 6699, fp 1, fn 72, recall 0.95174265, precision 0.99929625, f1 0.97493994, acc 0.99108887" package=dtm
+time="2021-01-17T02:29:36+09:00" level=info msg="epoch 20, exp Baseline1, tp 166, tn 6508, fp 192, fn 1326, recall 0.11126006, precision 0.46368715, f1 0.17945945, acc 0.81469727" package=dtm
+time="2021-01-17T02:29:36+09:00" level=info msg="epoch 20, exp Proposal0, tp 1409, tn 6698, fp 2, fn 83, recall 0.94437, precision 0.99858254, f1 0.97071993, acc 0.989624" package=dtm
+time="2021-01-17T02:29:36+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6080" package=simulator
+time="2021-01-17T02:29:52+09:00" level=info msg="epoch 21, exp Baseline1, tp 148, tn 6495, fp 205, fn 1344, recall 0.09919571, precision 0.41926345, f1 0.16043362, acc 0.8109131" package=dtm
+time="2021-01-17T02:29:52+09:00" level=info msg="epoch 21, exp Proposal0, tp 1422, tn 6700, fp 0, fn 70, recall 0.9530831, precision 1, f1 0.9759781, acc 0.9914551" package=dtm
+time="2021-01-17T02:29:52+09:00" level=info msg="epoch 21, exp Proposal1, tp 1421, tn 6700, fp 0, fn 71, recall 0.95241284, precision 1, f1 0.97562647, acc 0.991333" package=dtm
+time="2021-01-17T02:29:52+09:00" level=info msg="epoch 21, exp Baseline0, tp 1453, tn 6700, fp 0, fn 39, recall 0.97386056, precision 1, f1 0.9867572, acc 0.99523926" package=dtm
+time="2021-01-17T02:29:52+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6201" package=simulator
+time="2021-01-17T02:30:08+09:00" level=info msg="epoch 22, exp Proposal1, tp 1422, tn 6700, fp 0, fn 70, recall 0.9530831, precision 1, f1 0.9759781, acc 0.9914551" package=dtm
+time="2021-01-17T02:30:08+09:00" level=info msg="epoch 22, exp Proposal0, tp 1421, tn 6700, fp 0, fn 71, recall 0.95241284, precision 1, f1 0.97562647, acc 0.991333" package=dtm
+time="2021-01-17T02:30:08+09:00" level=info msg="epoch 22, exp Baseline1, tp 136, tn 6513, fp 187, fn 1356, recall 0.09115282, precision 0.42105263, f1 0.14986226, acc 0.8116455" package=dtm
+time="2021-01-17T02:30:08+09:00" level=info msg="epoch 22, exp Baseline0, tp 1446, tn 6700, fp 0, fn 46, recall 0.9691689, precision 1, f1 0.9843431, acc 0.99438477" package=dtm
+time="2021-01-17T02:30:08+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6293" package=simulator
+time="2021-01-17T02:30:24+09:00" level=info msg="epoch 23, exp Proposal1, tp 1410, tn 6700, fp 0, fn 82, recall 0.9450402, precision 1, f1 0.97174364, acc 0.98999023" package=dtm
+time="2021-01-17T02:30:24+09:00" level=info msg="epoch 23, exp Proposal0, tp 1431, tn 6698, fp 2, fn 61, recall 0.95911527, precision 0.9986043, f1 0.9784615, acc 0.9923096" package=dtm
+time="2021-01-17T02:30:24+09:00" level=info msg="epoch 23, exp Baseline0, tp 1448, tn 6700, fp 0, fn 44, recall 0.9705094, precision 1, f1 0.98503405, acc 0.9946289" package=dtm
+time="2021-01-17T02:30:24+09:00" level=info msg="epoch 23, exp Baseline1, tp 115, tn 6496, fp 204, fn 1377, recall 0.07707775, precision 0.36050156, f1 0.12700166, acc 0.80700684" package=dtm
+time="2021-01-17T02:30:24+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5943" package=simulator
+time="2021-01-17T02:30:40+09:00" level=info msg="epoch 24, exp Proposal1, tp 1405, tn 6700, fp 0, fn 87, recall 0.941689, precision 1, f1 0.9699689, acc 0.9893799" package=dtm
+time="2021-01-17T02:30:40+09:00" level=info msg="epoch 24, exp Proposal0, tp 1416, tn 6700, fp 0, fn 76, recall 0.9490617, precision 1, f1 0.9738653, acc 0.99072266" package=dtm
+time="2021-01-17T02:30:40+09:00" level=info msg="epoch 24, exp Baseline0, tp 1453, tn 6700, fp 0, fn 39, recall 0.97386056, precision 1, f1 0.9867572, acc 0.99523926" package=dtm
+time="2021-01-17T02:30:40+09:00" level=info msg="epoch 24, exp Baseline1, tp 129, tn 6503, fp 197, fn 1363, recall 0.08646113, precision 0.39570552, f1 0.14191419, acc 0.8095703" package=dtm
+time="2021-01-17T02:30:40+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5766" package=simulator
+time="2021-01-17T02:30:56+09:00" level=info msg="epoch 25, exp Baseline1, tp 129, tn 6480, fp 220, fn 1363, recall 0.08646113, precision 0.3696275, f1 0.14014123, acc 0.8067627" package=dtm
+time="2021-01-17T02:30:56+09:00" level=info msg="epoch 25, exp Proposal1, tp 1417, tn 6700, fp 0, fn 75, recall 0.9497319, precision 1, f1 0.97421795, acc 0.9908447" package=dtm
+time="2021-01-17T02:30:56+09:00" level=info msg="epoch 25, exp Proposal0, tp 1413, tn 6697, fp 3, fn 79, recall 0.9470509, precision 0.99788135, f1 0.97180194, acc 0.98999023" package=dtm
+time="2021-01-17T02:30:56+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5968" package=simulator
+time="2021-01-17T02:30:56+09:00" level=info msg="epoch 25, exp Baseline0, tp 1446, tn 6700, fp 0, fn 46, recall 0.9691689, precision 1, f1 0.9843431, acc 0.99438477" package=dtm
+time="2021-01-17T02:31:12+09:00" level=info msg="epoch 26, exp Proposal1, tp 1417, tn 6700, fp 0, fn 75, recall 0.9497319, precision 1, f1 0.97421795, acc 0.9908447" package=dtm
+time="2021-01-17T02:31:12+09:00" level=info msg="epoch 26, exp Baseline0, tp 1456, tn 6700, fp 0, fn 36, recall 0.9758713, precision 1, f1 0.9877883, acc 0.99560547" package=dtm
+time="2021-01-17T02:31:12+09:00" level=info msg="epoch 26, exp Baseline1, tp 118, tn 6498, fp 202, fn 1374, recall 0.07908847, precision 0.36875, f1 0.13024282, acc 0.8076172" package=dtm
+time="2021-01-17T02:31:12+09:00" level=info msg="epoch 26, exp Proposal0, tp 1419, tn 6699, fp 1, fn 73, recall 0.9510724, precision 0.9992958, f1 0.9745879, acc 0.9909668" package=dtm
+time="2021-01-17T02:31:12+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5133" package=simulator
+time="2021-01-17T02:31:28+09:00" level=info msg="epoch 27, exp Proposal1, tp 1430, tn 6700, fp 0, fn 62, recall 0.958445, precision 1, f1 0.97878164, acc 0.99243164" package=dtm
+time="2021-01-17T02:31:28+09:00" level=info msg="epoch 27, exp Proposal0, tp 1409, tn 6697, fp 3, fn 83, recall 0.94437, precision 0.99787533, f1 0.9703857, acc 0.98950195" package=dtm
+time="2021-01-17T02:31:28+09:00" level=info msg="epoch 27, exp Baseline0, tp 1440, tn 6700, fp 0, fn 52, recall 0.96514744, precision 1, f1 0.98226464, acc 0.99365234" package=dtm
+time="2021-01-17T02:31:28+09:00" level=info msg="epoch 27, exp Baseline1, tp 90, tn 6460, fp 240, fn 1402, recall 0.060321715, precision 0.27272728, f1 0.09879254, acc 0.79956055" package=dtm
+time="2021-01-17T02:31:28+09:00" level=info msg="[ProcessEpoch] done! active vehicles 5863" package=simulator
+time="2021-01-17T02:31:44+09:00" level=info msg="epoch 28, exp Baseline0, tp 1443, tn 6700, fp 0, fn 49, recall 0.9671582, precision 1, f1 0.983305, acc 0.99401855" package=dtm
+time="2021-01-17T02:31:44+09:00" level=info msg="epoch 28, exp Baseline1, tp 98, tn 6483, fp 217, fn 1394, recall 0.06568365, precision 0.31111112, f1 0.10846709, acc 0.8033447" package=dtm
+time="2021-01-17T02:31:44+09:00" level=info msg="epoch 28, exp Proposal1, tp 1412, tn 6699, fp 1, fn 80, recall 0.9463807, precision 0.9992923, f1 0.97211707, acc 0.9901123" package=dtm
+time="2021-01-17T02:31:44+09:00" level=info msg="epoch 28, exp Proposal0, tp 1385, tn 6696, fp 4, fn 107, recall 0.92828417, precision 0.9971202, f1 0.96147174, acc 0.9864502" package=dtm
+time="2021-01-17T02:31:44+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6339" package=simulator
+time="2021-01-17T02:32:00+09:00" level=info msg="epoch 29, exp Baseline0, tp 1441, tn 6700, fp 0, fn 51, recall 0.9658177, precision 1, f1 0.98261166, acc 0.9937744" package=dtm
+time="2021-01-17T02:32:00+09:00" level=info msg="epoch 29, exp Baseline1, tp 103, tn 6491, fp 209, fn 1389, recall 0.06903485, precision 0.3301282, f1 0.11419069, acc 0.80493164" package=dtm
+time="2021-01-17T02:32:00+09:00" level=info msg="epoch 29, exp Proposal0, tp 1404, tn 6700, fp 0, fn 88, recall 0.94101876, precision 1, f1 0.96961325, acc 0.9892578" package=dtm
+time="2021-01-17T02:32:00+09:00" level=info msg="epoch 29, exp Proposal1, tp 1408, tn 6700, fp 0, fn 84, recall 0.9436997, precision 1, f1 0.97103447, acc 0.9897461" package=dtm
+time="2021-01-17T02:32:00+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6352" package=simulator
+time="2021-01-17T02:32:17+09:00" level=info msg="epoch 30, exp Proposal0, tp 1413, tn 6699, fp 1, fn 79, recall 0.9470509, precision 0.9992928, f1 0.97247076, acc 0.9902344" package=dtm
+time="2021-01-17T02:32:17+09:00" level=info msg="epoch 30, exp Baseline0, tp 1446, tn 6700, fp 0, fn 46, recall 0.9691689, precision 1, f1 0.9843431, acc 0.99438477" package=dtm
+time="2021-01-17T02:32:17+09:00" level=info msg="epoch 30, exp Proposal1, tp 1409, tn 6700, fp 0, fn 83, recall 0.94437, precision 1, f1 0.9713892, acc 0.98986816" package=dtm
+time="2021-01-17T02:32:17+09:00" level=info msg="epoch 30, exp Baseline1, tp 97, tn 6506, fp 194, fn 1395, recall 0.0650134, precision 0.33333334, f1 0.10880538, acc 0.8060303" package=dtm
+time="2021-01-17T02:32:17+09:00" level=info msg="[ProcessEpoch] done! active vehicles 6083" package=simulator

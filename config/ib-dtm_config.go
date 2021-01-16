@@ -53,7 +53,7 @@ func GenIBDTMConfig(simCfg *SimConfig) *IBDTMConfig {
 	res.BaseReward =
 		res.EffectiveStakeUpperBound * res.UploaderCoverRatio /
 			float32(math.Sqrt(float64(simCfg.VehicleNumMax)))
-	res.PenaltyFactor = 3
+	res.PenaltyFactor = float32(simCfg.SlotsPerEpoch)
 
 	res.SlashingsLimit = 4
 	res.WhistleBlowingsLimit = 8

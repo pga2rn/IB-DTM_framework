@@ -23,7 +23,7 @@ var services = make(Services)
 func Init(uCtx *cli.Context) error {
 
 	// init the logger
-	logutil.SetLevel(logrus.DebugLevel)
+	logutil.SetLevel(logrus.InfoLevel)
 	logutil.GetLogger(PackageName).Debugf("[Init] init logger")
 
 	// init the simulation config
