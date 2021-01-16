@@ -13,11 +13,9 @@ type TrustValuesPerEpoch = sync.Map // map[<vehicleId>uint32]float32
 
 // link list head of trust value storage list
 type TrustValueStorageHead struct {
-	mu         sync.Mutex
-	headEpoch  uint32 `the epoch of current head`
-	headPtr    *TrustValueStorage
-	epochCount int `total epoch being recorded`
-	ptrNext    *TrustValueStorage
+	mu        sync.Mutex
+	headEpoch uint32
+	headPtr   *TrustValueStorage
 }
 
 // data structure to hold every vehicle's trust value of specific epoch
@@ -26,26 +24,17 @@ type TrustValueStorage struct {
 	trustValueList           *TrustValuesPerEpoch
 	misbehavingVehicleBitMap *bitmap.Threadsafe
 	statisticsPack           *pb.StatisticsPerExperiment
-	ptrNext                  *TrustValueStorage
-	ptrPrevious              *TrustValueStorage
-}
-
-func InitTrustValueStorageHeadMap() *map[string]*TrustValueStorageHead {
-	tmp := make(map[string]*TrustValueStorageHead)
-	return &tmp
 }
 
 // constructor of trust value storage
 func InitTrustValueStorage() *TrustValueStorageHead {
 	return &TrustValueStorageHead{
-		mu:         sync.Mutex{},
-		headEpoch:  0,
-		epochCount: 0,
+		mu:        sync.Mutex{},
+		headEpoch: 0,
 	}
 }
 
-// init a storage for specific epoch, the way to add a new block into the linked list
-// and then we can attach the trust value list to the returned new block via SetTrustValueList
+// init a new storage object
 func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint32, cfg *config.SimConfig) (*TrustValueStorage, error) {
 	if epoch != (head.headEpoch+1) && epoch != 0 {
 		return nil, errors.New("storage is out of sync with the simulation")
@@ -56,46 +45,22 @@ func (head *TrustValueStorageHead) InitTrustValueStorageObject(epoch uint32, cfg
 		epoch:                    epoch,
 		trustValueList:           &TrustValuesPerEpoch{},
 		misbehavingVehicleBitMap: bitmap.NewTS(cfg.VehicleNumMax),
-		ptrNext:                  nil,
-		ptrPrevious:              head.headPtr,
 	}
 
 	head.mu.Lock()
-	// update the head block
-	if head.headPtr != nil {
-		head.headPtr.ptrNext = storage
-		head.headPtr = storage
-	} else {
-		// for slot 0
-		head.ptrNext = storage
-		head.headPtr = storage
-	}
-
-	// update the head information in the head
-	head.headEpoch, head.epochCount = epoch, head.epochCount+1
+	// record the results
+	head.headPtr, head.headEpoch = storage, epoch
 	head.mu.Unlock()
 
 	return storage, nil
 }
 
-func (head *TrustValueStorageHead) GetEpochInformation() (uint32, int) {
-	return head.headEpoch, head.epochCount
+func (head *TrustValueStorageHead) GetEpochInformation() uint32 {
+	return head.headEpoch
 }
 
 func (head *TrustValueStorageHead) GetHeadBlock() *TrustValueStorage {
 	return head.headPtr
-}
-
-func (head *TrustValueStorageHead) GetTrustValueStorageForEpoch(epoch uint32) *TrustValueStorage {
-	if epoch > head.headEpoch {
-		return nil
-	}
-
-	ptr := head.ptrNext
-	for i := uint32(0); i < epoch; i++ {
-		ptr = ptr.ptrNext
-	}
-	return ptr
 }
 
 func (storage *TrustValueStorage) AddTrustRatingForVehicle(vid uint32, v float32) {

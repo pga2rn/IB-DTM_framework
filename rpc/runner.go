@@ -13,6 +13,8 @@ import (
 	"net/http"
 )
 
+var PackageName = "rpc"
+
 type RPCServerSession struct {
 	serverLis  string
 	gatewayLis string
@@ -45,7 +47,7 @@ func (rpcs *RPCServerSession) startRPCServer(ctx context.Context) {
 	lisparam := rpcs.serverLis
 	lis, err := net.Listen("tcp", lisparam)
 	if err != nil {
-		logutil.LoggerList["rpc"].Fatal("[Run] failed to init rpc server")
+		logutil.GetLogger(PackageName).Fatal("[Run] failed to init rpc server")
 	}
 
 	s := grpc.NewServer()
@@ -54,7 +56,7 @@ func (rpcs *RPCServerSession) startRPCServer(ctx context.Context) {
 	pb.RegisterFrameworkStatisticsQueryServer(s, &Server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			logutil.LoggerList["rpc"].Fatal("[Run] failed to start the server")
+			logutil.GetLogger(PackageName).Fatal("[Run] failed to start the server")
 		}
 	}()
 
@@ -84,7 +86,7 @@ func (rpcs *RPCServerSession) startRPCgw(ctx context.Context) {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	err := gw.RegisterFrameworkStatisticsQueryHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
-		logutil.LoggerList["rpc"].Fatalf("[startRPCgw] error when register the handler to gateway server")
+		logutil.GetLogger(PackageName).Fatalf("[startRPCgw] error when register the handler to gateway server")
 	}
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
@@ -94,12 +96,12 @@ func (rpcs *RPCServerSession) startRPCgw(ctx context.Context) {
 	}
 	rpcs.gwInstance = gws
 	if err := gws.ListenAndServe(); err != nil {
-		logutil.LoggerList["rpc"].Fatalf("[startRPCgw] error when start the gateway server")
+		logutil.GetLogger(PackageName).Fatalf("[startRPCgw] error when start the gateway server")
 	}
 }
 
 func (rpcs *RPCServerSession) Done(ctx context.Context) {
-	logutil.LoggerList["rpc"].Debugf("[Done] terminate the RPC server")
+	logutil.GetLogger(PackageName).Debugf("[Done] terminate the RPC server")
 	rpcs.serverInstance.GracefulStop()
 	if err := rpcs.gwInstance.Shutdown(ctx); err != nil {
 		return
@@ -114,8 +116,8 @@ func (rpcs *RPCServerSession) Run(ctx context.Context) {
 		go rpcs.startRPCServer(ctx)
 		go rpcs.startRPCgw(ctx)
 
-		logutil.LoggerList["rpc"].Infof("[Run] framework query server now listens at %v", rpcs.gatewayLis)
-		logutil.LoggerList["rpc"].Infof("[Run] API: http://127.0.0.1:5001/v1/framework/data")
+		logutil.GetLogger(PackageName).Infof("[Run] framework query server now listens at %v", rpcs.gatewayLis)
+		logutil.GetLogger(PackageName).Infof("[Run] API: http://127.0.0.1:5001/v1/framework/data")
 
 		// start the main routine loop
 		// listen the chandtm channel and waiting for latest available data
@@ -124,7 +126,7 @@ func (rpcs *RPCServerSession) Run(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case data := <-rpcs.chanDTM:
-				logutil.LoggerList["rpc"].Debugf("[Run] receive data from dtm")
+				logutil.GetLogger(PackageName).Debugf("[Run] receive data from dtm")
 				rpcs.cacheLatestData = data.(*pb.StatisticsBundle)
 			}
 		}

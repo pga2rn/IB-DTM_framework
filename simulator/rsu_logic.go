@@ -14,7 +14,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 			r := rsu.InitRSU(
 				uint32(sim.Config.CoordToIndex(x, y)),
 				fwtype.Position{x, y},
-				sim.Config.RingLength,
+				sim.Config.EpochCacheLength,
 			)
 
 			sim.RSUs[x][y] = r
@@ -28,7 +28,7 @@ func (sim *SimulationSession) InitRSUs() bool {
 func (sim *SimulationSession) initAssignCompromisedRSU(ctx context.Context) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[initAssignMisbehaveVehicle] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[initAssignMisbehaveVehicle] context canceled")
 		return
 	default:
 		sim.CompromisedRSUPortion = sim.Config.CompromisedRSUPortion

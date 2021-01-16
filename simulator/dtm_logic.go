@@ -11,25 +11,24 @@ import (
 func (sim *SimulationSession) prepareRSUsForSlot(ctx context.Context, slot uint32) {
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[prepareRSUsForSlot] context cancel")
+		logutil.GetLogger(PackageName).Fatalf("[prepareRSUsForSlot] context cancel")
 	default:
-		for x := 0; x < sim.Config.XLen; x++ {
-			for y := 0; y < sim.Config.YLen; y++ {
-				r := sim.RSUs[x][y]
-				r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
-			}
+		for i := 0; i < sim.Config.RSUNum; i++ {
+			x, y := sim.Config.IndexToCoord(uint32(i))
+			r := sim.RSUs[x][y]
+			r.InsertSlotsInRing(slot, &fwtype.TrustValueOffsetsPerSlot{})
 		}
 	}
 }
 
 // trust value offsets are stored on each RSU components
 func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
-	defer logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] done")
+	logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] slot %v, epoch %v", slot, slot/sim.Config.SlotsPerEpoch)
+	defer logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] done")
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Debugf("[genTrustValueOffset] context canceled")
+		logutil.GetLogger(PackageName).Debugf("[genTrustValueOffset] context canceled")
 		return
 	default:
 		wg := sync.WaitGroup{}
@@ -45,7 +44,7 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					return
 				default:
 					if v.Id != uint32(id) {
-						logutil.LoggerList["simulator"].
+						logutil.GetLogger(PackageName).
 							Fatalf("[genTrustValueOffset] index and vehicle id mismatches, %v, %v", id, v.Id)
 					}
 
@@ -79,9 +78,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// or they will behave normally
 						flag := sim.R.Float32()
 						switch {
-						case tvo.Weight == fwtype.Critical && flag < 0.7:
+						case tvo.Weight == fwtype.Critical && flag < 0.6:
 							tvo.TrustValueOffset = -1
-						case tvo.Weight == fwtype.Routine && flag < 0.5:
+						case tvo.Weight == fwtype.Routine && flag < 0.9:
 							tvo.TrustValueOffset = 1
 						default:
 							tvo.TrustValueOffset = -1
@@ -91,7 +90,9 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 						// but there is still possible for me to perform some evil when I am malfunction!
 						flag := sim.R.Float32()
 						switch {
-						case flag < 0.10 && tvo.Weight == fwtype.Routine:
+						case flag < 0.20 && tvo.Weight == fwtype.Routine:
+							tvo.TrustValueOffset = -1
+						case flag < 0.10 && tvo.Weight == fwtype.Critical:
 							tvo.TrustValueOffset = -1
 						default:
 							tvo.TrustValueOffset = 1
@@ -106,10 +107,18 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 					if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
 						rn := sim.R.Float32()
 						// assign altered type
-						if rn < 0.8 {
-							tvo.AlterType = fwtype.Flipped
+						if sim.MisbehaviorVehicleBitMap.Get(int(v.Id)) {
+							if rn < 0.8 {
+								tvo.AlterType = fwtype.Flipped
+							} else {
+								tvo.AlterType = fwtype.Dropped
+							}
 						} else {
-							tvo.AlterType = fwtype.Dropped
+							if rn < 0.6 {
+								tvo.AlterType = fwtype.Dropped
+							} else {
+								tvo.AlterType = fwtype.Flipped
+							}
 						}
 					}
 					rsu.GetSlotInRing(slot).Store(v.Id, &tvo)
@@ -128,28 +137,31 @@ func (sim *SimulationSession) genTrustValueOffset(ctx context.Context, slot uint
 
 // execute compromised RSU logic here
 func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot uint32) {
-	logutil.LoggerList["simulator"].Debugf("[forgeTrustValueOffsets] slot %v", slot)
-	defer logutil.LoggerList["simulator"].Debugf("[forgeTrustValueOffsets] slot %v, done", slot)
+	logutil.GetLogger(PackageName).Debugf("[forgeTrustValueOffsets] slot %v", slot)
+	defer logutil.GetLogger(PackageName).Debugf("[forgeTrustValueOffsets] slot %v, done", slot)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["simulator"].Fatalf("[forgeTrustValueOffsets] slot %v, context canceled", slot)
+		logutil.GetLogger(PackageName).Fatalf("[forgeTrustValueOffsets] slot %v, context canceled", slot)
 	default:
 		wg := sync.WaitGroup{}
+
+		// spawn a go routine for each RSU
 		for i := 0; i < sim.Config.RSUNum; i++ {
+
 			x, y := sim.Config.IndexToCoord(uint32(i))
 			rsu := sim.RSUs[x][y]
+			rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
 
+			wg.Add(1)
 			go func() {
-				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
-
-				wg.Add(1)
 				// execute compromised RSU evil logics
 				if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
 					rn, target := sim.R.Float32(), 0
 					// if managed vehicles num is too small
 					// the compromised RSU will not do evils to hide themselves
 					if rsu.ManagedVehicles < sim.ActiveVehiclesNum/sim.Config.RSUNum {
+						wg.Done()
 						return
 					} else {
 						target = rsu.ManagedVehicles
@@ -157,11 +169,11 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 
 					switch {
 					case rn < 0.6:
-						target = target / 2
+						target = target / 5
 					case rn >= 0.6 && rn < 0.9:
-						target = target * 4 / 5
+						target = target * 3 / 5
 					default:
-						target = sim.R.RandIntRange(target, target*2)
+						target = sim.R.RandIntRange(target, target*3/2)
 					}
 
 					for i := 0; i < target; i++ {
@@ -172,13 +184,22 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 							VehicleId: vid,
 						}
 
-						// randomly rate the vehicle
 						rn := sim.R.Float32()
-						switch {
-						case rn < 0.7: // portion of good vehicles are larger, so rate lower it
-							tvo.TrustValueOffset = -1
-						default:
-							tvo.TrustValueOffset = 1
+						switch sim.MisbehaviorVehicleBitMap.Get(int(vid)) {
+						case true: // if the vehicle is misbehaving, the compromisedRSU may help it covered
+							switch {
+							case rn < 0.8:
+								tvo.TrustValueOffset = 1
+							default:
+								tvo.TrustValueOffset = -1
+							}
+						case false: // if the vehicle is normal, randomly alter its trust value offset
+							switch {
+							case rn < 0.5:
+								tvo.TrustValueOffset = -1
+							default:
+								tvo.TrustValueOffset = 1
+							}
 						}
 
 						rn = sim.R.Float32()
@@ -196,7 +217,7 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 					}
 				} // if is evil RSU
 				wg.Done()
-			}()
+			}() // go routine
 		} // iterate RSU for loop
 		wg.Wait()
 	} // select

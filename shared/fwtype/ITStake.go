@@ -6,28 +6,33 @@ import (
 )
 
 type ITStake struct {
-	mu   sync.Mutex
+	mu   sync.RWMutex
 	slot []uint32
-	m    map[uint32]float32
+	m    map[uint32]float32 // map[slot]stake
 }
 
-func NewITStack(length int) *ITStake {
-	return &ITStake{
-		mu:   sync.Mutex{},
+func NewITStack(length int, init float32) *ITStake {
+	res := ITStake{
+		mu:   sync.RWMutex{},
 		slot: make([]uint32, length),
 		m:    make(map[uint32]float32),
 	}
+	// add init amount of ITStake for every RSU
+	res.AddAmount(0, init)
+
+	return &res
 }
 
 func (s *ITStake) AddAmount(epoch uint32, amount float32) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if _, ok := s.m[epoch]; ok { // the slot is already in the map
 		s.m[epoch] += amount
 	} else { // this is the new slot
 		if len(s.m) < len(s.slot) {
 			s.push(epoch)
-		} else {
+		} else { // storage is full, delete old records
 			oldEpoch, _ := s.pop()
 			delete(s.m, oldEpoch)
 
@@ -38,8 +43,8 @@ func (s *ITStake) AddAmount(epoch uint32, amount float32) {
 }
 
 func (s *ITStake) GetAmount() float32 {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	count := float32(0)
 	for _, value := range s.m {

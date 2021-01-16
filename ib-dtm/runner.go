@@ -11,26 +11,26 @@ func (session *IBDTMSession) Done(ctx context.Context) {
 }
 
 func (session *IBDTMSession) Run(ctx context.Context) {
-	logutil.LoggerList["ib-dtm"].Debugf("[Run] start!")
+	logutil.GetLogger(PackageName).Debugf("[Run] start!")
 
 	// wait for simulator to activate the dtm logic module
 	if err := session.WaitForSimulator(ctx); err != nil {
 		session.Done(ctx)
-		logutil.LoggerList["ib-dtm"].Fatalf("failed to wait for simulator start")
+		logutil.GetLogger(PackageName).Fatalf("failed to wait for simulator start")
 	}
 
-	logutil.LoggerList["ib-dtm"].Debugf("[Run] genesis kics start!")
+	logutil.GetLogger(PackageName).Debugf("[Run] genesis kics start!")
 	for {
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["ib-dtm"].Fatal("[Run] context canceled, abort")
+			logutil.GetLogger(PackageName).Fatal("[Run] context canceled, abort")
 		case slot := <-session.Ticker.C():
-			logutil.LoggerList["ib-dtm"].Debugf("[blockchain] slot %v", slot)
+			logutil.GetLogger(PackageName).Debugf("[blockchain] slot %v", slot)
 
 			// prepare blockchain head block
 			for _, bc := range session.Blockchain {
 				if _, err := bc.InitBlockchainBlock(slot, session.IBDTMConfig); err != nil {
-					logutil.LoggerList["ib-dtm"].Fatal("[Run] failed to init new block, slot %v", slot)
+					logutil.GetLogger(PackageName).Fatal("[Run] failed to init new block, slot %v", slot)
 				}
 			}
 

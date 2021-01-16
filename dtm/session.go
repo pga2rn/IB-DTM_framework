@@ -12,11 +12,13 @@ import (
 	"sync"
 )
 
+var PackageName = "dtm"
+
 // communicating with simulator: RSU compromised bitmap, slot
 
 type DTMLogicSession struct {
 	// configs
-	ExpConfig *map[string]*config.ExperimentConfig
+	ExpConfig map[string]*config.ExperimentConfig
 	SimConfig *config.SimConfig
 	// the correct answer
 	MisbehavingVehicleBitMap *bitmap.Threadsafe
@@ -27,8 +29,7 @@ type DTMLogicSession struct {
 	ActiveVehiclesNum int32
 
 	// pointer to the vehicles and RSU
-	// I don't know if it is a good idea to use mutex via pointer
-	RSUs *[][]*rsu.RSU
+	RSUs [][]*rsu.RSU
 	rmu  *sync.Mutex
 
 	// channel
@@ -38,7 +39,7 @@ type DTMLogicSession struct {
 
 	// trust value storage and misbehaving flag results for epochs
 	// each experiment instance has its own trust value storage
-	TrustValueStorageHead *map[string]*fwtype.TrustValueStorageHead
+	TrustValueStorageHead map[string]*fwtype.TrustValueStorageHead
 
 	// a random source
 	R *randutil.RandUtil
@@ -49,7 +50,7 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 	case <-ctx.Done():
 		return
 	default:
-		expNum := len(*session.ExpConfig)
+		expNum := len(session.ExpConfig)
 		statisticsBundle := &pb.StatisticsBundle{
 			Epoch:             epoch,
 			Bundle:            make([]*pb.StatisticsPerExperiment, expNum),
@@ -58,10 +59,10 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 
 		// query the newest results
 		count := 0
-		for expName, _ := range *session.ExpConfig {
-			head := (*session.TrustValueStorageHead)[expName]
-			if ep, _ := head.GetEpochInformation(); ep != epoch {
-				logutil.LoggerList["dtm"].Debugf("[informRPCServer] epoch async")
+		for expName, _ := range session.ExpConfig {
+			head := session.TrustValueStorageHead[expName]
+			if ep := head.GetEpochInformation(); ep != epoch {
+				logutil.GetLogger(PackageName).Debugf("[informRPCServer] epoch async")
 				continue
 			}
 
@@ -74,34 +75,33 @@ func (session *DTMLogicSession) informRPCServer(ctx context.Context, epoch uint3
 		select {
 		case session.ChanRPC <- statisticsBundle:
 		default:
-			logutil.LoggerList["dtm"].Debugf("[informRPCServer] transimition dropped")
+			logutil.GetLogger(PackageName).Debugf("[informRPCServer] transimition dropped")
 		}
 	}
 }
 
 func PrepareDTMLogicModuleSession(
-	simCfg *config.SimConfig, expCfg *map[string]*config.ExperimentConfig,
+	simCfg *config.SimConfig, expCfg map[string]*config.ExperimentConfig,
 	simChan, ibdtmChan, rpcChan chan interface{},
 ) *DTMLogicSession {
+	dtmSession := &DTMLogicSession{
+		// init the simulator config and experiment config
+		SimConfig: simCfg,
+		ExpConfig: expCfg,
 
-	dtmSession := &DTMLogicSession{}
+		// inter module communication
+		ChanSim:   simChan,
+		ChanRPC:   rpcChan,
+		ChanIBDTM: ibdtmChan,
 
-	// init the simulator config and experiment config
-	dtmSession.SimConfig = simCfg
-	dtmSession.ExpConfig = expCfg
-
-	// inter module communication
-	dtmSession.ChanSim = simChan
-	dtmSession.ChanRPC = rpcChan
-	dtmSession.ChanIBDTM = ibdtmChan
-
-	// random source
-	dtmSession.R = randutil.InitRand(123)
+		// random source
+		R: randutil.InitRand(123),
+	}
 
 	// prepare experiments
-	dtmSession.TrustValueStorageHead = fwtype.InitTrustValueStorageHeadMap()
-	for expName, _ := range *expCfg {
-		(*dtmSession.TrustValueStorageHead)[expName] = fwtype.InitTrustValueStorage()
+	dtmSession.TrustValueStorageHead = make(map[string]*fwtype.TrustValueStorageHead)
+	for expName, _ := range expCfg {
+		dtmSession.TrustValueStorageHead[expName] = fwtype.InitTrustValueStorage()
 	}
 
 	return dtmSession

@@ -1,6 +1,7 @@
 package ib_dtm
 
 import (
+	"github.com/pga2rn/ib-dtm_framework/config"
 	"github.com/pga2rn/ib-dtm_framework/shared/fwtype"
 	"math"
 	"sync"
@@ -17,13 +18,13 @@ type Validator struct {
 	uploadMu          sync.Mutex
 }
 
-func InitValidator(vid uint32, initEffectiveStake float32, itsStakeCacheLength int) *Validator {
+func InitValidator(vid uint32, cfg *config.IBDTMConfig, exp *config.ExperimentConfig) *Validator {
 	res := &Validator{
 		mu:                sync.Mutex{},
 		uploadMu:          sync.Mutex{},
 		Id:                vid,
-		effectiveStake:    initEffectiveStake,
-		itsStake:          fwtype.NewITStack(itsStakeCacheLength),
+		effectiveStake:    cfg.InitialEffectiveStake,
+		itsStake:          fwtype.NewITStack(exp.TrustValueOffsetsTraceBackEpochs, cfg.InitialITStake),
 		nextSlotForUpload: 0,
 	}
 	return res
@@ -45,13 +46,13 @@ func (v *Validator) GetNextSlotForUpload() uint32 {
 	return v.nextSlotForUpload
 }
 
-func (v *Validator) AddEffectiveStake(amount float32) {
+func (v *Validator) AddEffectiveStake(amount float32, cfg *config.IBDTMConfig) {
 	v.mu.Lock()
 	if amount < 0 && math.Abs(float64(amount)) >= float64(v.effectiveStake) {
 		v.effectiveStake = 0
 	} else {
-		if v.effectiveStake+amount > 32 {
-			v.effectiveStake = 32
+		if v.effectiveStake+amount > cfg.EffectiveStakeUpperBound {
+			v.effectiveStake = cfg.EffectiveStakeUpperBound
 		} else {
 			v.effectiveStake += amount
 		}

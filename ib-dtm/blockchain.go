@@ -100,7 +100,7 @@ func (head *BlockchainRoot) GetBlockForSlot(slot uint32) *BeaconBlock {
 
 	// debug
 	if ptr == nil {
-		logutil.LoggerList["ib-dtm"].Debugf("[GetBlockForSlot] failed! slot %v", slot)
+		logutil.GetLogger(PackageName).Debugf("[GetBlockForSlot] failed! slot %v", slot)
 	}
 
 	return ptr

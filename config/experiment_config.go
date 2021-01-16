@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
-	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 )
 
 type ExperimentType uint32
@@ -23,7 +22,7 @@ type ExperimentConfig struct {
 }
 
 func InitProposalExperimentConfigList() []*ExperimentConfig {
-	m := *InitExperimentConfig()
+	m := InitExperimentConfig()
 	res := make([]*ExperimentConfig, len(m))
 
 	count := 0
@@ -38,7 +37,7 @@ func InitProposalExperimentConfigList() []*ExperimentConfig {
 }
 
 // return a map of experiment config
-func InitExperimentConfig() *map[string]*ExperimentConfig {
+func InitExperimentConfig() map[string]*ExperimentConfig {
 	m := make(map[string]*ExperimentConfig)
 
 	// baseline 0
@@ -47,8 +46,6 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		Description:                      "base line setup 0",
 		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   false,
-		TimeFactorType:                   -1,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -58,8 +55,6 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		Description:                      "base line setup 1",
 		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   false,
-		TimeFactorType:                   -1,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -69,8 +64,6 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		Description:                      "proposal 0",
 		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -80,10 +73,8 @@ func InitExperimentConfig() *map[string]*ExperimentConfig {
 		Description:                      "proposal 1",
 		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
-	return &m
+	return m
 }

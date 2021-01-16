@@ -19,7 +19,7 @@ func (session *DTMLogicSession) WaitForSimulator(ctx context.Context) error {
 		return errors.New("[WaitForSimulator] context canceled")
 	case v := <-session.ChanSim:
 		// unpack
-		pack := v.(*shared.SimInitDTMCommunication)
+		pack := v.(shared.SimInitDTMCommunication)
 
 		session.RSUs = pack.RSUs
 		session.MisbehavingVehicleBitMap = pack.MisbehavingVehicleBitMap
@@ -27,25 +27,25 @@ func (session *DTMLogicSession) WaitForSimulator(ctx context.Context) error {
 
 		// after the init, signal the simulator
 		session.ChanSim <- true
-		logutil.LoggerList["dtm"].Debugf("[WaitForSimulator] init finished!")
+		logutil.GetLogger(PackageName).Debugf("[WaitForSimulator] init finished!")
 		return nil
 	}
 }
 
 func (session *DTMLogicSession) Run(ctx context.Context) {
-	logutil.LoggerList["dtm"].Debugf("[Run] start!")
+	logutil.GetLogger(PackageName).Debugf("[Run] start!")
 
 	// wait for simulator to activate the dtm logic module
 	if err := session.WaitForSimulator(ctx); err != nil {
 		session.Done(ctx)
-		logutil.LoggerList["dtm"].Fatalf("failed to wait for simulator start")
+		logutil.GetLogger(PackageName).Fatalf("failed to wait for simulator start")
 	}
 
 	// after initialization is finished, waiting for the communication from the simulator
 	for {
 		select {
 		case <-ctx.Done():
-			logutil.LoggerList["dtm"].Fatalf("[Run] context canceled")
+			logutil.GetLogger(PackageName).Fatalf("[Run] context canceled")
 		case v := <-session.ChanSim:
 			// unpack
 			pack := v.(shared.SimDTMEpochCommunication)
@@ -53,7 +53,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 			session.CompromisedRSUBitMap = pack.CompromisedRSUBitMap
 			session.ActiveVehiclesNum = pack.ActiveVehiclesNum
 
-			logutil.LoggerList["dtm"].Debugf("[dtm] epoch %v", session.Epoch)
+			logutil.GetLogger(PackageName).Debugf("[dtm] epoch %v", session.Epoch)
 			// init context
 			// must be finished within a slot, otherwise the storage of RSU will be altered in the new epoch
 			slotCtx, cancel :=
@@ -73,7 +73,7 @@ func (session *DTMLogicSession) Run(ctx context.Context) {
 
 			// cancel the context for this epoch's process
 			cancel()
-			logutil.LoggerList["dtm"].Debugf("[Run] epoch %v Done", session.Epoch)
+			logutil.GetLogger(PackageName).Debugf("[Run] epoch %v Done", session.Epoch)
 
 			// emit a signal to tell the simulator to go on
 			session.ChanSim <- true

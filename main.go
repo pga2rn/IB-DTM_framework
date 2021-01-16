@@ -8,6 +8,8 @@ import (
 	runtimeDebug "runtime/debug"
 )
 
+var PackageName = "main"
+
 func main() {
 	app := &cli.App{
 		Name:   "framework",
@@ -18,12 +20,12 @@ func main() {
 
 	defer func() {
 		if x := recover(); x != nil {
-			logutil.LoggerList["main"].Errorf("Runtime panic: %v\n%v", x, string(runtimeDebug.Stack()))
+			logutil.GetLogger(PackageName).Errorf("Runtime panic: %v\n%v", x, string(runtimeDebug.Stack()))
 			panic(x)
 		}
 	}()
 
 	if err := app.Run(os.Args); err != nil {
-		logutil.LoggerList["main"].Fatalf("failed to start the application")
+		logutil.GetLogger(PackageName).Fatalf("failed to start the application")
 	}
 }

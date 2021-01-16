@@ -29,12 +29,12 @@ type IBDTM2DTMCommunication struct {
 // struct for initializing the dtm & ib-dtm module
 type SimInitDTMCommunication struct {
 	MisbehavingVehicleBitMap *bitmap.Threadsafe
-	RSUs                     *[][]*rsu.RSU
+	RSUs                     [][]*rsu.RSU
 	Rmu                      *sync.Mutex
 }
 type SimInitIBDTMCommunication struct {
 	CompromisedRSUBitMap *bitmap.Threadsafe
-	RSUs                 *[][]*rsu.RSU
+	RSUs                 [][]*rsu.RSU
 	Rmu                  *sync.Mutex
 }
 

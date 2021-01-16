@@ -45,7 +45,7 @@ func GenStatisticsForEpoch(epoch uint32, answer, result *bitmap.Threadsafe) *pb.
 }
 
 func Run(ctx context.Context) int {
-	logutil.LoggerList["statistics"].Debugf("[Run] start statistics service")
+	logutil.GetLogger(PackageName).Debugf("[Run] start statistics service")
 	return 0
 }
 

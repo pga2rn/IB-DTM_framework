@@ -37,8 +37,7 @@ type BeaconStatus struct {
 	whistleBlowings          map[uint32]int
 
 	// committees
-	shardStatus         []*ShardStatus
-	TotalProposerBitMap *bitmap.Threadsafe
+	shardStatus []*ShardStatus
 
 	// random source
 	R *randutil.RandUtil
@@ -68,7 +67,7 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	// init validator instances for every RSU
 	for i := 0; i < simCfg.RSUNum; i++ {
 		// register all RSUs as validator
-		res.validators.Validators[i] = InitValidator(uint32(i), ibdtmConfig.InitialEffectiveStake, exp.TrustValueOffsetsTraceBackEpochs)
+		res.validators.Validators[i] = InitValidator(uint32(i), ibdtmConfig, exp)
 		// all validators are active right now
 		res.activeValidators[uint32(i)] = res.validators.Validators[i]
 	}
@@ -81,7 +80,6 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 			Epoch: 0,
 		}
 	}
-	res.TotalProposerBitMap = bitmap.NewTS(res.SimConfig.RSUNum)
 
 	// random source
 	res.R = randutil.InitRand(123)
@@ -91,16 +89,16 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 
 // separate proposer and committee(proposer no need to be the member of committee)
 func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[genAssignment] epoch %v done", epoch)
+	//logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v", epoch)
+	//defer logutil.GetLogger(PackageName).Debugf("[genAssignment] epoch %v done", epoch)
 
 	select {
 	case <-ctx.Done():
-		logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] context canceled")
+		logutil.GetLogger(PackageName).Fatalf("[genAssignment] context canceled")
 	default:
 		shardStatus := bs.shardStatus[shardId]
 		if shardStatus.Epoch != epoch && epoch != 0 {
-			logutil.LoggerList["ib-dtm"].Fatalf("[genAssignment] epoch async, status e %v, epoch %v", shardStatus.Epoch)
+			logutil.GetLogger(PackageName).Fatalf("[genAssignment] epoch async, status e %v, epoch %v", shardStatus.Epoch)
 		}
 
 		// re-generate shuffled list
@@ -117,8 +115,8 @@ func (bs *BeaconStatus) genAssignment(ctx context.Context, shardId, epoch uint32
 		//
 		for i := 0; i < bs.IBDTMConfig.CommitteeNum; i++ {
 			for {
-				// randomly pick a proposer from the first 2/3 validators with most stakes
-				rn := bs.R.Intn(len(tmpVlist) * 2 / 3)
+				// randomly pick a proposer from the first 3/4 validators with most stakes
+				rn := bs.R.Intn(len(tmpVlist) * 3 / 4)
 
 				if !bs.IsValidatorActive(tmpVlist[rn].Id) {
 					continue
@@ -180,16 +178,21 @@ func (bs *BeaconStatus) GetRewardFactor(id uint32) float32 {
 }
 
 func (bs *BeaconStatus) UpdateShardStatus(ctx context.Context, epoch uint32) {
-	logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v", epoch)
-	defer logutil.LoggerList["ib-dtm"].Debugf("[UpdateShardStatus] epoch %v, done", epoch)
+	logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v", epoch)
+	defer logutil.GetLogger(PackageName).Debugf("[UpdateShardStatus] epoch %v, done", epoch)
 
-	// reset the bitmap
-	bs.TotalProposerBitMap = bitmap.NewTS(bs.SimConfig.RSUNum)
+	wg := sync.WaitGroup{}
 	for shardId := range bs.shardStatus {
 		bs.shardStatus[shardId] = &ShardStatus{
 			Epoch: epoch,
 			Id:    uint32(shardId),
 		}
-		bs.genAssignment(ctx, uint32(shardId), epoch)
+
+		wg.Add(1)
+		go func(shardId uint32) { // spawn go routines for assignment generation
+			bs.genAssignment(ctx, shardId, epoch)
+			wg.Done()
+		}(uint32(shardId))
 	}
+	wg.Wait()
 }

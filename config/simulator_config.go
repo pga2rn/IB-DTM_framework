@@ -2,9 +2,14 @@
 package config
 
 import (
-	"github.com/sirupsen/logrus"
 	"time"
 )
+
+var Genesis time.Time
+
+func SetGenesis(genesis time.Time) {
+	Genesis = genesis
+}
 
 // SimConfig is used to define a simulation
 type SimConfig struct {
@@ -34,41 +39,27 @@ type SimConfig struct {
 
 	// rsu config
 	RingLength int
-	Loglevel   logrus.Level
 
 	// vehicle config
 }
 
 func GenYangNetConfig() *SimConfig {
-	cfg := &SimConfig{}
-	cfg.Loglevel = logrus.InfoLevel
+	return &SimConfig{
+		Genesis:        Genesis,
+		SecondsPerSlot: 1,
+		SlotsPerEpoch:  16,
+		RSUNum:         256,
 
-	// config aligned to yang test eth2 net
-	cfg.SecondsPerSlot = 1
-	cfg.SlotsPerEpoch = 16
-	cfg.RSUNum = 256
+		XLen: 16,
+		YLen: 16,
 
-	// map config
-	cfg.XLen = 16
-	cfg.YLen = 16
+		EpochCacheLength:      512,
+		CompromisedRSUPortion: 0.2,
 
-	// sim config
-	cfg.EpochCacheLength = 512
-
-	// rsu config
-	cfg.CompromisedRSUPortion = 0.2
-	cfg.RingLength = cfg.EpochCacheLength
-
-	// vehicle
-	cfg.MisbehaveVehiclePortion = 0.2
-	cfg.VehicleNumMin = 8000
-	cfg.VehicleNumMax = 8192
-
-	return cfg
-}
-
-func (cfg *SimConfig) SetGenesis(genesis time.Time) {
-	cfg.Genesis = genesis
+		MisbehaveVehiclePortion: 0.2,
+		VehicleNumMin:           8000,
+		VehicleNumMax:           8192,
+	}
 }
 
 // a little helper function to convert index to coord
