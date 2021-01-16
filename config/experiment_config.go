@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/pga2rn/ib-dtm_framework/rpc/pb"
-	"github.com/pga2rn/ib-dtm_framework/shared/timefactor"
 )
 
 type ExperimentType uint32
@@ -47,8 +46,6 @@ func InitExperimentConfig() map[string]*ExperimentConfig {
 		Description:                      "base line setup 0",
 		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   false,
-		TimeFactorType:                   -1,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -58,8 +55,6 @@ func InitExperimentConfig() map[string]*ExperimentConfig {
 		Description:                      "base line setup 1",
 		Type:                             pb.ExperimentType_BASELINE,
 		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   false,
-		TimeFactorType:                   -1,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -69,8 +64,6 @@ func InitExperimentConfig() map[string]*ExperimentConfig {
 		Description:                      "proposal 0",
 		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               false,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 
@@ -80,8 +73,6 @@ func InitExperimentConfig() map[string]*ExperimentConfig {
 		Description:                      "proposal 1",
 		Type:                             pb.ExperimentType_PROPOSAL,
 		CompromisedRSUFlag:               true,
-		TimeFactorFlag:                   true,
-		TimeFactorType:                   timefactor.Power,
 		TrustValueOffsetsTraceBackEpochs: 3,
 	}
 

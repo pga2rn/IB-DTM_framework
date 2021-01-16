@@ -57,7 +57,6 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 		// signal the ib-dtm
 		session.ChanIBDTM <- true
 
-		// TODO: inter module connection transmit instance instead of pointer
 		// wait for results from the ib-dtm module
 		for {
 			v := <-session.ChanIBDTM
@@ -80,6 +79,7 @@ func (session *DTMLogicSession) genProposalTrustValue(ctx context.Context, epoch
 	}
 }
 
+// TODO: refactor
 func (session *DTMLogicSession) genBaselineTrustValue(ctx context.Context, epoch uint32) {
 	logutil.GetLogger(PackageName).Debugf("[genBaselineTrustValue] start to process for epoch %v", epoch)
 	defer logutil.GetLogger(PackageName).
