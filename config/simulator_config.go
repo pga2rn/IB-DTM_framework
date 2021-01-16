@@ -57,8 +57,8 @@ func GenYangNetConfig() *SimConfig {
 		CompromisedRSUPortion: 0.2,
 
 		MisbehaveVehiclePortion: 0.2,
-		VehicleNumMin:           8000,
-		VehicleNumMax:           8192,
+		VehicleNumMin:           4000,
+		VehicleNumMax:           4096,
 	}
 }
 

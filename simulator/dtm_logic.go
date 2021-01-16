@@ -159,11 +159,11 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 
 					switch {
 					case rn < 0.6:
-						target = target / 2
+						target = target / 5
 					case rn >= 0.6 && rn < 0.9:
-						target = target * 4 / 5
+						target = target * 3 / 5
 					default:
-						target = sim.R.RandIntRange(target, target*2)
+						target = sim.R.RandIntRange(target, target*3/2)
 					}
 
 					for i := 0; i < target; i++ {
@@ -174,13 +174,22 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 							VehicleId: vid,
 						}
 
-						// randomly rate the vehicle
 						rn := sim.R.Float32()
-						switch {
-						case rn < 0.7: // portion of good vehicles are larger, so rate lower it
-							tvo.TrustValueOffset = -1
-						default:
-							tvo.TrustValueOffset = 1
+						switch sim.MisbehaviorVehicleBitMap.Get(int(vid)) {
+						case true: // if the vehicle is misbehaving, the compromisedRSU may help it covered
+							switch {
+							case rn < 0.8:
+								tvo.TrustValueOffset = 1
+							default:
+								tvo.TrustValueOffset = -1
+							}
+						case false: // if the vehicle is normal, randomly alter its trust value offset
+							switch {
+							case rn < 0.5:
+								tvo.TrustValueOffset = -1
+							default:
+								tvo.TrustValueOffset = 1
+							}
 						}
 
 						rn = sim.R.Float32()
