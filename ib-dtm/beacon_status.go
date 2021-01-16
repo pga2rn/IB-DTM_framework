@@ -67,7 +67,7 @@ func InitBeaconStatus(simCfg *config.SimConfig, ibdtmConfig *config.IBDTMConfig,
 	// init validator instances for every RSU
 	for i := 0; i < simCfg.RSUNum; i++ {
 		// register all RSUs as validator
-		res.validators.Validators[i] = InitValidator(uint32(i), ibdtmConfig.InitialEffectiveStake, exp.TrustValueOffsetsTraceBackEpochs)
+		res.validators.Validators[i] = InitValidator(uint32(i), ibdtmConfig, exp)
 		// all validators are active right now
 		res.activeValidators[uint32(i)] = res.validators.Validators[i]
 	}

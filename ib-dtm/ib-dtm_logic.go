@@ -241,10 +241,10 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 
 				if block.skipped {
 					logutil.GetLogger(PackageName).Debugf("block skipped at slot %v, shard %v", block.slot, shardId)
-					proposer.AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward * bs.IBDTMConfig.PenaltyFactor)
+					proposer.AddEffectiveStake(-1*bs.IBDTMConfig.BaseReward*bs.IBDTMConfig.PenaltyFactor, bs.IBDTMConfig)
 				} else {
 					factor := bs.GetRewardFactor(proposer.Id)
-					proposer.AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
+					proposer.AddEffectiveStake(bs.IBDTMConfig.BaseReward*factor, bs.IBDTMConfig)
 					// add its stake
 					count := 0
 					f := func(key, value interface{}) bool {
@@ -271,10 +271,10 @@ func (bs *BeaconStatus) ProcessBalanceAdjustment(ctx context.Context, epoch uint
 					switch {
 					// if the block is not valid, but the voter votes for it
 					case block.skipped == true && block.votes[index] == true:
-						bs.validators.Validators[vid].AddEffectiveStake(-1 * bs.IBDTMConfig.BaseReward)
+						bs.validators.Validators[vid].AddEffectiveStake(-1*bs.IBDTMConfig.BaseReward, bs.IBDTMConfig)
 					// if the block is valid, and the voter votes for it
 					case block.skipped == false && block.votes[index] == true:
-						bs.validators.Validators[vid].AddEffectiveStake(bs.IBDTMConfig.BaseReward * factor)
+						bs.validators.Validators[vid].AddEffectiveStake(bs.IBDTMConfig.BaseReward*factor, bs.IBDTMConfig)
 					}
 				}
 

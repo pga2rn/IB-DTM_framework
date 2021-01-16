@@ -11,12 +11,16 @@ type ITStake struct {
 	m    map[uint32]float32 // map[slot]stake
 }
 
-func NewITStack(length int) *ITStake {
-	return &ITStake{
+func NewITStack(length int, init float32) *ITStake {
+	res := ITStake{
 		mu:   sync.RWMutex{},
 		slot: make([]uint32, length),
 		m:    make(map[uint32]float32),
 	}
+	// add init amount of ITStake for every RSU
+	res.AddAmount(0, init)
+
+	return &res
 }
 
 func (s *ITStake) AddAmount(epoch uint32, amount float32) {
