@@ -136,20 +136,23 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 		logutil.LoggerList["simulator"].Fatalf("[forgeTrustValueOffsets] slot %v, context canceled", slot)
 	default:
 		wg := sync.WaitGroup{}
+
+		// spawn a go routine for each RSU
 		for i := 0; i < sim.Config.RSUNum; i++ {
+
 			x, y := sim.Config.IndexToCoord(uint32(i))
 			rsu := sim.RSUs[x][y]
+			rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
 
+			wg.Add(1)
 			go func() {
-				rsu.ManagedVehicles = sim.Map.GetCross(rsu.Pos).GetVehicleNum()
-
-				wg.Add(1)
 				// execute compromised RSU evil logics
 				if sim.CompromisedRSUBitMap.Get(int(rsu.Id)) {
 					rn, target := sim.R.Float32(), 0
 					// if managed vehicles num is too small
 					// the compromised RSU will not do evils to hide themselves
 					if rsu.ManagedVehicles < sim.ActiveVehiclesNum/sim.Config.RSUNum {
+						wg.Done()
 						return
 					} else {
 						target = rsu.ManagedVehicles
@@ -196,7 +199,7 @@ func (sim *SimulationSession) forgeTrustValueOffsets(ctx context.Context, slot u
 					}
 				} // if is evil RSU
 				wg.Done()
-			}()
+			}() // go routine
 		} // iterate RSU for loop
 		wg.Wait()
 	} // select
