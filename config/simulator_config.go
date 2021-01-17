@@ -53,7 +53,7 @@ func GenYangNetConfig() *SimConfig {
 		XLen: 16,
 		YLen: 16,
 
-		EpochCacheLength:      512,
+		EpochCacheLength:      96,
 		CompromisedRSUPortion: 0.2,
 
 		MisbehaveVehiclePortion: 0.2,
