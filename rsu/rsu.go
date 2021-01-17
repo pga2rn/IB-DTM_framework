@@ -60,18 +60,7 @@ func (rsu *RSU) InsertSlotsInRing(slot uint32, element *fwtype.TrustValueOffsets
 }
 
 func (rsu *RSU) GetSlotInRing(slot uint32) *fwtype.TrustValueOffsetsPerSlot {
-	rin, rinMu := rsu.ring.GetRing()
-	baseSlot, curSlot := rsu.ring.GetProperties()
-
-	if slot < baseSlot || slot > curSlot {
-		logutil.GetLogger(PackageName).Debugf("[GetSlotInRing] rsu %v, baseSlot %v, curSlot %v, slot %v", rsu.Id, baseSlot, curSlot, slot)
-	}
-
-	rinMu.Lock()
-	res := rin.Move(-int(curSlot - slot)).Value.(*fwtype.TrustValueOffsetsPerSlot)
-	rinMu.Unlock()
-
-	return res
+	return rsu.ring.GetElementForSlot(slot)
 }
 func (rsu *RSU) GetRingInformation() (baseSlot, currentSlot uint32) {
 	return rsu.ring.GetProperties()
